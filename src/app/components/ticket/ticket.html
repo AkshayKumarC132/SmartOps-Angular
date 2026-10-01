@@ -1,0 +1,334 @@
+<div class="tickets-page">
+
+  <div class="page-header">
+
+    <div>
+
+      <h1>
+        Tickets
+      </h1>
+
+      <p>
+        Manage and  support tickets
+      </p>
+
+    </div>
+
+  </div>
+
+  <div class="filter-card">
+
+    <div class="search-box">
+
+      <svg viewBox="0 0 24 24">
+        <circle
+          cx="11"
+          cy="11"
+          r="7"
+        ></circle>
+
+        <path
+          d="M20 20l-4-4"
+        ></path>
+      </svg>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Search tickets..."
+      >
+
+    </div>
+
+    <div class="filter-group">
+
+      <select
+        [(ngModel)]="selectedStatus"
+      >
+        <option value="All">
+          All Statuses
+        </option>
+
+        <option value="Open">
+          Open
+        </option>
+
+        <option value="Assigned">
+          Assigned
+        </option>
+
+        <option value="In_Progress">
+          In Progress
+        </option>
+
+        <option value="Resolved">
+          Resolved
+        </option>
+
+        <option value="Closed">
+          Closed
+        </option>
+
+      </select>
+
+      <select
+        [(ngModel)]="selectedPriority"
+      >
+        <option value="All">
+          All Priorities
+        </option>
+
+        <option value="Low">
+          Low
+        </option>
+
+        <option value="Medium">
+          Medium
+        </option>
+
+        <option value="High">
+          High
+        </option>
+
+        <option value="Urgent">
+          Urgent
+        </option>
+
+      </select>
+
+      <button
+        type="button"
+        class="clear-button"
+        (click)="clearFilters()"
+      >
+        Clear
+      </button>
+
+    </div>
+
+  </div>
+
+  <div
+    *ngIf="loading"
+    class="state-message"
+  >
+    Loading tickets...
+  </div>
+
+  <div
+    *ngIf="errorMessage"
+    class="error-message"
+  >
+    {{ errorMessage }}
+  </div>
+
+  <div
+    *ngIf="!loading && !errorMessage"
+    class="table-card"
+  >
+
+    <div class="table-header">
+
+      <div>
+
+        <h2>
+          All Tickets
+        </h2>
+
+        <p>
+          {{ filteredTickets.length }}
+          ticket{{
+            filteredTickets.length === 1
+              ? ''
+              : 's'
+          }}
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>
+              Ticket ID
+            </th>
+
+            <th>
+              Ticket Name
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th>
+              Priority
+            </th>
+
+            <th>
+              Category
+            </th>
+
+            <th>
+              Team
+            </th>
+
+            <th>
+              Assigned To
+            </th>
+
+            <th>
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="
+              let ticket of filteredTickets
+            "
+          >
+
+            <td>
+
+              <button
+                type="button"
+                class="ticket-link"
+                (click)="openTicket(ticket.id)"
+              >
+                {{ ticket.ticket_id }}
+              </button>
+
+            </td>
+
+            <td>
+
+              <div class="ticket-name">
+                {{ ticket.ticket_name }}
+              </div>
+
+              <div
+                class="ticket-summary"
+                *ngIf="ticket.summary"
+              >
+                {{ ticket.summary }}
+              </div>
+
+            </td>
+
+            <td>
+
+              <span
+                class="status-badge"
+                [ngClass]="ticket.status"
+              >
+                {{
+                  formatStatus(
+                    ticket.status
+                  )
+                }}
+              </span>
+
+            </td>
+
+            <td>
+
+              <span
+                class="priority-badge"
+                [ngClass]="
+                  ticket.priority?.toLowerCase()
+                "
+              >
+                {{ ticket.priority }}
+              </span>
+
+            </td>
+
+            <td>
+              {{
+                ticket.category ||
+                'Not specified'
+              }}
+            </td>
+
+            <td>
+              {{
+                getDisplayValue(
+                  ticket.team
+                )
+              }}
+            </td>
+
+            <td>
+              {{
+                getDisplayValue(
+                  ticket.assigned_to
+                )
+              }}
+            </td>
+
+            <td>
+
+              <button
+                type="button"
+                class="view-button"
+                (click)="openTicket(ticket.id)"
+              >
+
+                <svg viewBox="0 0 24 24">
+
+                  <path
+                    d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+                  ></path>
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  ></circle>
+
+                </svg>
+
+                View
+
+              </button>
+
+            </td>
+
+          </tr>
+
+          <tr
+            *ngIf="
+              filteredTickets.length === 0
+            "
+          >
+
+            <td
+              colspan="8"
+              class="empty-table"
+            >
+              No tickets found.
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>

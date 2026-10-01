@@ -1,0 +1,144 @@
+<div class="ticket-details-page">
+
+  <div class="page-header">
+    <div>
+      <h1>Ticket Details</h1>
+      <p>View complete information about this ticket</p>
+    </div>
+
+    <button
+      type="button"
+      class="back-button"
+      (click)="goBack()"
+    >
+      ← Back to Tickets
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="state-message">
+    Loading ticket details...
+  </div>
+   
+  <!-- Error -->
+  <div *ngIf="!loading && errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Ticket -->
+  <div *ngIf="!loading && !errorMessage && ticket" class="details-card">
+
+    <div class="details-header">
+      <div>
+        <span class="ticket-number">
+          Ticket #{{ ticket.ticket_id }}
+        </span>
+
+        <h2>
+          {{ ticket.ticket_name }}
+        </h2>
+      </div>
+
+      <span class="status-badge">
+        {{ ticket.status }}
+      </span>
+    </div>
+
+    <div class="details-body">
+
+      <div class="detail-item">
+        <label>Ticket ID</label>
+        <div class="detail-value">
+          {{ ticket.ticket_id }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Ticket Name</label>
+        <div class="detail-value">
+          {{ ticket.ticket_name }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Status</label>
+        <div class="detail-value">
+          {{ ticket.status }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Priority</label>
+        <div class="detail-value">
+          {{ ticket.priority }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Category</label>
+        <div class="detail-value">
+          {{ ticket.category }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Team</label>
+        <div class="detail-value">
+          {{ ticket.team }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Assigned To</label>
+        <div class="detail-value">
+          {{ ticket.assigned_to }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Storage Type</label>
+        <div class="detail-value">
+          {{ ticket.storage_type }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <label>Lock Status</label>
+        <div class="detail-value">
+          {{ ticket.is_locked ? 'Locked' : 'Unlocked' }}
+        </div>
+      </div>
+
+      <div class="detail-item full-width">
+        <label>Description</label>
+        <div class="detail-value">
+          {{ ticket.description }}
+        </div>
+      </div>
+
+      <div class="detail-item full-width">
+        <label>Summary</label>
+        <div class="detail-value">
+          {{ ticket.summary }}
+        </div>
+      </div>
+
+      <div class="detail-item full-width">
+        <label>Tags</label>
+        <div class="detail-value">
+          {{ ticket.tags?.length ? ticket.tags.join(', ') : 'No tags' }}
+        </div>
+      </div>
+
+      <div class="detail-item full-width">
+        <label>Attachments</label>
+        <div class="detail-value">
+          {{ ticket.attachments?.length ? ticket.attachments.join(', ') : 'No attachments' }}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

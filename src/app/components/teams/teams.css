@@ -1,0 +1,1312 @@
+.teams-page {
+  padding: 28px 25px 40px;
+  background: #f6f7f9;
+  min-height: calc(100vh - 56px);
+}
+
+
+/* =====================================================
+   PAGE HEADER
+   ===================================================== */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 20px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  color: #101828;
+  font-size: 27px;
+  font-weight: 700;
+}
+
+.page-heading p {
+  margin: 6px 0 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   NEW TEAM
+   ===================================================== */
+
+.new-team-button {
+  height: 37px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 0 15px;
+
+  background: #24a99a;
+  color: #ffffff;
+
+  border: none;
+  border-radius: 6px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.new-team-button:hover {
+  background: #1d9689;
+}
+
+.new-team-button svg {
+  width: 17px;
+  height: 17px;
+
+  fill: none;
+  stroke: currentColor;
+
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* =====================================================
+   TEAM GRID
+   ===================================================== */
+
+.teams-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+
+/* =====================================================
+   TEAM CARD
+   ===================================================== */
+
+.team-card {
+  min-height: 142px;
+
+  padding: 25px;
+
+  background: #ffffff;
+
+  border: 1px solid #d9dfe7;
+
+  border-radius: 8px;
+
+  box-shadow:
+    0 1px 2px
+    rgba(16, 24, 40, 0.04);
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.team-card:hover {
+  border-color: #24a99a;
+
+  box-shadow:
+    0 3px 10px
+    rgba(16, 24, 40, 0.07);
+}
+
+.team-card.selected-team {
+  border-color: #24a99a;
+
+  box-shadow:
+    0 0 0 1px #24a99a,
+    0 4px 12px
+    rgba(36, 169, 154, 0.10);
+}
+
+
+/* =====================================================
+   TEAM CARD HEADER
+   ===================================================== */
+
+.team-card-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.team-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.team-icon-wrapper {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #e8f8f5;
+
+  border-radius: 6px;
+}
+
+.team-title h2 {
+  margin: 0;
+
+  color: #101828;
+
+  font-size: 16px;
+
+  font-weight: 600;
+
+  word-break: break-word;
+}
+
+.team-icon {
+  width: 18px;
+  height: 18px;
+
+  fill: none;
+
+  stroke: #20a99a;
+
+  stroke-width: 1.8;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+}
+
+
+/* =====================================================
+   EDIT BUTTON
+   ===================================================== */
+
+.edit-button {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  background: transparent;
+
+  color: #475467;
+
+  border: none;
+
+  border-radius: 5px;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+}
+
+.edit-button:hover {
+  background: #f2f4f7;
+  color: #101828;
+}
+
+.edit-button svg {
+  width: 17px;
+  height: 17px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.8;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+}
+
+
+/* =====================================================
+   DESCRIPTION
+   ===================================================== */
+
+.description {
+  min-height: 20px;
+
+  margin: 15px 0 18px;
+
+  color: #667085;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+/* =====================================================
+   TEAM FOOTER
+   ===================================================== */
+
+.team-footer {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.member-section {
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  min-width: 0;
+}
+
+.member-avatars {
+  display: flex;
+
+  align-items: center;
+}
+
+.member-avatar {
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-left: -4px;
+
+  background: #e7f7f5;
+
+  color: #1ba595;
+
+  border: 2px solid #ffffff;
+
+  border-radius: 50%;
+
+  font-size: 10px;
+
+  font-weight: 600;
+}
+
+.member-avatar:first-child {
+  margin-left: 0;
+}
+
+.member-more {
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-left: -4px;
+
+  background: #f2f4f7;
+
+  color: #667085;
+
+  border: 2px solid #ffffff;
+
+  border-radius: 50%;
+
+  font-size: 9px;
+
+  font-weight: 600;
+}
+
+.member-count {
+  color: #667085;
+
+  font-size: 12px;
+
+  white-space: nowrap;
+}
+
+.created-badge {
+  padding: 4px 10px;
+
+  background: #ffffff;
+
+  color: #101828;
+
+  border: 1px solid #d9dfe7;
+
+  border-radius: 14px;
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   GENERAL MESSAGES
+   ===================================================== */
+
+.message,
+.error-message,
+.empty-state {
+  padding: 25px;
+
+  background: #ffffff;
+
+  border: 1px solid #d9dfe7;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+}
+
+.error-message {
+  margin-bottom: 16px;
+
+  color: #b42318;
+
+  background: #fef3f2;
+
+  border-color: #fecdca;
+}
+
+.success-message {
+  margin-bottom: 16px;
+
+  padding: 12px 15px;
+
+  color: #067647;
+
+  background: #ecfdf3;
+
+  border: 1px solid #abefc6;
+
+  border-radius: 7px;
+
+  font-size: 13px;
+}
+
+.empty-state {
+  color: #667085;
+
+  text-align: center;
+}
+
+
+/* =====================================================
+   SELECTED TEAM MEMBERS
+   ===================================================== */
+
+.selected-members-section {
+  margin-top: 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #d9dfe7;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 1px 2px
+    rgba(16, 24, 40, 0.04);
+}
+
+
+/* =====================================================
+   MEMBERS HEADER
+   ===================================================== */
+
+.members-section-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 18px 24px;
+
+  border-bottom: 1px solid #eaecf0;
+}
+
+.members-section-header h2 {
+  margin: 0;
+
+  color: #101828;
+
+  font-size: 17px;
+
+  font-weight: 700;
+}
+
+.members-section-header p {
+  margin: 5px 0 0;
+
+  color: #667085;
+
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   ADD MEMBER BUTTON
+   ===================================================== */
+
+.add-member-button {
+  height: 37px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 14px;
+
+  background: #ffffff;
+
+  color: #344054;
+
+  border: 1px solid #98a2b3;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.add-member-button:hover {
+  background: #f9fafb;
+
+  border-color: #667085;
+}
+
+.add-member-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+
+/* =====================================================
+   MEMBERS TABLE
+   ===================================================== */
+
+.members-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.members-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 650px;
+}
+
+.members-table th {
+  padding: 13px 24px;
+
+  background: #f8fafc;
+
+  color: #475467;
+
+  border-bottom: 1px solid #eaecf0;
+
+  text-align: left;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.03em;
+}
+
+.members-table td {
+  padding: 13px 24px;
+
+  color: #344054;
+
+  border-bottom: 1px solid #eaecf0;
+
+  font-size: 13px;
+}
+
+.members-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.members-table tbody tr:hover {
+  background: #fafafa;
+}
+
+
+/* =====================================================
+   USER CELL
+   ===================================================== */
+
+.user-cell {
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+}
+
+.table-member-avatar {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #e7f7f5;
+
+  color: #1ba595;
+
+  border-radius: 50%;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.user-details {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.user-details strong {
+  color: #101828;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.user-details span {
+  color: #667085;
+
+  font-size: 11px;
+
+  word-break: break-word;
+}
+
+
+/* =====================================================
+   ROLE
+   ===================================================== */
+
+.role-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 4px 9px;
+
+  background: #ecfdf3;
+
+  color: #027a48;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   DELETE MEMBER BUTTON
+   ===================================================== */
+
+.delete-member-button {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  background: #ffffff;
+
+  color: #b42318;
+
+  border: 1px solid #d0d5dd;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+}
+
+.delete-member-button:hover {
+  background: #fef3f2;
+
+  border-color: #fecdca;
+
+  color: #b42318;
+}
+
+.delete-member-button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.5;
+}
+
+.delete-member-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+
+/* =====================================================
+   EMPTY SELECTED MEMBERS
+   ===================================================== */
+
+.empty-selected-members {
+  padding: 45px 24px;
+
+  text-align: center;
+
+  color: #667085;
+}
+
+.empty-members-icon {
+  width: 48px;
+  height: 48px;
+
+  margin: 0 auto 12px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #e8f8f5;
+
+  border-radius: 50%;
+
+  color: #24a99a;
+}
+
+.empty-members-icon svg {
+  width: 24px;
+  height: 24px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.7;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+}
+
+.empty-selected-members p {
+  margin: 0;
+
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   MODAL BACKDROP
+   ===================================================== */
+
+.modal-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1000;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(16, 24, 40, 0.45);
+}
+
+
+/* =====================================================
+   TEAM MODAL
+   ===================================================== */
+
+.team-modal {
+  width: 100%;
+
+  max-width: 500px;
+
+  max-height:
+    calc(100vh - 40px);
+
+  background: #ffffff;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 20px 45px
+    rgba(16, 24, 40, 0.18);
+
+  overflow: hidden;
+}
+
+
+/* =====================================================
+   MODAL HEADER
+   ===================================================== */
+
+.modal-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 22px 24px;
+
+  border-bottom:
+    1px solid #eaecf0;
+}
+
+.modal-header h2 {
+  margin: 0;
+
+  color: #101828;
+
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+.modal-header p {
+  margin: 5px 0 0;
+
+  color: #667085;
+
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   CLOSE BUTTON
+   ===================================================== */
+
+.modal-close {
+  width: 30px;
+  height: 30px;
+
+  padding: 0;
+
+  background: transparent;
+
+  color: #667085;
+
+  border: none;
+
+  border-radius: 5px;
+
+  font-size: 25px;
+
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #f2f4f7;
+
+  color: #101828;
+}
+
+.modal-close:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.5;
+}
+
+
+/* =====================================================
+   MODAL ERROR
+   ===================================================== */
+
+.modal-error {
+  margin: 18px 24px 0;
+
+  padding: 11px 13px;
+
+  color: #b42318;
+
+  background: #fef3f2;
+
+  border: 1px solid #fecdca;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+
+  line-height: 1.4;
+}
+
+
+/* =====================================================
+   TEAM FORM
+   ===================================================== */
+
+.team-form {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #344054;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 10px 12px;
+
+  background: #ffffff;
+
+  color: #101828;
+
+  border: 1px solid #d0d5dd;
+
+  border-radius: 6px;
+
+  outline: none;
+
+  font-family: inherit;
+
+  font-size: 14px;
+}
+
+.form-group input {
+  height: 40px;
+}
+
+.form-group textarea {
+  resize: vertical;
+
+  min-height: 95px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #24a99a;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(36, 169, 154, 0.12);
+}
+
+.form-group input:disabled,
+.form-group textarea:disabled {
+  background: #f9fafb;
+
+  cursor: not-allowed;
+}
+
+.form-note {
+  margin-bottom: 20px;
+
+  padding: 10px 12px;
+
+  color: #667085;
+
+  background: #f8fafc;
+
+  border: 1px solid #eaecf0;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   MODAL ACTIONS
+   ===================================================== */
+
+.modal-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 16px 24px;
+
+  border-top:
+    1px solid #eaecf0;
+}
+
+.cancel-button,
+.save-button {
+  height: 38px;
+
+  padding: 0 16px;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.cancel-button {
+  background: #ffffff;
+
+  color: #344054;
+
+  border: 1px solid #d0d5dd;
+}
+
+.cancel-button:hover {
+  background: #f9fafb;
+}
+
+.save-button {
+  background: #24a99a;
+
+  color: #ffffff;
+
+  border: 1px solid #24a99a;
+}
+
+.save-button:hover {
+  background: #1d9689;
+
+  border-color: #1d9689;
+}
+
+.cancel-button:disabled,
+.save-button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.6;
+}
+
+
+/* =====================================================
+   ADD MEMBER MODAL
+   ===================================================== */
+
+.add-member-modal {
+  max-width: 680px;
+}
+
+.add-member-loading {
+  padding: 45px 24px;
+
+  text-align: center;
+
+  color: #667085;
+
+  font-size: 14px;
+}
+
+.add-member-list {
+  max-height: 430px;
+
+  overflow-y: auto;
+
+  padding: 10px 20px;
+}
+
+.add-member-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 11px 12px;
+
+  border: 1px solid transparent;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+}
+
+.add-member-row:hover {
+  background: #f8fafc;
+}
+
+.add-member-row.selected-member {
+  background: #ecfdf3;
+
+  border-color: #a7f3d0;
+}
+
+.add-member-row.existing-member {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+.add-member-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+
+  flex-shrink: 0;
+
+  cursor: pointer;
+}
+
+.add-member-row input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.add-member-avatar {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #e7f7f5;
+
+  color: #1ba595;
+
+  border-radius: 50%;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.add-member-info {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  flex: 1;
+
+  min-width: 0;
+}
+
+.add-member-info strong {
+  color: #101828;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.add-member-info span {
+  color: #667085;
+
+  font-size: 11px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.add-member-info small {
+  color: #98a2b3;
+
+  font-size: 10px;
+}
+
+.add-member-role {
+  padding: 4px 9px;
+
+  background: #f2f4f7;
+
+  color: #344054;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.already-member {
+  color: #027a48;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 1100px) {
+
+  .teams-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .teams-page {
+    padding: 20px;
+  }
+
+
+  .page-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .new-team-button {
+    width: 100%;
+  }
+
+
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .team-footer {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .members-section-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .add-member-button {
+    width: 100%;
+  }
+
+
+  .team-modal {
+    max-height:
+      calc(100vh - 40px);
+
+    overflow-y: auto;
+  }
+
+
+  .add-member-row {
+    align-items: flex-start;
+
+    flex-wrap: wrap;
+  }
+
+
+  .add-member-role {
+    margin-left: 29px;
+  }
+
+
+  .already-member {
+    margin-left: 29px;
+  }
+
+}

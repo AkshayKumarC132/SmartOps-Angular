@@ -1,0 +1,286 @@
+
+<div class="knowledge-base-edit-page">
+
+  <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
+
+  <div class="page-header">
+
+    <button
+      type="button"
+      class="back-button"
+      (click)="cancelEdit()"
+    >
+      ← Back
+    </button>
+
+    <div class="header-content">
+
+      <div>
+        <h1>Edit Knowledge Base Article</h1>
+
+        <p>
+          Update the article information and save your changes.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       LOADING
+       ===================================================== -->
+
+  <div
+    class="state-message"
+    *ngIf="loading"
+  >
+    <div class="loader"></div>
+
+    <p>
+      Loading article...
+    </p>
+  </div>
+
+
+  <!-- =====================================================
+       ERROR
+       ===================================================== -->
+
+  <div
+    class="state-message error"
+    *ngIf="!loading && errorMessage"
+  >
+    <p>
+      {{ errorMessage }}
+    </p>
+
+    <button
+      type="button"
+      class="back-to-list-button"
+      (click)="cancelEdit()"
+    >
+      Back to Knowledge Base
+    </button>
+  </div>
+
+
+  <!-- =====================================================
+       EDIT FORM
+       ===================================================== -->
+
+  <form
+    *ngIf="!loading && article && !errorMessage"
+    class="article-form"
+    (ngSubmit)="saveArticle()"
+  >
+
+    <!-- ===================================================
+         TITLE
+         =================================================== -->
+
+    <div class="form-group">
+
+      <label for="title">
+        Title
+        <span class="required">*</span>
+      </label>
+
+      <input
+        id="title"
+        name="title"
+        type="text"
+        [(ngModel)]="title"
+        placeholder="Enter article title"
+        autocomplete="off"
+      />
+
+    </div>
+
+
+    <!-- ===================================================
+         SUMMARY
+         =================================================== -->
+
+    <div class="form-group">
+
+      <label for="summary">
+        Summary
+      </label>
+
+      <textarea
+        id="summary"
+        name="summary"
+        rows="4"
+        [(ngModel)]="summary"
+        placeholder="Enter a short summary of the article"
+      ></textarea>
+
+    </div>
+
+
+    <!-- ===================================================
+         CATEGORY
+         =================================================== -->
+
+    <div class="form-row">
+
+      <div class="form-group">
+
+        <label for="category">
+          Category
+        </label>
+
+        <input
+          id="category"
+          name="category"
+          type="text"
+          [(ngModel)]="category"
+          placeholder="Enter category"
+        />
+
+      </div>
+
+
+      <!-- =================================================
+           STATUS
+           ================================================= -->
+
+      <div class="form-group">
+
+        <label for="status">
+          Status
+        </label>
+
+        <select
+          id="status"
+          name="status"
+          [(ngModel)]="status"
+        >
+
+          <option value="draft">
+            Draft
+          </option>
+
+          <option value="published">
+            Published
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         TAGS
+         =================================================== -->
+
+    <div class="form-group">
+
+      <label for="tags">
+        Tags
+      </label>
+
+      <input
+        id="tags"
+        name="tags"
+        type="text"
+        [(ngModel)]="tags"
+        placeholder="Enter tags separated by commas"
+      />
+
+      <small>
+        Example: password, account, login
+      </small>
+
+    </div>
+
+
+    <!-- ===================================================
+         CONTENT
+         =================================================== -->
+
+    <div class="form-group">
+
+      <label for="content">
+        Content
+        <span class="required">*</span>
+      </label>
+
+      <textarea
+        id="content"
+        name="content"
+        class="content-input"
+        rows="18"
+        [(ngModel)]="content"
+        placeholder="Enter article content"
+      ></textarea>
+
+    </div>
+
+
+    <!-- ===================================================
+         ERROR MESSAGE
+         =================================================== -->
+
+    <div
+      class="form-error"
+      *ngIf="errorMessage"
+    >
+      {{ errorMessage }}
+    </div>
+
+
+    <!-- ===================================================
+         SUCCESS MESSAGE
+         =================================================== -->
+
+    <div
+      class="form-success"
+      *ngIf="successMessage"
+    >
+      {{ successMessage }}
+    </div>
+
+
+    <!-- ===================================================
+         FORM ACTIONS
+         =================================================== -->
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="saving"
+        (click)="cancelEdit()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="save-button"
+        [disabled]="saving"
+      >
+
+        <span *ngIf="!saving">
+          Save Changes
+        </span>
+
+        <span *ngIf="saving">
+          Saving...
+        </span>
+
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

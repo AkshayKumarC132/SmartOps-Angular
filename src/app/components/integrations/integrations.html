@@ -1,0 +1,48 @@
+<div class="integrations-page">
+
+  <button
+    type="button"
+    (click)="goBack()"
+  >
+    Back to Dashboard
+  </button>
+
+  <h1>Integrations</h1>
+
+  <p>
+    Manage SmartOps email and webhook integrations.
+  </p>
+
+  <div class="integration-options">
+
+    <button
+      type="button"
+      (click)="goToEmailEndpoints()"
+    >
+      Email Endpoints
+    </button>
+
+    <button
+      type="button"
+      (click)="goToEmailDeliveries()"
+    >
+      Email Deliveries
+    </button>
+
+    <button
+      type="button"
+      (click)="goToWebhookEndpoints()"
+    >
+      Webhook Endpoints
+    </button>
+
+    <button
+      type="button"
+      (click)="goToWebhookDeliveries()"
+    >
+      Webhook Deliveries
+    </button>
+
+  </div>
+
+</div>

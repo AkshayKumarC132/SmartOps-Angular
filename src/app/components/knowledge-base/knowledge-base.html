@@ -1,0 +1,274 @@
+
+<div class="knowledge-base-page">
+
+  <!-- =========================
+       PAGE HEADER
+       ========================= -->
+
+  <div class="page-header">
+    <h1>Knowledge Base</h1>
+  </div>
+
+
+  <!-- =========================
+       SEARCH
+       ========================= -->
+
+  <div class="filter-card">
+
+    <div class="search-box">
+
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle
+          cx="11"
+          cy="11"
+          r="7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        ></circle>
+
+        <line
+          x1="16.5"
+          y1="16.5"
+          x2="21"
+          y2="21"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        ></line>
+      </svg>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Search articles..."
+      />
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       LOADING
+       ========================= -->
+
+  <div
+    *ngIf="loading"
+    class="state-message"
+  >
+    Loading Knowledge Base articles...
+  </div>
+
+
+  <!-- =========================
+       ERROR
+       ========================= -->
+
+  <div
+    *ngIf="!loading && errorMessage"
+    class="state-message error"
+  >
+    {{ errorMessage }}
+  </div>
+
+
+  <!-- =========================
+       NO ARTICLES
+       ========================= -->
+
+  <div
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      filteredArticles.length === 0
+    "
+    class="state-message"
+  >
+    No Knowledge Base articles found.
+  </div>
+
+
+  <!-- =========================
+       ARTICLES
+       ========================= -->
+
+  <div
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      filteredArticles.length > 0
+    "
+    class="articles-grid"
+  >
+
+    <article
+      class="article-card"
+      *ngFor="
+        let article of filteredArticles;
+        trackBy: trackByArticle
+      "
+      (click)="openArticle(article.id)"
+    >
+
+      <!-- =========================
+           ARTICLE HEADER
+           ========================= -->
+
+      <div class="article-card-header">
+
+        <div class="article-title-row">
+
+          <!-- BOOK ICON -->
+
+          <div class="article-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <path
+                d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linejoin="round"
+              ></path>
+
+              <path
+                d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              ></path>
+
+              <path
+                d="M8 7h8M8 10h8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              ></path>
+
+            </svg>
+
+          </div>
+
+
+          <!-- TITLE -->
+
+          <h2>
+            {{ article.title }}
+          </h2>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <span
+          class="status-badge"
+          [ngClass]="{
+            'published':
+              article.status?.toLowerCase() === 'published',
+
+            'draft':
+              article.status?.toLowerCase() === 'draft'
+          }"
+        >
+          {{ formatStatus(article.status) }}
+        </span>
+
+      </div>
+
+
+      <!-- =========================
+           SUMMARY
+           ========================= -->
+
+      <p class="article-summary">
+        {{ article.summary }}
+      </p>
+
+
+      <!-- =========================
+           ARTICLE FOOTER
+           ========================= -->
+
+      <div class="article-card-footer">
+
+        <!-- LIKE -->
+
+        <span class="reaction">
+
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M7 10v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h3Zm0 10h9.5a2 2 0 0 0 1.9-1.4l2-6A2 2 0 0 0 18.5 10H14l.8-4.2A2 2 0 0 0 12.8 3.5L7 10v10Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            ></path>
+
+          </svg>
+
+          {{ getLikes(article) }}
+
+        </span>
+
+
+        <!-- DISLIKE -->
+
+        <span class="reaction">
+
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M17 14V4h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3Zm0-10H7.5a2 2 0 0 0-1.9 1.4l-2 6A2 2 0 0 0 5.5 14H10l-.8 4.2a2 2 0 0 0 2 2.3L17 14V4Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            ></path>
+
+          </svg>
+
+          {{ getDislikes(article) }}
+
+        </span>
+
+
+        <!-- AUTHOR -->
+
+        <span class="article-author">
+          by {{ getAuthor(article) }}
+        </span>
+
+
+        <!-- DATE -->
+
+        <span class="article-date">
+          {{ formatDate(article.updated_at || article.created_at) }}
+        </span>
+
+      </div>
+
+    </article>
+
+  </div>
+
+</div>

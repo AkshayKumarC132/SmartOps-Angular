@@ -1,0 +1,65 @@
+.raise-ticket-page {
+  min-height: 100vh;
+  padding: 40px;
+  background: #f4f6f8;
+  font-family: Arial, sans-serif;
+}
+
+.ticket-card {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px;
+  background: white;
+  border-radius: 10px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+button {
+  padding: 11px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #111827;
+  color: white;
+  cursor: pointer;
+}
+
+.cancel {
+  background: #6b7280;
+}
+
+button:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.success {
+  color: #15803d;
+}

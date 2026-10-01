@@ -1,0 +1,95 @@
+<div class="email-endpoints-page">
+
+  <button
+    type="button"
+    (click)="goBack()"
+  >
+    Back to Integrations
+  </button>
+
+  <h1>Email Endpoints</h1>
+
+  <p>
+    Manage email notification endpoints.
+  </p>
+
+  <p *ngIf="loading">
+    Loading email endpoints...
+  </p>
+
+  <p
+    *ngIf="errorMessage"
+    class="error"
+  >
+    {{ errorMessage }}
+  </p>
+
+  <div
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      emailEndpoints.length > 0
+    "
+  >
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Events</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr
+          *ngFor="let endpoint of emailEndpoints"
+        >
+
+          <td>
+            {{ endpoint.id }}
+          </td>
+
+          <td>
+            {{ endpoint.name || '-' }}
+          </td>
+
+          <td>
+            {{ endpoint.email || '-' }}
+          </td>
+
+          <td>
+            {{ endpoint.events?.join(', ') || '-' }}
+          </td>
+
+          <td>
+            {{
+              endpoint.is_active
+                ? 'Active'
+                : 'Inactive'
+            }}
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <p
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      emailEndpoints.length === 0
+    "
+  >
+    No email endpoints found.
+  </p>
+
+</div>

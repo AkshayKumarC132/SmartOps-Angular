@@ -1,0 +1,137 @@
+<div class="ai-results-page">
+
+  <div class="page-header">
+    <div>
+      <h1>AI Results</h1>
+      <p>Review AI-generated analysis and insights from SmartOps tickets.</p>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div>
+        <span>Total Results</span>
+        <strong>{{ totalResults }}</strong>
+      </div>
+
+      <div class="summary-icon">
+        ✦
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div>
+        <span>Avg Confidence</span>
+        <strong>{{ averageConfidence }}%</strong>
+      </div>
+
+      <div class="summary-icon">
+        ◉
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div>
+        <span>Pending Reviews</span>
+        <strong>{{ pendingReviews }}</strong>
+      </div>
+
+      <div class="summary-icon">
+        !
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div>
+        <span>Completed</span>
+        <strong>{{ completedResults }}</strong>
+      </div>
+
+      <div class="summary-icon">
+        ✓
+      </div>
+    </div>
+
+  </div>
+
+  <div class="results-list">
+
+    <div
+      class="result-card"
+      *ngFor="let result of results"
+    >
+
+      <div class="result-header">
+
+        <div class="result-info">
+
+          <div class="result-icon">
+            ✦
+          </div>
+
+          <div>
+            <div class="result-title">
+              AI Analysis
+            </div>
+
+            <div class="ticket-reference">
+              for
+              <span>{{ result.ticketId }}</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="result-meta">
+
+          <span class="model">
+            {{ result.modelName }}
+          </span>
+
+          <span
+            class="status-badge"
+            [ngClass]="getStatusClass(result.processingStatus)"
+          >
+            {{ result.processingStatus }}
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="result-body">
+
+        <p>
+          {{ result.result }}
+        </p>
+
+      </div>
+
+      <div class="result-footer">
+
+        <div class="provider">
+          Provider:
+          <strong>{{ result.provider }}</strong>
+        </div>
+
+        <div>
+          <span
+            class="review-status"
+            [ngClass]="getStatusClass(result.reviewStatus)"
+          >
+            {{ result.reviewStatus }}
+          </span>
+        </div>
+
+        <div class="created-date">
+          {{ result.createdAt }}
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

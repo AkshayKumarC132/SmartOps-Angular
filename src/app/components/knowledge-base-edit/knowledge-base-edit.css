@@ -1,0 +1,549 @@
+
+/* =========================================================
+   KNOWLEDGE BASE EDIT PAGE
+   ========================================================= */
+
+.knowledge-base-edit-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: #f8f9fb;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.page-header {
+  max-width: 1000px;
+  margin: 0 auto 28px;
+}
+
+.header-content {
+  margin-top: 20px;
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #171717;
+  letter-spacing: -0.5px;
+}
+
+.header-content p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: transparent;
+
+  padding: 8px 0;
+
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.back-button:hover {
+  color: #111827;
+  transform: translateX(-2px);
+}
+
+
+/* =========================================================
+   ARTICLE FORM
+   ========================================================= */
+
+.article-form {
+  max-width: 1000px;
+  margin: 0 auto;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  padding: 32px;
+
+  box-sizing: border-box;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #1f2937;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.required {
+  color: #dc2626;
+  margin-left: 3px;
+}
+
+
+/* =========================================================
+   FORM ROW
+   ========================================================= */
+
+.form-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 20px;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   TEXT INPUT
+   ========================================================= */
+
+.form-group input {
+  height: 44px;
+  padding: 0 13px;
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+.form-group textarea {
+  padding: 12px 13px;
+
+  line-height: 1.6;
+
+  resize: vertical;
+}
+
+.content-input {
+  min-height: 380px;
+
+  font-family:
+    "Inter",
+    Arial,
+    sans-serif;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
+.form-group select {
+  height: 44px;
+
+  padding: 0 12px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #111827;
+
+  box-shadow:
+    0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+
+/* =========================================================
+   PLACEHOLDER
+   ========================================================= */
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+
+/* =========================================================
+   HELP TEXT
+   ========================================================= */
+
+.form-group small {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #6b7280;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   FORM ERROR
+   ========================================================= */
+
+.form-error {
+  margin-bottom: 20px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   FORM SUCCESS
+   ========================================================= */
+
+.form-success {
+  margin-bottom: 20px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+
+  background: #f0fdf4;
+
+  color: #15803d;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+   ========================================================= */
+
+.form-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding-top: 24px;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+
+/* =========================================================
+   CANCEL BUTTON
+   ========================================================= */
+
+.cancel-button {
+  height: 42px;
+
+  padding: 0 20px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #f9fafb;
+
+  border-color: #9ca3af;
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+   ========================================================= */
+
+.save-button {
+  height: 42px;
+
+  min-width: 130px;
+
+  padding: 0 20px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #111827;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #000000;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   DISABLED BUTTONS
+   ========================================================= */
+
+.cancel-button:disabled,
+.save-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   STATE MESSAGE
+   ========================================================= */
+
+.state-message {
+  max-width: 1000px;
+
+  margin: 60px auto;
+
+  padding: 40px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 14px;
+
+  text-align: center;
+
+  box-sizing: border-box;
+}
+
+.state-message p {
+  margin: 12px 0 0;
+
+  color: #6b7280;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   LOADER
+   ========================================================= */
+
+.loader {
+  width: 28px;
+  height: 28px;
+
+  margin: 0 auto;
+
+  border: 3px solid #e5e7eb;
+  border-top-color: #111827;
+
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   ERROR STATE
+   ========================================================= */
+
+.state-message.error {
+  border-color: #fecaca;
+
+  background: #fef2f2;
+}
+
+.state-message.error p {
+  color: #b91c1c;
+}
+
+
+/* =========================================================
+   BACK TO LIST BUTTON
+   ========================================================= */
+
+.back-to-list-button {
+  margin-top: 16px;
+
+  height: 40px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.back-to-list-button:hover {
+  background: #f9fafb;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .knowledge-base-edit-page {
+    padding: 20px;
+  }
+
+  .article-form {
+    padding: 22px;
+  }
+
+  .header-content h1 {
+    font-size: 25px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+
+  .content-input {
+    min-height: 300px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+  .cancel-button,
+  .save-button {
+    width: 100%;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .knowledge-base-edit-page {
+    padding: 14px;
+  }
+
+  .article-form {
+    padding: 18px;
+
+    border-radius: 10px;
+  }
+
+  .header-content h1 {
+    font-size: 22px;
+  }
+
+}

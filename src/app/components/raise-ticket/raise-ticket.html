@@ -1,0 +1,109 @@
+<div class="raise-ticket-page">
+
+  <div class="ticket-card">
+
+    <h1>Raise Ticket</h1>
+
+    <form (ngSubmit)="submitTicket()">
+
+      <div class="form-group">
+        <label>Ticket Name</label>
+
+        <input
+          type="text"
+          name="ticketName"
+          [(ngModel)]="ticketName"
+          placeholder="Enter ticket name"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Summary</label>
+
+        <input
+          type="text"
+          name="summary"
+          [(ngModel)]="summary"
+          placeholder="Enter summary"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+
+        <textarea
+          name="description"
+          [(ngModel)]="description"
+          placeholder="Describe your issue"
+          rows="5"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+
+        <select
+          name="category"
+          [(ngModel)]="category"
+        >
+          <option value="Other">Other</option>
+          <option value="Bug">Bug</option>
+          <option value="Network">Network</option>
+          <option value="Hardware">Hardware</option>
+          <option value="Software">Software</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+
+        <select
+          name="priority"
+          [(ngModel)]="priority"
+        >
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+
+      <p
+        *ngIf="errorMessage"
+        class="error"
+      >
+        {{ errorMessage }}
+      </p>
+
+      <p
+        *ngIf="successMessage"
+        class="success"
+      >
+        {{ successMessage }}
+      </p>
+
+      <div class="actions">
+
+        <button
+          type="button"
+          class="cancel"
+          (click)="cancel()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Raising...' : 'Raise Ticket' }}
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>

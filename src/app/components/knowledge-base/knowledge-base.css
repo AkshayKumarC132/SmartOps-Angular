@@ -1,0 +1,442 @@
+/* =========================
+   KNOWLEDGE BASE PAGE
+   ========================= */
+
+.knowledge-base-page {
+  min-height: calc(100vh - 58px);
+  padding: 28px 18px 40px;
+  background: #f6f7f9;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #101828;
+  box-sizing: border-box;
+}
+
+
+/* =========================
+   PAGE HEADER
+   ========================= */
+
+.page-header {
+  margin-bottom: 18px;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: #101828;
+  font-size: 25px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+
+/* =========================
+   SEARCH
+   ========================= */
+
+.filter-card {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  margin-bottom: 20px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.search-box {
+  width: 455px;
+  height: 46px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.search-box svg {
+  width: 18px;
+  height: 18px;
+
+  position: absolute;
+  left: 14px;
+
+  z-index: 1;
+
+  fill: none;
+  stroke: #667085;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+
+  padding: 0 14px 0 39px;
+
+  background: #ffffff;
+
+  border: 1px solid #16a99a;
+  border-radius: 8px;
+
+  outline: none;
+
+  color: #101828;
+
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.search-box input::placeholder {
+  color: #667085;
+}
+
+.search-box input:focus {
+  border-color: #16a99a;
+
+  box-shadow:
+    0 0 0 2px rgba(22, 169, 154, 0.12);
+}
+
+
+/* =========================
+   ARTICLES GRID
+   ========================= */
+
+.articles-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 16px;
+
+  width: 100%;
+}
+
+
+/* =========================
+   ARTICLE CARD
+   ========================= */
+
+.article-card {
+  min-width: 0;
+
+  height: 150px;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  padding: 20px 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.article-card:hover {
+  box-shadow:
+    0 4px 12px rgba(16, 24, 40, 0.08);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================
+   ARTICLE HEADER
+   ========================= */
+
+.article-card-header {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 10px;
+}
+
+
+/* =========================
+   TITLE ROW
+   ========================= */
+
+.article-title-row {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.article-title-row h2 {
+  min-width: 0;
+
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #101828;
+
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================
+   BOOK ICON
+   ========================= */
+
+.article-icon {
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #16a99a;
+}
+
+.article-icon svg {
+  width: 20px;
+  height: 20px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.7;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* =========================
+   STATUS BADGE
+   ========================= */
+
+.status-badge {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 68px;
+
+  padding: 4px 10px;
+
+  box-sizing: border-box;
+
+  border-radius: 12px;
+
+  font-size: 10px;
+  line-height: 1;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.status-badge.published {
+  background: #e7f8ef;
+
+  border: 1px solid #a7e1c3;
+
+  color: #168b57;
+}
+
+.status-badge.draft {
+  background: #ffffff;
+
+  border: 1px solid #d0d5dd;
+
+  color: #344054;
+}
+
+
+/* =========================
+   ARTICLE SUMMARY
+   ========================= */
+
+.article-summary {
+  display: -webkit-box;
+
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #667085;
+
+  font-size: 14px;
+  line-height: 1.45;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+
+/* =========================
+   ARTICLE FOOTER
+   ========================= */
+
+.article-card-footer {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  margin-top: auto;
+
+  color: #667085;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+.reaction {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  color: #667085;
+}
+
+.reaction svg {
+  width: 14px;
+  height: 14px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.5;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.article-author {
+  color: #475467;
+}
+
+.article-date {
+  color: #475467;
+}
+
+
+/* =========================
+   STATES
+   ========================= */
+
+.state-message {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 25px;
+
+  background: #ffffff;
+
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+
+  color: #667085;
+
+  font-size: 14px;
+}
+
+.state-message.error {
+  color: #b42318;
+}
+
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 1000px) {
+
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box {
+    width: 455px;
+    max-width: 100%;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .knowledge-base-page {
+    padding: 20px 15px 30px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .articles-grid {
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+  }
+
+  .article-card {
+    height: auto;
+
+    min-height: 150px;
+
+    padding: 18px;
+  }
+
+  .article-card-header {
+    align-items: flex-start;
+  }
+
+  .article-title-row h2 {
+    white-space: normal;
+  }
+
+  .article-card-footer {
+    flex-wrap: wrap;
+
+    gap: 8px 12px;
+  }
+}

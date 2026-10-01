@@ -1,0 +1,50 @@
+.integrations-page {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 30px;
+  font-family: Arial, sans-serif;
+}
+
+.integrations-page > button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #374151;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.integrations-page h1 {
+  margin-bottom: 10px;
+}
+
+.integrations-page p {
+  margin-bottom: 30px;
+}
+
+.integration-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.integration-options button {
+  padding: 25px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.integration-options button:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 600px) {
+  .integration-options {
+    grid-template-columns: 1fr;
+  }
+}
