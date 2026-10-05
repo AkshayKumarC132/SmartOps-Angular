@@ -1,5 +1,9 @@
 <div class="dashboard-page">
 
+  <!-- ============================================
+       PAGE HEADING
+       ============================================ -->
+
   <div class="page-heading">
 
     <h1>
@@ -12,12 +16,22 @@
 
   </div>
 
+
+  <!-- ============================================
+       ERROR MESSAGE
+       ============================================ -->
+
   <div
     *ngIf="errorMessage"
     class="error-message"
   >
     {{ errorMessage }}
   </div>
+
+
+  <!-- ============================================
+       LOADING
+       ============================================ -->
 
   <div
     *ngIf="loading"
@@ -26,13 +40,20 @@
     Loading dashboard...
   </div>
 
+
   <ng-container *ngIf="!loading">
+
+
+    <!-- ==========================================
+         DASHBOARD ALERT
+         ========================================== -->
 
     <div class="dashboard-alert">
 
       <div class="alert-icon">
 
         <svg viewBox="0 0 24 24">
+
           <circle
             cx="12"
             cy="12"
@@ -42,9 +63,11 @@
           <path
             d="M12 7v5l3 2"
           ></path>
+
         </svg>
 
       </div>
+
 
       <div class="alert-content">
 
@@ -62,9 +85,13 @@
 
     </div>
 
-    <!-- PRIMARY STATISTICS -->
+
+    <!-- ==========================================
+         PRIMARY STATISTICS
+         ========================================== -->
 
     <div class="stats-grid">
+
 
       <!-- OPEN TICKETS -->
 
@@ -82,12 +109,13 @@
 
         </div>
 
+
         <div class="stat-icon blue">
 
           <svg viewBox="0 0 24 24">
 
             <path
-              d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4V7z"
+              d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0-0-4V7z"
             ></path>
 
             <path
@@ -99,6 +127,7 @@
         </div>
 
       </div>
+
 
       <!-- IN PROGRESS -->
 
@@ -115,6 +144,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon orange">
 
@@ -136,6 +166,7 @@
 
       </div>
 
+
       <!-- RESOLVED -->
 
       <div class="stat-card">
@@ -151,6 +182,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon green">
 
@@ -172,6 +204,7 @@
 
       </div>
 
+
       <!-- URGENT -->
 
       <div class="stat-card">
@@ -187,6 +220,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon red">
 
@@ -212,9 +246,13 @@
 
     </div>
 
-    <!-- SECONDARY STATISTICS -->
+
+    <!-- ==========================================
+         SECONDARY STATISTICS
+         ========================================== -->
 
     <div class="stats-grid secondary-stats">
+
 
       <!-- TOTAL USERS -->
 
@@ -231,6 +269,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon teal">
 
@@ -269,6 +308,7 @@
 
       </div>
 
+
       <!-- TEAMS -->
 
       <div class="stat-card">
@@ -284,6 +324,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon teal">
 
@@ -311,6 +352,7 @@
 
       </div>
 
+
       <!-- KNOWLEDGE BASE ARTICLES -->
 
       <div class="stat-card">
@@ -326,6 +368,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon teal">
 
@@ -345,6 +388,7 @@
 
       </div>
 
+
       <!-- TOTAL TICKETS -->
 
       <div class="stat-card">
@@ -360,6 +404,7 @@
           </h2>
 
         </div>
+
 
         <div class="stat-icon teal">
 
@@ -381,11 +426,17 @@
 
     </div>
 
-    <!-- BOTTOM SECTION -->
+
+    <!-- ==========================================
+         BOTTOM SECTION
+         ========================================== -->
 
     <div class="dashboard-bottom">
 
-      <!-- RECENT TICKETS -->
+
+      <!-- ========================================
+           RECENT TICKETS
+           ======================================== -->
 
       <section class="recent-tickets">
 
@@ -404,12 +455,18 @@
 
         </div>
 
+
+        <!-- No Tickets -->
+
         <div
           *ngIf="recentTickets.length === 0"
           class="empty-message"
         >
           No tickets found.
         </div>
+
+
+        <!-- Ticket List -->
 
         <div
           class="ticket-item"
@@ -423,29 +480,37 @@
               {{ ticket.ticket_id }}
             </span>
 
+
             <span
               class="status-badge"
               [ngClass]="ticket.status"
             >
+
               {{
                 ticket.status === 'In_Progress'
                   ? 'IN PROGRESS'
                   : ticket.status
               }}
+
             </span>
+
 
             <span
               class="priority-badge"
               [ngClass]="ticket.priority?.toLowerCase()"
             >
+
               {{ ticket.priority }}
+
             </span>
 
           </div>
 
+
           <h3>
             {{ ticket.ticket_name }}
           </h3>
+
 
           <p>
             {{ ticket.category || 'No category' }}
@@ -455,9 +520,15 @@
 
       </section>
 
-      <!-- RECENT ACTIVITY -->
+
+      <!-- ========================================
+           RECENT ACTIVITY / AUDIT LOG
+           ======================================== -->
 
       <section class="recent-activity">
+
+
+        <!-- Activity Header -->
 
         <div class="activity-title">
 
@@ -469,20 +540,99 @@
 
           </svg>
 
+
           <h2>
             Recent Activity
           </h2>
 
         </div>
 
-        <div class="activity-placeholder">
+
+        <!-- ======================================
+             AUDIT ACTIVITIES
+             ====================================== -->
+
+        <div
+          class="activity-list"
+          *ngIf="auditActivities.length > 0"
+        >
+
+
+          <div
+            class="activity-item"
+            *ngFor="let activity of auditActivities"
+          >
+
+
+            <!-- Activity Dot -->
+
+            <div class="activity-dot"></div>
+
+
+            <!-- Activity Content -->
+
+            <div class="activity-content">
+
+
+              <!-- Description -->
+
+              <div class="activity-description">
+
+                {{ activity.description }}
+
+              </div>
+
+
+              <!-- User + Ticket -->
+
+              <div class="activity-meta">
+
+                <span>
+                  By
+                  {{ activity.performed_by || 'System' }}
+                </span>
+
+
+                <span
+                  *ngIf="activity.ticket"
+                >
+                  •
+                  {{ activity.ticket }}
+                </span>
+
+              </div>
+
+
+              <!-- Date / Time -->
+
+              <div class="activity-time">
+
+                {{ activity.created_at | date:'dd MMM yyyy, hh:mm a' }}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ======================================
+             NO ACTIVITY
+             ====================================== -->
+
+        <div
+          class="activity-placeholder"
+          *ngIf="auditActivities.length === 0"
+        >
 
           <p>
-            Activity data will appear here
-            when the Audit Log API is connected.
+            No recent activity found.
           </p>
 
         </div>
+
 
       </section>
 

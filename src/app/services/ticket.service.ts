@@ -57,4 +57,14 @@ export class TicketService {
       data
     );
   }
+
+  // ==============================
+  // AUDIT LOG / TICKET ACTIVITY
+  // ==============================
+
+  getAuditActivities(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/tickets-activity/`
+    );
+  }
 }

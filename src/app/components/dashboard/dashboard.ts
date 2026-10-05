@@ -13,6 +13,25 @@ import { AuthService } from '../../services/auth.service';
 import { Ticket } from '../../models/tickets.model';
 import { environment } from '../../../environments/environment';
 
+
+// ============================================
+// TICKET ACTIVITY / AUDIT LOG INTERFACE
+// ============================================
+
+interface TicketActivity {
+  id: number;
+  ticket: string | null;
+  performed_by: string | null;
+  action: string;
+  field: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  description: string;
+  result: string;
+  created_at: string;
+}
+
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -24,17 +43,45 @@ import { environment } from '../../../environments/environment';
 })
 export class Dashboard implements OnInit {
 
+  // ============================================
+  // USER
+  // ============================================
+
   user: any = null;
 
+
+  // ============================================
+  // DASHBOARD DATA
+  // ============================================
+
   tickets: Ticket[] = [];
+
   teams: any[] = [];
+
   kbArticles: any[] = [];
 
-  // Total number of users
   totalUsers: number = 0;
 
+
+  // ============================================
+  // AUDIT LOG DATA
+  // ============================================
+
+  auditActivities: TicketActivity[] = [];
+
+
+  // ============================================
+  // DASHBOARD STATE
+  // ============================================
+
   loading = true;
+
   errorMessage = '';
+
+
+  // ============================================
+  // CONSTRUCTOR
+  // ============================================
 
   constructor(
     private ticketService: TicketService,
@@ -44,16 +91,32 @@ export class Dashboard implements OnInit {
     private http: HttpClient
   ) {}
 
+
+  // ============================================
+  // INITIALIZE DASHBOARD
+  // ============================================
+
   ngOnInit(): void {
 
     this.user =
       this.authService.getUser();
 
     this.loadTickets();
+
     this.loadTeams();
+
     this.loadKbArticles();
+
     this.loadUsers();
+
+    // Load Audit Log / Recent Activity
+    this.loadAuditActivities();
   }
+
+
+  // ============================================
+  // USERNAME
+  // ============================================
 
   get username(): string {
 
@@ -64,6 +127,11 @@ export class Dashboard implements OnInit {
     );
   }
 
+
+  // ============================================
+  // OPEN TICKETS
+  // ============================================
+
   get openTickets(): number {
 
     return this.tickets.filter(
@@ -71,6 +139,11 @@ export class Dashboard implements OnInit {
         ticket.status === 'Open'
     ).length;
   }
+
+
+  // ============================================
+  // IN PROGRESS TICKETS
+  // ============================================
 
   get inProgressTickets(): number {
 
@@ -80,6 +153,11 @@ export class Dashboard implements OnInit {
     ).length;
   }
 
+
+  // ============================================
+  // RESOLVED TICKETS
+  // ============================================
+
   get resolvedTickets(): number {
 
     return this.tickets.filter(
@@ -87,6 +165,11 @@ export class Dashboard implements OnInit {
         ticket.status === 'Resolved'
     ).length;
   }
+
+
+  // ============================================
+  // URGENT TICKETS
+  // ============================================
 
   get urgentTickets(): number {
 
@@ -97,29 +180,55 @@ export class Dashboard implements OnInit {
     ).length;
   }
 
+
+  // ============================================
+  // TOTAL TICKETS
+  // ============================================
+
   get totalTickets(): number {
 
     return this.tickets.length;
   }
+
+
+  // ============================================
+  // TOTAL TEAMS
+  // ============================================
 
   get totalTeams(): number {
 
     return this.teams.length;
   }
 
+
+  // ============================================
+  // TOTAL KB ARTICLES
+  // ============================================
+
   get totalKbArticles(): number {
 
     return this.kbArticles.length;
   }
+
+
+  // ============================================
+  // RECENT TICKETS
+  // ============================================
 
   get recentTickets(): Ticket[] {
 
     return this.tickets.slice(0, 5);
   }
 
+
+  // ============================================
+  // LOAD TICKETS
+  // ============================================
+
   loadTickets(): void {
 
     this.loading = true;
+
     this.errorMessage = '';
 
     this.ticketService
@@ -173,6 +282,11 @@ export class Dashboard implements OnInit {
       });
   }
 
+
+  // ============================================
+  // LOAD TEAMS
+  // ============================================
+
   loadTeams(): void {
 
     this.ticketService
@@ -205,6 +319,11 @@ export class Dashboard implements OnInit {
 
       });
   }
+
+
+  // ============================================
+  // LOAD KNOWLEDGE BASE ARTICLES
+  // ============================================
 
   loadKbArticles(): void {
 
@@ -256,6 +375,11 @@ export class Dashboard implements OnInit {
       });
   }
 
+
+  // ============================================
+  // LOAD USERS
+  // ============================================
+
   loadUsers(): void {
 
     this.http
@@ -275,16 +399,18 @@ export class Dashboard implements OnInit {
            * Django REST Framework can return either:
            *
            * 1. Direct array
-           *    [
-           *      {...},
-           *      {...}
-           *    ]
+           *
+           * [
+           *   {...},
+           *   {...}
+           * ]
            *
            * 2. Paginated response
-           *    {
-           *      count: 10,
-           *      results: [...]
-           *    }
+           *
+           * {
+           *   count: 10,
+           *   results: [...]
+           * }
            */
 
           if (Array.isArray(response)) {
@@ -331,6 +457,73 @@ export class Dashboard implements OnInit {
       });
   }
 
+
+  // ============================================
+  // LOAD AUDIT LOG / RECENT ACTIVITY
+  // ============================================
+
+  loadAuditActivities(): void {
+
+    this.ticketService
+      .getAuditActivities()
+      .subscribe({
+
+        next: (response: any[]) => {
+
+          console.log(
+            'Dashboard Audit Activity Response:',
+            response
+          );
+
+
+          // Make sure response is an array
+          if (Array.isArray(response)) {
+
+            /*
+             * Sort newest activity first.
+             *
+             * Backend currently returns activities
+             * ordered by created_at ascending,
+             * so we reverse the order here.
+             */
+
+            this.auditActivities = response
+              .sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() -
+                  new Date(a.created_at).getTime()
+              )
+              .slice(0, 5);
+
+          } else {
+
+            this.auditActivities = [];
+          }
+
+
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Dashboard Audit Activity Error:',
+            error
+          );
+
+          this.auditActivities = [];
+
+          this.cdr.detectChanges();
+        }
+
+      });
+  }
+
+
+  // ============================================
+  // OPEN TICKET
+  // ============================================
+
   openTicket(id: number): void {
 
     this.router.navigate([
@@ -339,10 +532,16 @@ export class Dashboard implements OnInit {
     ]);
   }
 
+
+  // ============================================
+  // GO TO TICKETS
+  // ============================================
+
   goToTickets(): void {
 
     this.router.navigate([
       '/tickets'
     ]);
   }
+
 }
