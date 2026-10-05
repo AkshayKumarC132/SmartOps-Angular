@@ -1,0 +1,1024 @@
+<div class="settings-page">
+
+  <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
+
+  <div class="settings-header">
+
+    <div>
+      <h1>Settings</h1>
+
+      <p>
+        Manage your account and application preferences.
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       SETTINGS LAYOUT
+       ===================================================== -->
+
+  <div
+    class="settings-layout"
+    *ngIf="!loading"
+  >
+
+
+    <!-- ===================================================
+         SETTINGS MENU
+         =================================================== -->
+
+    <aside class="settings-menu">
+
+      <!-- PROFILE -->
+
+      <button
+        type="button"
+        [class.active]="activeSection === 'profile'"
+        (click)="selectSection('profile')"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <circle
+            cx="12"
+            cy="8"
+            r="3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+
+          <path
+            d="M5 20a7 7 0 0 1 14 0"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+        <span>
+          Profile
+        </span>
+
+      </button>
+
+
+      <!-- SECURITY -->
+
+      <button
+        type="button"
+        [class.active]="activeSection === 'security'"
+        (click)="selectSection('security')"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <rect
+            x="5"
+            y="10"
+            width="14"
+            height="10"
+            rx="2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+
+          <path
+            d="M8 10V7a4 4 0 0 1 8 0v3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+        <span>
+          Security
+        </span>
+
+      </button>
+
+
+      <!-- NOTIFICATIONS -->
+
+      <button
+        type="button"
+        [class.active]="activeSection === 'notifications'"
+        (click)="selectSection('notifications')"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <path
+            d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M10 21h4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+        <span>
+          Notifications
+        </span>
+
+      </button>
+
+    </aside>
+
+
+    <!-- ===================================================
+         SETTINGS CONTENT
+         =================================================== -->
+
+    <section class="settings-content">
+
+
+      <!-- =================================================
+           PROFILE
+           ================================================= -->
+
+      <div
+        class="settings-card"
+        *ngIf="activeSection === 'profile'"
+      >
+
+        <!-- CARD HEADER -->
+
+        <div class="card-header">
+
+          <div>
+
+            <h2>
+              Profile Information
+            </h2>
+
+            <p>
+              Manage your personal account information.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             USER SUMMARY
+             =============================================== -->
+
+        <div class="profile-summary">
+
+          <!-- DYNAMIC AVATAR -->
+
+          <div class="large-avatar">
+
+            {{ avatarLetter }}
+
+          </div>
+
+
+          <!-- DYNAMIC USER DETAILS -->
+
+          <div class="profile-user-info">
+
+            <strong>
+              {{ displayName }}
+            </strong>
+
+            <span>
+              {{ email }}
+            </span>
+
+            <span class="role-badge">
+              {{ role }}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             PROFILE FORM
+             =============================================== -->
+
+        <div class="form-grid">
+
+
+          <!-- USERNAME -->
+
+          <div class="form-group">
+
+            <label>
+              Username
+            </label>
+
+            <input
+              type="text"
+              [value]="username"
+              disabled
+            />
+
+            <small>
+              Username cannot be changed.
+            </small>
+
+          </div>
+
+
+          <!-- EMAIL -->
+
+          <div class="form-group">
+
+            <label>
+              Email
+            </label>
+
+            <input
+              type="email"
+              [(ngModel)]="form.email"
+              placeholder="Enter email address"
+            />
+
+          </div>
+
+
+          <!-- FIRST NAME -->
+
+          <div class="form-group">
+
+            <label>
+              First Name
+            </label>
+
+            <input
+              type="text"
+              [(ngModel)]="form.first_name"
+              placeholder="Enter first name"
+            />
+
+          </div>
+
+
+          <!-- LAST NAME -->
+
+          <div class="form-group">
+
+            <label>
+              Last Name
+            </label>
+
+            <input
+              type="text"
+              [(ngModel)]="form.last_name"
+              placeholder="Enter last name"
+            />
+
+          </div>
+
+
+          <!-- ROLE -->
+
+          <div class="form-group">
+
+            <label>
+              Role
+            </label>
+
+            <input
+              type="text"
+              [value]="role"
+              disabled
+            />
+
+            <small>
+              Role is managed by an administrator.
+            </small>
+
+          </div>
+
+
+          <!-- ORGANIZATION -->
+
+          <div class="form-group">
+
+            <label>
+              Organization
+            </label>
+
+            <input
+              type="text"
+              [value]="organizationName"
+              disabled
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             SUCCESS MESSAGE
+             =============================================== -->
+
+        <div
+          class="success-message"
+          *ngIf="successMessage"
+        >
+
+          {{ successMessage }}
+
+        </div>
+
+
+        <!-- ===============================================
+             ERROR MESSAGE
+             =============================================== -->
+
+        <div
+          class="error-message"
+          *ngIf="errorMessage"
+        >
+
+          {{ errorMessage }}
+
+        </div>
+
+
+        <!-- ===============================================
+             ACTIONS
+             =============================================== -->
+
+        <div class="card-actions">
+
+          <button
+            type="button"
+            class="save-button"
+            [disabled]="saving"
+            (click)="saveProfile()"
+          >
+
+            {{
+              saving
+                ? 'Saving...'
+                : 'Save Changes'
+            }}
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           SECURITY
+           ================================================= -->
+
+      <div
+        class="settings-card"
+        *ngIf="activeSection === 'security'"
+      >
+
+        <!-- HEADER -->
+
+        <div class="card-header">
+
+          <div>
+
+            <h2>
+              Change Password
+            </h2>
+
+            <p>
+              Update your account password.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- PASSWORD FORM -->
+
+        <div class="password-section">
+
+
+          <!-- CURRENT PASSWORD -->
+
+          <div class="form-group full-width">
+
+            <label>
+              Current Password
+            </label>
+
+            <input
+              type="password"
+              placeholder="Enter current password"
+            />
+
+          </div>
+
+
+          <!-- NEW PASSWORD -->
+
+          <div class="form-group">
+
+            <label>
+              New Password
+            </label>
+
+            <input
+              type="password"
+              placeholder="New password"
+            />
+
+          </div>
+
+
+          <!-- CONFIRM PASSWORD -->
+
+          <div class="form-group">
+
+            <label>
+              Confirm New Password
+            </label>
+
+            <input
+              type="password"
+              placeholder="Confirm password"
+            />
+
+          </div>
+
+
+          <!-- CHANGE PASSWORD -->
+
+          <div class="password-action">
+
+            <button
+              type="button"
+              class="secondary-button"
+            >
+              Change Password
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             SESSIONS
+             =============================================== -->
+
+        <div class="sessions-section">
+
+          <div class="section-title">
+
+            <h3>
+              Sessions
+            </h3>
+
+            <p>
+              Manage your active sessions.
+            </p>
+
+          </div>
+
+
+          <!-- CURRENT SESSION -->
+
+          <div class="session-card">
+
+            <div class="session-info">
+
+              <strong>
+                Current Session
+              </strong>
+
+              <span>
+                Browser · Last active now
+              </span>
+
+            </div>
+
+
+            <span class="session-status">
+              Active
+            </span>
+
+          </div>
+
+
+          <!-- REVOKE -->
+
+          <button
+            type="button"
+            class="danger-button"
+          >
+
+            Revoke All Other Sessions
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           NOTIFICATION PREFERENCES
+           ================================================= -->
+
+      <div
+        class="settings-card"
+        *ngIf="activeSection === 'notifications'"
+      >
+
+        <!-- HEADER -->
+
+        <div class="card-header">
+
+          <div>
+
+            <h2>
+              Notification Preferences
+            </h2>
+
+            <p>
+              Choose which notifications you want to receive.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             IN-APP NOTIFICATIONS
+             =============================================== -->
+
+        <div class="notification-preferences">
+
+
+          <div class="preference-section-title">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <path
+                d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+              <path
+                d="M10 21h4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+
+            </svg>
+
+            <span>
+              In-App Notifications
+            </span>
+
+          </div>
+
+
+          <!-- TICKET ASSIGNED -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Ticket assigned to me
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- STATUS CHANGES -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Ticket status changes
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- COMMENTS -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                New comments on my tickets
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- SLA -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                SLA breach warnings
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- AI -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                AI suggestions available
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- =============================================
+               EMAIL
+               ============================================= -->
+
+          <div class="preference-divider"></div>
+
+
+          <div class="preference-section-title">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <rect
+                x="3"
+                y="5"
+                width="18"
+                height="14"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              />
+
+              <path
+                d="M4 7l8 6 8-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+
+            </svg>
+
+            <span>
+              Email Notifications
+            </span>
+
+          </div>
+
+
+          <!-- TICKET UPDATES -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Ticket updates
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- WEEKLY DIGEST -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Weekly digest
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- MENTIONS -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Mentions
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- =============================================
+               SLACK
+               ============================================= -->
+
+          <div class="preference-divider"></div>
+
+
+          <div class="preference-section-title">
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+
+              <path
+                d="M7 4a2 2 0 1 0 0 4h2V4H7zM13 4a2 2 0 1 0 0 4h2V4h-2zM9 10H5a2 2 0 1 0 0 4h4v-4zM15 10h4a2 2 0 1 0 0 4h-4v-4zM9 16H7a2 2 0 1 0 0 4h2v-4zM15 16h2a2 2 0 1 0 0-4h-2v4z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+            </svg>
+
+            <span>
+              Slack Notifications
+            </span>
+
+          </div>
+
+
+          <!-- URGENT ALERTS -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Urgent ticket alerts
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- SLA ALERTS -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                SLA breach alerts
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+                checked
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- TEAM MENTIONS -->
+
+          <div class="preference-row">
+
+            <div>
+
+              <strong>
+                Team mentions
+              </strong>
+
+            </div>
+
+            <label class="toggle">
+
+              <input
+                type="checkbox"
+              />
+
+              <span class="slider"></span>
+
+            </label>
+
+          </div>
+
+
+          <!-- SAVE -->
+
+          <div class="preferences-actions">
+
+            <button
+              type="button"
+              class="save-button"
+            >
+
+              Save Preferences
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+
+  <!-- =====================================================
+       LOADING
+       ===================================================== -->
+
+  <div
+    class="loading-state"
+    *ngIf="loading"
+  >
+
+    <div class="spinner"></div>
+
+    <span>
+      Loading settings...
+    </span>
+
+  </div>
+
+</div>

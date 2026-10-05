@@ -1,0 +1,489 @@
+<div class="notifications-page">
+
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
+
+  <div class="notifications-header">
+
+    <div class="header-left">
+
+      <h1>
+        Notifications
+      </h1>
+
+      <span
+        class="unread-count"
+        *ngIf="unreadCount > 0"
+      >
+        {{ unreadCount }} unread
+      </span>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="mark-all-button"
+      *ngIf="unreadCount > 0"
+      (click)="markAllRead()"
+    >
+
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 12l4 4L19 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+        <path
+          d="M9 12l3 3 7-7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+
+      <span>
+        Mark All Read
+      </span>
+
+    </button>
+
+  </div>
+
+
+  <!-- =====================================================
+       FILTERS
+       ===================================================== -->
+
+  <div class="filters-row">
+
+    <!-- Filter -->
+    <div class="filter-select">
+
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M4 6h16M7 12h10M10 18h4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </svg>
+
+      <select
+        [value]="selectedFilter"
+        (change)="setFilter($any($event.target).value)"
+      >
+
+        <option value="All">
+          All
+        </option>
+
+        <option value="Unread">
+          Unread
+        </option>
+
+      </select>
+
+      <span class="select-arrow">
+        ▾
+      </span>
+
+    </div>
+
+
+    <!-- Type -->
+    <div class="filter-select type-filter">
+
+      <select
+        [value]="selectedType"
+        (change)="setType($any($event.target).value)"
+      >
+
+        <option value="All">
+          All
+        </option>
+
+        <option value="Status Change">
+          Status Change
+        </option>
+
+        <option value="Assignment">
+          Assignment
+        </option>
+
+        <option value="Attachment Added">
+          Attachment Added
+        </option>
+
+        <option value="Created">
+          Created
+        </option>
+
+        <option value="Comment Added">
+          Comment Added
+        </option>
+
+        <option value="Kb Generated">
+          Kb Generated
+        </option>
+
+      </select>
+
+      <span class="select-arrow">
+        ▾
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       LOADING
+       ===================================================== -->
+
+  <div
+    class="loading-state"
+    *ngIf="loading"
+  >
+
+    <div class="loading-spinner"></div>
+
+    <span>
+      Loading notifications...
+    </span>
+
+  </div>
+
+
+  <!-- =====================================================
+       ERROR
+       ===================================================== -->
+
+  <div
+    class="error-state"
+    *ngIf="!loading && errorMessage"
+  >
+
+    <div class="error-icon">
+
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+
+        <path
+          d="M12 7v6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+
+        <circle
+          cx="12"
+          cy="16.5"
+          r="1"
+          fill="currentColor"
+        />
+      </svg>
+
+    </div>
+
+    <div>
+      {{ errorMessage }}
+    </div>
+
+    <button
+      type="button"
+      (click)="refresh()"
+    >
+      Retry
+    </button>
+
+  </div>
+
+
+  <!-- =====================================================
+       EMPTY
+       ===================================================== -->
+
+  <div
+    class="empty-state"
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      filteredNotifications.length === 0
+    "
+  >
+
+    <div class="empty-icon">
+
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+        <path
+          d="M10 21h4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </svg>
+
+    </div>
+
+    <h3>
+      No notifications
+    </h3>
+
+    <p>
+      You're all caught up.
+    </p>
+
+  </div>
+
+
+  <!-- =====================================================
+       NOTIFICATION LIST
+       ===================================================== -->
+
+  <div
+    class="notification-list"
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      filteredNotifications.length > 0
+    "
+  >
+
+    <div
+      class="notification-card"
+      *ngFor="let notification of filteredNotifications"
+      [class.unread]="!notification.read"
+      (click)="openNotification(notification)"
+    >
+
+      <!-- ICON -->
+
+      <div
+        class="notification-icon"
+        [ngClass]="getNotificationIcon(notification)"
+      >
+
+        <!-- STATUS -->
+        <svg
+          *ngIf="getNotificationIcon(notification) === 'status'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 3v18M3 12h18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+
+
+        <!-- ASSIGNMENT -->
+        <svg
+          *ngIf="getNotificationIcon(notification) === 'assignment'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="9"
+            cy="8"
+            r="3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+          />
+
+          <path
+            d="M3.5 20a5.5 5.5 0 0 1 11 0"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M16 11l2 2 3-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+
+        <!-- ATTACHMENT -->
+        <svg
+          *ngIf="getNotificationIcon(notification) === 'attachment'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M8 12.5l5.5-5.5a3.2 3.2 0 0 1 4.5 4.5l-6.5 6.5a5 5 0 0 1-7-7l7-7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+
+        <!-- CREATED -->
+        <svg
+          *ngIf="getNotificationIcon(notification) === 'created'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 5v14M5 12h14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+
+
+        <!-- DEFAULT -->
+        <svg
+          *ngIf="getNotificationIcon(notification) === 'default'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M10 21h4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+
+      </div>
+
+
+      <!-- CONTENT -->
+
+      <div class="notification-content">
+
+        <div class="notification-title">
+
+          {{ notification.title }}
+
+        </div>
+
+
+        <div class="notification-meta">
+
+          <span
+            class="ticket-link"
+            *ngIf="notification.ticket"
+          >
+            {{ notification.ticket }}
+          </span>
+
+          <span
+            class="notification-date"
+          >
+            {{ formatDate(notification.created_at) }}
+          </span>
+
+
+          <span
+            class="status-pill sent"
+          >
+            Sent
+          </span>
+
+
+          <span class="channel-pill">
+            {{ notification.channel }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- READ INDICATOR -->
+
+      <button
+        type="button"
+        class="read-button"
+        [class.unread-button]="!notification.read"
+        (click)="$event.stopPropagation(); notification.read ? null : openNotification(notification)"
+        [title]="notification.read ? 'Read' : 'Mark as read'"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M5 12l4 4L19 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

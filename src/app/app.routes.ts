@@ -11,6 +11,9 @@ import { KnowledgeBaseDetails } from './components/knowledge-base-details/knowle
 import { KnowledgeBaseEdit } from './components/knowledge-base-edit/knowledge-base-edit';
 import { UserManagement } from './components/user-management/user-management';
 import { SlaConfig } from './components/sla-config/sla-config';
+import { AuditLog } from './components/audit-log/audit-log';
+import { Notifications } from './components/notifications/notifications';
+import { Settings } from './components/settings/settings';
 import { authGuard } from './auth/auth.guard';
 
 
@@ -82,6 +85,21 @@ export const routes: Routes = [
       {
         path: 'sla-config',
         component: SlaConfig
+      },
+
+      {
+        path: 'audit-log',
+        component: AuditLog
+      },
+
+      {
+        path: 'notifications',
+        component: Notifications
+      },
+
+      {
+        path: 'settings',
+        component: Settings
       }
 
     ]

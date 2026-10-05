@@ -310,7 +310,7 @@
 
 
 /* =====================================================
-   NOTIFICATION
+   NOTIFICATION BUTTON
    ===================================================== */
 
 .notification {
@@ -324,6 +324,23 @@
   align-items: center;
 
   justify-content: center;
+
+  padding: 0;
+
+  background: transparent;
+
+  border: none;
+
+  color: #101828;
+
+  cursor: pointer;
+
+  border-radius: 5px;
+}
+
+
+.notification:hover {
+  background: #f2f4f7;
 }
 
 
@@ -333,7 +350,7 @@
 
   fill: none;
 
-  stroke: #101828;
+  stroke: currentColor;
 
   stroke-width: 1.8;
 
@@ -346,12 +363,12 @@
 /* Notification badge */
 
 .notification-count {
-  width: 16px;
+  min-width: 16px;
   height: 16px;
 
   position: absolute;
 
-  top: -4px;
+  top: -3px;
   right: -3px;
 
   display: flex;
@@ -360,15 +377,21 @@
 
   justify-content: center;
 
+  padding: 0 4px;
+
   background: #20a99a;
 
   color: #ffffff;
 
-  border-radius: 50%;
+  border-radius: 999px;
 
   font-size: 10px;
 
-  font-weight: 600;
+  line-height: 16px;
+
+  font-weight: 700;
+
+  pointer-events: none;
 }
 
 

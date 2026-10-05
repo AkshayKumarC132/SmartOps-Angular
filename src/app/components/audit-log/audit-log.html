@@ -1,0 +1,272 @@
+<div class="audit-page">
+
+  <!-- =========================
+       PAGE HEADER
+       ========================= -->
+
+  <div class="page-header">
+
+    <div>
+      <h1>Audit Log</h1>
+
+      <p>
+        Track all ticket activities and changes.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="refresh()"
+      [disabled]="loading"
+    >
+
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+
+        <path
+          d="M20 11a8 8 0 0 0-15-3"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+
+        <path
+          d="M5 4v4h4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+        <path
+          d="M4 13a8 8 0 0 0 15 3"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+
+        <path
+          d="M19 20v-4h-4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+      </svg>
+
+      Refresh
+
+    </button>
+
+  </div>
+
+
+  <!-- =========================
+       ERROR
+       ========================= -->
+
+  <div
+    class="error-card"
+    *ngIf="!loading && errorMessage"
+  >
+
+    <div>
+      <strong>
+        Unable to load audit log
+      </strong>
+
+      <p>
+        {{ errorMessage }}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="refresh()"
+    >
+      Retry
+    </button>
+
+  </div>
+
+
+  <!-- =========================
+       LOADING
+       ========================= -->
+
+  <div
+    class="loading-state"
+    *ngIf="loading"
+  >
+
+    <div class="spinner"></div>
+
+    <span>
+      Loading audit logs...
+    </span>
+
+  </div>
+
+
+  <!-- =========================
+       EMPTY
+       ========================= -->
+
+  <div
+    class="empty-state"
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      activities.length === 0
+    "
+  >
+
+    <h3>
+      No audit activities found
+    </h3>
+
+    <p>
+      Ticket activities will appear here.
+    </p>
+
+  </div>
+
+
+  <!-- =========================
+       AUDIT TABLE
+       ========================= -->
+
+  <div
+    class="audit-table-card"
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      activities.length > 0
+    "
+  >
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Timestamp</th>
+
+            <th>Ticket</th>
+
+            <th>Actor</th>
+
+            <th>Event</th>
+
+            <th>Details</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="let activity of activities"
+          >
+
+            <!-- TIMESTAMP -->
+
+            <td class="timestamp-cell">
+
+              {{ formatDate(activity.created_at) }}
+
+            </td>
+
+
+            <!-- TICKET -->
+
+            <td>
+
+              <a
+                class="ticket-link"
+                [href]="'/ticket/' + activity.ticket"
+                *ngIf="activity.ticket"
+              >
+                {{ getTicket(activity) }}
+              </a>
+
+              <span
+                class="ticket-text"
+                *ngIf="!activity.ticket"
+              >
+                {{ getTicket(activity) }}
+              </span>
+
+            </td>
+
+
+            <!-- ACTOR -->
+
+            <td>
+
+              <div class="actor-cell">
+
+                <div class="actor-avatar">
+
+                  {{ getActorInitial(activity) }}
+
+                </div>
+
+                <span class="actor-name">
+
+                  {{ getActor(activity) }}
+
+                </span>
+
+              </div>
+
+            </td>
+
+
+            <!-- EVENT -->
+
+            <td>
+
+              <span
+                class="event-badge"
+                [ngClass]="
+                  getEventClass(activity.action)
+                "
+              >
+
+                {{ formatEvent(activity.action) }}
+
+              </span>
+
+            </td>
+
+
+            <!-- DETAILS -->
+
+            <td class="details-cell">
+
+              {{ getDetails(activity) }}
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>

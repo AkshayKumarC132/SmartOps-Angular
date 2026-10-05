@@ -13,7 +13,6 @@
     <div class="brand">
 
       <div class="brand-icon">
-
         <svg
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -26,11 +25,9 @@
             stroke-linejoin="round"
           />
         </svg>
-
       </div>
 
       <div class="brand-text">
-
         <div class="brand-title">
           SmartOps Hub
         </div>
@@ -38,7 +35,6 @@
         <div class="brand-subtitle">
           Admin Portal
         </div>
-
       </div>
 
     </div>
@@ -380,55 +376,79 @@
 
       <!-- SLA CONFIG -->
 
-      <!-- SLA CONFIG -->
-
       <a
-      routerLink="/sla-config"
-      routerLinkActive="active"
-      class="nav-item"
+        routerLink="/sla-config"
+        routerLinkActive="active"
+        class="nav-item"
       >
 
-     <svg
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-     >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
 
-    <circle
-      cx="12"
-      cy="12"
-      r="8"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-    />
+          <circle
+            cx="12"
+            cy="12"
+            r="8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
 
-    <path
-      d="M12 7v5l3 2"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
+          <path
+            d="M12 7v5l3 2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
 
-  </svg>
+        </svg>
 
-  <span>
-    SLA Config
-  </span>
+        <span>
+          SLA Config
+        </span>
 
-</a>
+      </a>
 
 
       <!-- AUDIT LOG -->
 
-      <div class="nav-item disabled-nav-item">
+      <a
+        routerLink="/audit-log"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+
+          <path
+            d="M5 4h14v16H5z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M8 8h8M8 12h8M8 16h5"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </svg>
 
         <span>
-        ≋  Audit Log
+          Audit Log
         </span>
 
-      </div>
+      </a>
 
 
       <!-- ===================================================
@@ -442,24 +462,82 @@
 
       <!-- NOTIFICATIONS -->
 
-      <div class="nav-item disabled-nav-item">
+      <a
+        routerLink="/notifications"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <path
+            d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M10 21h4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </svg>
 
         <span>
-        🔔Notifications
+          Notifications
         </span>
 
-      </div>
+      </a>
 
 
-      <!-- SETTINGS -->
+      <!-- ===================================================
+           SETTINGS
+           =================================================== -->
 
-      <div class="nav-item disabled-nav-item">
+      <a
+        routerLink="/settings"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <circle
+            cx="12"
+            cy="12"
+            r="3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.41 1.41-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-2v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.41-1.41.06-.06A1.7 1.7 0 0 0 9.4 15a1.7 1.7 0 0 0-1.56-1.03H7v-2h.84A1.7 1.7 0 0 0 9.4 10a1.7 1.7 0 0 0-.34-1.88L9 8.06l1.41-1.41.06.06A1.7 1.7 0 0 0 12.35 7a1.7 1.7 0 0 0 1.03-1.56V5h2v.44A1.7 1.7 0 0 0 16.41 7a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.41 1.41-.06.06A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.56 1.03H21v2h-.04A1.7 1.7 0 0 0 19.4 15Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linejoin="round"
+          />
+
+        </svg>
 
         <span>
-          ⚙️Settings
+          Settings
         </span>
 
-      </div>
+      </a>
 
     </nav>
 
@@ -480,7 +558,7 @@
     <header class="topbar">
 
 
-      <!-- Left -->
+      <!-- LEFT -->
 
       <div class="topbar-left">
 
@@ -508,14 +586,21 @@
       </div>
 
 
-      <!-- Right -->
+      <!-- RIGHT -->
 
       <div class="topbar-user">
 
 
-        <!-- Notification -->
+        <!-- =================================================
+             NOTIFICATION BUTTON
+             ================================================= -->
 
-        <div class="notification">
+        <button
+          type="button"
+          class="notification"
+          (click)="openNotifications()"
+          title="Notifications"
+        >
 
           <svg
             viewBox="0 0 24 24"
@@ -541,6 +626,9 @@
 
           </svg>
 
+
+          <!-- REAL UNREAD COUNT -->
+
           <span
             class="notification-count"
             *ngIf="notificationCount > 0"
@@ -548,10 +636,10 @@
             {{ notificationCount }}
           </span>
 
-        </div>
+        </button>
 
 
-        <!-- Dynamic Avatar -->
+        <!-- DYNAMIC AVATAR -->
 
         <div
           class="avatar"
@@ -561,14 +649,14 @@
         </div>
 
 
-        <!-- Dynamic Role -->
+        <!-- DYNAMIC ROLE -->
 
         <span class="role">
           {{ userRole }}
         </span>
 
 
-        <!-- Logout -->
+        <!-- LOGOUT -->
 
         <button
           type="button"
@@ -622,12 +710,11 @@
 
     <section class="page-content">
 
-      <!-- Child pages load here -->
+      <!-- CHILD PAGES LOAD HERE -->
 
       <router-outlet></router-outlet>
 
     </section>
-
 
   </main>
 
