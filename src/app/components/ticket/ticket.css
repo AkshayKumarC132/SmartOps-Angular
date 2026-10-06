@@ -374,35 +374,49 @@ tbody tr:hover {
   color: #667085;
 }
 
+/* PRIORITY BADGES */
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 42px;
+  padding: 4px 10px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+/* LOW */
 .priority-badge.low {
   background: #f2f4f7;
-
   border: 1px solid #d0d5dd;
-
   color: #667085;
 }
 
+/* MEDIUM */
 .priority-badge.medium {
   background: #e8f3ff;
-
   border: 1px solid #b7d8ff;
-
   color: #0877e8;
 }
 
+/* HIGH */
 .priority-badge.high {
   background: #fff3df;
-
   border: 1px solid #ffd28c;
-
   color: #d97706;
 }
 
-.priority-badge.Criticalalal {
+/* CRITICAL */
+.priority-badge.critical {
   background: #ffe8e8;
-
   border: 1px solid #fdb6b6;
-
   color: #dc2626;
 }
 

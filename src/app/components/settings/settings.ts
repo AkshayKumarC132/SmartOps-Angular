@@ -6,11 +6,14 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
+import { environment } from '../../../environments/environment';
+
 
 @Component({
   selector: 'app-settings',
@@ -22,9 +25,10 @@ import { UserService } from '../../services/user.service';
   ],
 
   templateUrl: './settings.html',
-
   styleUrl: './settings.css'
 })
+
+
 export class Settings implements OnInit {
 
   // =========================================================
@@ -32,6 +36,8 @@ export class Settings implements OnInit {
   // =========================================================
 
   user: any = null;
+
+  organizationName = '—';
 
   loading = true;
 
@@ -91,14 +97,29 @@ export class Settings implements OnInit {
   passwordErrorMessage = '';
 
 
+  // =========================================================
+  // USER ID
+  // =========================================================
+
+  private currentUserId: number | null = null;
+
+
+  // =========================================================
+  // CONSTRUCTOR
+  // =========================================================
+
   constructor(
+
     private authService: AuthService,
 
     private userService: UserService,
 
     private router: Router,
 
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+
+    private http: HttpClient
+
   ) {}
 
 
@@ -123,6 +144,10 @@ export class Settings implements OnInit {
       this.authService.getUser();
 
 
+    // =======================================================
+    // USER NOT LOGGED IN
+    // =======================================================
+
     if (!loggedInUser) {
 
       this.router.navigate([
@@ -133,15 +158,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * Login response:
-     *
-     * {
-     *   "User Id": 1,
-     *   "Username": "...",
-     *   "Role": "..."
-     * }
-     */
+    // =======================================================
+    // GET USER ID
+    // =======================================================
 
     const userId =
       loggedInUser['User Id'] ||
@@ -163,18 +182,36 @@ export class Settings implements OnInit {
     }
 
 
+    this.currentUserId =
+      Number(userId);
+
+
+    // =======================================================
+    // FIRST: LOAD ORGANIZATION FROM LOGIN DATA
+    // =======================================================
+
     /*
-     * Get latest user details
-     * from Django.
+     * The login API already provides organization
+     * information for the Admin user.
+     *
+     * We use this before calling the profile API so
+     * Organization does not depend on the UserSerializer.
      */
 
+    this.setOrganizationFromUser(
+      loggedInUser
+    );
+
+
+    // =======================================================
+    // GET LATEST USER DETAILS
+    // =======================================================
+
     this.userService
-      .getUser(
-        Number(userId)
-      )
+      .getUser(Number(userId))
       .subscribe({
 
-        next: (response) => {
+        next: (response: any) => {
 
           console.log(
             'Settings User API Response:',
@@ -182,23 +219,65 @@ export class Settings implements OnInit {
           );
 
 
+          // =================================================
+          // STORE COMPLETE USER RESPONSE
+          // =================================================
+
           this.user = response;
 
 
-          this.form.first_name =
-            response.first_name || '';
+          // =================================================
+          // PROFILE DATA
+          // =================================================
 
+          this.form.first_name =
+            response?.first_name ||
+            '';
 
           this.form.last_name =
-            response.last_name || '';
-
+            response?.last_name ||
+            '';
 
           this.form.email =
-            response.email || '';
+            response?.email ||
+            '';
+
+
+          // =================================================
+          // ORGANIZATION
+          // =================================================
+
+          /*
+           * First try API response.
+           *
+           * If API response does not contain organization,
+           * setOrganizationFromUser() will leave the value
+           * already obtained from login data.
+           */
+
+          this.setOrganizationFromUser(
+            response,
+            false
+          );
+
+
+          // =================================================
+          // FALLBACK TO LOGIN DATA IF NECESSARY
+          // =================================================
+
+          if (
+            !this.organizationName ||
+            this.organizationName === '—'
+          ) {
+
+            this.setOrganizationFromUser(
+              loggedInUser
+            );
+
+          }
 
 
           this.loading = false;
-
 
           this.cdr.detectChanges();
 
@@ -213,9 +292,9 @@ export class Settings implements OnInit {
           );
 
 
-          /*
-           * Fallback to login data.
-           */
+          // =================================================
+          // FALLBACK TO LOGIN DATA
+          // =================================================
 
           this.user = {
 
@@ -233,7 +312,28 @@ export class Settings implements OnInit {
 
             email:
               loggedInUser.email ||
-              ''
+              '',
+
+            first_name:
+              loggedInUser.first_name ||
+              '',
+
+            last_name:
+              loggedInUser.last_name ||
+              '',
+
+            organization:
+              loggedInUser.organization,
+
+            Organization:
+              loggedInUser.Organization,
+
+            organization_id:
+              loggedInUser.organization_id,
+
+            organization_name:
+              loggedInUser.organization_name
+
           };
 
 
@@ -241,39 +341,390 @@ export class Settings implements OnInit {
             loggedInUser.first_name ||
             '';
 
-
           this.form.last_name =
             loggedInUser.last_name ||
             '';
-
 
           this.form.email =
             loggedInUser.email ||
             '';
 
 
+          // =================================================
+          // ORGANIZATION FROM LOGIN DATA
+          // =================================================
+
+          this.setOrganizationFromUser(
+            loggedInUser
+          );
+
+
           this.loading = false;
 
+
+          // =================================================
+          // ERROR MESSAGE
+          // =================================================
 
           if (error.status === 401) {
 
             this.errorMessage =
               'Your session has expired. Please login again.';
 
-          } else if (error.status === 403) {
+          }
+
+          else if (error.status === 403) {
 
             this.errorMessage =
               'You do not have permission to view this profile.';
 
-          } else if (error.status === 0) {
+          }
+
+          else if (error.status === 0) {
 
             this.errorMessage =
               'Unable to connect to the backend server.';
 
-          } else {
+          }
+
+          else {
 
             this.errorMessage =
               'Unable to load your profile.';
+
+          }
+
+
+          this.cdr.detectChanges();
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // SET ORGANIZATION FROM USER RESPONSE
+  // =========================================================
+
+  setOrganizationFromUser(
+    response: any,
+    allowOverwrite: boolean = true
+  ): void {
+
+    console.log(
+      'Checking organization data:',
+      response
+    );
+
+
+    // =======================================================
+    // ORGANIZATION OBJECT
+    // =======================================================
+
+    if (
+      response?.organization &&
+      typeof response.organization === 'object' &&
+      !Array.isArray(response.organization)
+    ) {
+
+      const organization =
+        response.organization;
+
+
+      const name =
+        organization.name ||
+        organization.organization_name ||
+        organization['Organization Name'] ||
+        organization['name'] ||
+        organization.title;
+
+
+      if (
+        name &&
+        (
+          allowOverwrite ||
+          this.organizationName === '—'
+        )
+      ) {
+
+        this.organizationName =
+          name;
+
+        console.log(
+          'Organization name from object:',
+          this.organizationName
+        );
+
+      }
+
+      return;
+    }
+
+
+    // =======================================================
+    // ORGANIZATION RETURNED AS STRING
+    // =======================================================
+
+    if (
+      typeof response?.organization === 'string'
+    ) {
+
+      if (
+        allowOverwrite ||
+        this.organizationName === '—'
+      ) {
+
+        this.organizationName =
+          response.organization;
+
+        console.log(
+          'Organization name from string:',
+          this.organizationName
+        );
+
+      }
+
+      return;
+    }
+
+
+    // =======================================================
+    // organization_name
+    // =======================================================
+
+    if (
+      response?.organization_name
+    ) {
+
+      if (
+        allowOverwrite ||
+        this.organizationName === '—'
+      ) {
+
+        this.organizationName =
+          response.organization_name;
+
+        console.log(
+          'Organization name from organization_name:',
+          this.organizationName
+        );
+
+      }
+
+      return;
+    }
+
+
+    // =======================================================
+    // Organization Name
+    // =======================================================
+
+    if (
+      response?.['Organization Name']
+    ) {
+
+      if (
+        allowOverwrite ||
+        this.organizationName === '—'
+      ) {
+
+        this.organizationName =
+          response['Organization Name'];
+
+        console.log(
+          'Organization name from Organization Name:',
+          this.organizationName
+        );
+
+      }
+
+      return;
+    }
+
+
+    // =======================================================
+    // Organization OBJECT WITH CAPITAL O
+    // =======================================================
+
+    if (
+      response?.Organization &&
+      typeof response.Organization === 'object' &&
+      !Array.isArray(response.Organization)
+    ) {
+
+      const organization =
+        response.Organization;
+
+
+      const name =
+        organization.name ||
+        organization.organization_name ||
+        organization['Organization Name'] ||
+        organization.Name ||
+        organization.title;
+
+
+      if (
+        name &&
+        (
+          allowOverwrite ||
+          this.organizationName === '—'
+        )
+      ) {
+
+        this.organizationName =
+          name;
+
+        console.log(
+          'Organization name from Organization object:',
+          this.organizationName
+        );
+
+      }
+
+      return;
+    }
+
+
+    // =======================================================
+    // Organization ID ONLY
+    // =======================================================
+
+    const organizationId =
+      response?.organization_id ??
+      response?.organizationId ??
+      response?.Organization?.id ??
+      response?.Organization?.['Organization Id'] ??
+      (
+        response?.organization &&
+        typeof response.organization === 'number'
+          ? response.organization
+          : null
+      );
+
+
+    if (organizationId) {
+
+      console.log(
+        'Organization ID found:',
+        organizationId
+      );
+
+
+      /*
+       * Keep the existing functionality of loading the
+       * organization if only an ID is available.
+       *
+       * This does NOT affect the normal login-data solution.
+       */
+
+      this.loadOrganization(
+        Number(organizationId)
+      );
+
+      return;
+    }
+
+
+    // =======================================================
+    // NOTHING FOUND
+    // =======================================================
+
+    /*
+     * Do not immediately overwrite an organization that
+     * was already obtained from login data.
+     */
+
+    if (
+      this.organizationName === '—'
+    ) {
+
+      console.warn(
+        'No organization information found in user response.'
+      );
+
+    }
+
+  }
+
+
+  // =========================================================
+  // LOAD ORGANIZATION
+  // =========================================================
+
+  loadOrganization(
+    organizationId: number
+  ): void {
+
+    console.log(
+      'Loading organization:',
+      organizationId
+    );
+
+
+    this.http
+      .get<any>(
+        `${environment.apiUrl}/organization/${organizationId}/`
+      )
+      .subscribe({
+
+        next: (organization) => {
+
+          console.log(
+            'Organization API Response:',
+            organization
+          );
+
+
+          const name =
+            organization?.name ||
+            organization?.organization_name ||
+            organization?.['Organization Name'] ||
+            organization?.Name ||
+            organization?.title;
+
+
+          if (name) {
+
+            this.organizationName =
+              name;
+
+          }
+
+
+          console.log(
+            'Final Organization Name:',
+            this.organizationName
+          );
+
+
+          this.cdr.detectChanges();
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Unable to load organization:',
+            error
+          );
+
+
+          /*
+           * Do not erase an organization name that may
+           * already have been obtained from login data.
+           */
+
+          if (
+            !this.organizationName ||
+            this.organizationName === '—'
+          ) {
+
+            this.organizationName = '—';
+
           }
 
 
@@ -292,7 +743,7 @@ export class Settings implements OnInit {
 
   get userId(): number | null {
 
-    return this.user?.id || null;
+    return this.currentUserId;
 
   }
 
@@ -376,23 +827,6 @@ export class Settings implements OnInit {
 
 
   // =========================================================
-  // ORGANIZATION
-  // =========================================================
-
-  get organizationName(): string {
-
-    return (
-      this.user?.organization?.name ||
-      this.user?.Organization?.[
-        'Organization Name'
-      ] ||
-      '—'
-    );
-
-  }
-
-
-  // =========================================================
   // SELECT SECTION
   // =========================================================
 
@@ -407,7 +841,6 @@ export class Settings implements OnInit {
     this.successMessage = '';
 
     this.errorMessage = '';
-
 
     this.passwordSuccessMessage = '';
 
@@ -427,6 +860,10 @@ export class Settings implements OnInit {
     this.errorMessage = '';
 
 
+    // =======================================================
+    // USER ID VALIDATION
+    // =======================================================
+
     if (!this.userId) {
 
       this.errorMessage =
@@ -435,6 +872,10 @@ export class Settings implements OnInit {
       return;
     }
 
+
+    // =======================================================
+    // EMAIL VALIDATION
+    // =======================================================
 
     if (!this.form.email.trim()) {
 
@@ -447,6 +888,10 @@ export class Settings implements OnInit {
 
     this.saving = true;
 
+
+    // =======================================================
+    // PAYLOAD
+    // =======================================================
 
     const payload = {
 
@@ -462,6 +907,10 @@ export class Settings implements OnInit {
     };
 
 
+    // =======================================================
+    // UPDATE USER
+    // =======================================================
+
     this.userService
       .updateUser(
         this.userId,
@@ -469,7 +918,7 @@ export class Settings implements OnInit {
       )
       .subscribe({
 
-        next: (response) => {
+        next: (response: any) => {
 
           console.log(
             'Profile updated:',
@@ -477,9 +926,9 @@ export class Settings implements OnInit {
           );
 
 
-          /*
-           * Update screen immediately.
-           */
+          // =================================================
+          // UPDATE SCREEN
+          // =================================================
 
           this.user = {
 
@@ -497,9 +946,9 @@ export class Settings implements OnInit {
           };
 
 
-          /*
-           * Update localStorage.
-           */
+          // =================================================
+          // UPDATE LOCAL STORAGE
+          // =================================================
 
           const storedUser =
             this.authService.getUser();
@@ -522,6 +971,13 @@ export class Settings implements OnInit {
 
             };
 
+
+            /*
+             * Keep the existing organization data.
+             *
+             * Do not replace the complete localStorage
+             * object with the profile API response.
+             */
 
             localStorage.setItem(
               'user',
@@ -564,25 +1020,34 @@ export class Settings implements OnInit {
               error.error?.message ||
               'Invalid profile information.';
 
-          } else if (error.status === 401) {
+          }
+
+          else if (error.status === 401) {
 
             this.errorMessage =
               'Your session has expired. Please login again.';
 
-          } else if (error.status === 403) {
+          }
+
+          else if (error.status === 403) {
 
             this.errorMessage =
               'You do not have permission to update this profile.';
 
-          } else if (error.status === 0) {
+          }
+
+          else if (error.status === 0) {
 
             this.errorMessage =
               'Unable to connect to the backend server.';
 
-          } else {
+          }
+
+          else {
 
             this.errorMessage =
               'Unable to update profile.';
+
           }
 
 
@@ -606,9 +1071,9 @@ export class Settings implements OnInit {
     this.passwordErrorMessage = '';
 
 
-    /*
-     * Current password
-     */
+    // =======================================================
+    // CURRENT PASSWORD
+    // =======================================================
 
     if (
       !this.passwordForm
@@ -623,9 +1088,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * New password
-     */
+    // =======================================================
+    // NEW PASSWORD
+    // =======================================================
 
     if (
       !this.passwordForm
@@ -640,9 +1105,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * Confirm password
-     */
+    // =======================================================
+    // CONFIRM PASSWORD
+    // =======================================================
 
     if (
       !this.passwordForm
@@ -657,9 +1122,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * Minimum password length
-     */
+    // =======================================================
+    // PASSWORD LENGTH
+    // =======================================================
 
     if (
       this.passwordForm
@@ -674,9 +1139,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * Password match
-     */
+    // =======================================================
+    // PASSWORD MATCH
+    // =======================================================
 
     if (
       this.passwordForm
@@ -692,9 +1157,9 @@ export class Settings implements OnInit {
     }
 
 
-    /*
-     * Same password check
-     */
+    // =======================================================
+    // SAME PASSWORD
+    // =======================================================
 
     if (
       this.passwordForm
@@ -713,13 +1178,17 @@ export class Settings implements OnInit {
     this.changingPassword = true;
 
 
+    // =======================================================
+    // CHANGE PASSWORD API
+    // =======================================================
+
     this.userService
       .changePassword(
         this.passwordForm
       )
       .subscribe({
 
-        next: (response) => {
+        next: (response: any) => {
 
           console.log(
             'Password change response:',
@@ -736,10 +1205,9 @@ export class Settings implements OnInit {
             'Password changed successfully.';
 
 
-          /*
-           * Clear all password fields
-           * after successful change.
-           */
+          // =================================================
+          // CLEAR PASSWORD FIELDS
+          // =================================================
 
           this.passwordForm = {
 
@@ -775,25 +1243,34 @@ export class Settings implements OnInit {
               error.error?.message ||
               'Unable to change password.';
 
-          } else if (error.status === 401) {
+          }
+
+          else if (error.status === 401) {
 
             this.passwordErrorMessage =
               'Your session has expired. Please login again.';
 
-          } else if (error.status === 403) {
+          }
+
+          else if (error.status === 403) {
 
             this.passwordErrorMessage =
               'You do not have permission to change this password.';
 
-          } else if (error.status === 0) {
+          }
+
+          else if (error.status === 0) {
 
             this.passwordErrorMessage =
               'Unable to connect to the backend server.';
 
-          } else {
+          }
+
+          else {
 
             this.passwordErrorMessage =
               'Unable to change password.';
+
           }
 
 

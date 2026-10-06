@@ -1310,3 +1310,105 @@
   }
 
 }
+/* =====================================================
+   TEAM MEMBER ALREADY IN ANOTHER TEAM
+   ===================================================== */
+
+.add-member-row.already-in-other-team {
+  background: #f8fafc;
+
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+
+.add-member-row.already-in-other-team:hover {
+  background: #f8fafc;
+}
+
+
+.add-member-row.already-in-other-team
+.add-member-avatar {
+  opacity: 0.65;
+}
+
+
+.add-member-row.already-in-other-team
+.add-member-info strong {
+  color: #667085;
+}
+
+
+.add-member-row.already-in-other-team
+.add-member-role {
+  opacity: 0.75;
+}
+
+
+.add-member-row.already-in-other-team
+input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+
+.already-in-other-team {
+  color: #98a2b3;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+/* =====================================================
+   TEAM MEMBERS ONLY - ADD MEMBER RESTRICTIONS
+   ===================================================== */
+
+.add-member-row.non-team-member {
+  background: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.add-member-row.non-team-member:hover {
+  background: #f8fafc;
+}
+
+.add-member-row.non-team-member input {
+  cursor: not-allowed;
+}
+
+.not-team-member {
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   TEAM MEMBER ALREADY IN ANOTHER TEAM
+   ===================================================== */
+
+.add-member-row.already-in-other-team {
+  background: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.add-member-row.already-in-other-team:hover {
+  background: #f8fafc;
+}
+
+.add-member-row.already-in-other-team input {
+  cursor: not-allowed;
+}
+
+.already-in-other-team {
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}

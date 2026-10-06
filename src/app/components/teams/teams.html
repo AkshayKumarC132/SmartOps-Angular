@@ -790,15 +790,28 @@
           trackBy: trackByMember
         "
         class="add-member-row"
+
         [class.selected-member]="
           isUserSelected(user.id)
         "
+
         [class.existing-member]="
           isExistingMember(user.id)
         "
+
+        [class.already-in-other-team]="
+          isMemberOfOtherTeam(user.id)
+        "
+
+        [class.non-team-member]="
+          isNonTeamMember(user.id)
+        "
+
         (click)="
-          !isExistingMember(user.id)
-          && toggleUserSelection(user.id)
+          isTeamMemberRole(user.id) &&
+          !isExistingMember(user.id) &&
+          !isMemberOfOtherTeam(user.id) &&
+          toggleUserSelection(user.id)
         "
       >
 
@@ -806,13 +819,19 @@
 
         <input
           type="checkbox"
+
           [checked]="
             isUserSelected(user.id)
           "
+
           [disabled]="
-            isExistingMember(user.id)
+            !isTeamMemberRole(user.id) ||
+            isExistingMember(user.id) ||
+            isMemberOfOtherTeam(user.id)
           "
+
           (click)="$event.stopPropagation()"
+
           (change)="
             toggleUserSelection(user.id)
           "
@@ -856,16 +875,48 @@
         </span>
 
 
+        <!-- NON TEAM MEMBER -->
+
+        <span
+          *ngIf="
+            isNonTeamMember(user.id)
+          "
+          class="already-member not-team-member"
+        >
+
+          Team Members only
+
+        </span>
+
+
         <!-- ALREADY MEMBER -->
 
         <span
           *ngIf="
+            isTeamMemberRole(user.id) &&
             isExistingMember(user.id)
           "
           class="already-member"
         >
 
           Already added
+
+        </span>
+
+
+        <!-- ALREADY IN ANOTHER TEAM -->
+
+        <span
+          *ngIf="
+            isTeamMemberRole(user.id) &&
+            !isExistingMember(user.id) &&
+            isMemberOfOtherTeam(user.id)
+          "
+          class="already-member already-in-other-team"
+        >
+
+          Already in
+          {{ getOtherTeamName(user.id) }}
 
         </span>
 

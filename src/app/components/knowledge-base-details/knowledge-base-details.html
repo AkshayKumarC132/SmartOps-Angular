@@ -36,7 +36,11 @@
 
   <!-- ARTICLE -->
   <article
-    *ngIf="!loading && !errorMessage && article"
+    *ngIf="
+      !loading &&
+      !errorMessage &&
+      article
+    "
     class="article-details"
   >
 
@@ -46,14 +50,20 @@
       <div class="article-header-content">
 
         <!-- STATUS -->
-        <span class="status-badge">
+        <span
+          class="status-badge"
+          [class.draft-status]="isDraft()"
+          [class.published-status]="isPublished()"
+        >
           {{ formatStatus(article.status) }}
         </span>
+
 
         <!-- TITLE -->
         <h1>
           {{ article.title }}
         </h1>
+
 
         <!-- SUMMARY -->
         <p
@@ -79,19 +89,53 @@
         </button>
 
 
-        <!-- UNPUBLISH -->
+        <!-- =============================================
+             UNPUBLISH
+             Visible only when Published
+             ============================================= -->
+
         <button
           type="button"
           class="unpublish-button"
           *ngIf="isPublished()"
-          [disabled]="unpublishing"
+          [disabled]="
+            unpublishing ||
+            publishing
+          "
           (click)="unpublishArticle()"
         >
+
           {{
             unpublishing
               ? 'Unpublishing...'
               : 'Unpublish'
           }}
+
+        </button>
+
+
+        <!-- =============================================
+             PUBLISH
+             Visible only when Draft
+             ============================================= -->
+
+        <button
+          type="button"
+          class="publish-button"
+          *ngIf="isDraft()"
+          [disabled]="
+            publishing ||
+            unpublishing
+          "
+          (click)="publishArticle()"
+        >
+
+          {{
+            publishing
+              ? 'Publishing...'
+              : 'Publish'
+          }}
+
         </button>
 
       </div>

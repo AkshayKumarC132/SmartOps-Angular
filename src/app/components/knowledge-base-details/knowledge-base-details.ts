@@ -5,7 +5,11 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router
+} from '@angular/router';
+
 import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
@@ -60,7 +64,9 @@ interface KBArticle {
 // =========================================================
 
 @Component({
-  selector: 'app-knowledge-base-details',
+
+  selector:
+    'app-knowledge-base-details',
 
   standalone: true,
 
@@ -68,20 +74,25 @@ interface KBArticle {
     CommonModule
   ],
 
-  templateUrl: './knowledge-base-details.html',
+  templateUrl:
+    './knowledge-base-details.html',
 
-  styleUrl: './knowledge-base-details.css'
+  styleUrl:
+    './knowledge-base-details.css'
+
 })
 
 
-export class KnowledgeBaseDetails implements OnInit {
+export class KnowledgeBaseDetails
+  implements OnInit {
 
 
   // =======================================================
   // ARTICLE
   // =======================================================
 
-  article: KBArticle | null = null;
+  article:
+    KBArticle | null = null;
 
 
   // =======================================================
@@ -94,12 +105,17 @@ export class KnowledgeBaseDetails implements OnInit {
 
   unpublishing = false;
 
+  publishing = false;
+
 
   // =======================================================
   // FEEDBACK
   // =======================================================
 
-  feedback: 'like' | 'dislike' | null = null;
+  feedback:
+    'like' |
+    'dislike' |
+    null = null;
 
   feedbackSubmitted = false;
 
@@ -118,13 +134,17 @@ export class KnowledgeBaseDetails implements OnInit {
 
   constructor(
 
-    private route: ActivatedRoute,
+    private route:
+      ActivatedRoute,
 
-    private router: Router,
+    private router:
+      Router,
 
-    private http: HttpClient,
+    private http:
+      HttpClient,
 
-    private cdr: ChangeDetectorRef
+    private cdr:
+      ChangeDetectorRef
 
   ) {}
 
@@ -136,7 +156,9 @@ export class KnowledgeBaseDetails implements OnInit {
   ngOnInit(): void {
 
     const articleId =
-      this.route.snapshot.paramMap.get('id');
+      this.route.snapshot
+        .paramMap
+        .get('id');
 
 
     console.log(
@@ -155,10 +177,12 @@ export class KnowledgeBaseDetails implements OnInit {
       this.cdr.detectChanges();
 
       return;
+
     }
 
 
     this.loadArticle(articleId);
+
   }
 
 
@@ -166,7 +190,9 @@ export class KnowledgeBaseDetails implements OnInit {
   // LOAD ARTICLE
   // =======================================================
 
-  loadArticle(articleId: string): void {
+  loadArticle(
+    articleId: string
+  ): void {
 
     this.loading = true;
 
@@ -189,9 +215,9 @@ export class KnowledgeBaseDetails implements OnInit {
       .get<KBArticle>(url)
       .subscribe({
 
-        // ===================================================
+        // =================================================
         // SUCCESS
-        // ===================================================
+        // =================================================
 
         next: (response) => {
 
@@ -201,7 +227,9 @@ export class KnowledgeBaseDetails implements OnInit {
           );
 
 
-          this.article = response;
+          this.article =
+            response;
+
 
           this.loading = false;
 
@@ -219,9 +247,9 @@ export class KnowledgeBaseDetails implements OnInit {
         },
 
 
-        // ===================================================
+        // =================================================
         // ERROR
-        // ===================================================
+        // =================================================
 
         error: (error) => {
 
@@ -258,10 +286,13 @@ export class KnowledgeBaseDetails implements OnInit {
           // 401
           // -----------------------------------------------
 
-          if (error.status === 401) {
+          if (
+            error.status === 401
+          ) {
 
             this.errorMessage =
               'Authentication failed. Please login again.';
+
           }
 
 
@@ -269,10 +300,13 @@ export class KnowledgeBaseDetails implements OnInit {
           // 403
           // -----------------------------------------------
 
-          else if (error.status === 403) {
+          else if (
+            error.status === 403
+          ) {
 
             this.errorMessage =
               'You do not have permission to view this article.';
+
           }
 
 
@@ -280,10 +314,13 @@ export class KnowledgeBaseDetails implements OnInit {
           // 404
           // -----------------------------------------------
 
-          else if (error.status === 404) {
+          else if (
+            error.status === 404
+          ) {
 
             this.errorMessage =
               'Knowledge Base article not found.';
+
           }
 
 
@@ -291,10 +328,13 @@ export class KnowledgeBaseDetails implements OnInit {
           // CONNECTION ERROR
           // -----------------------------------------------
 
-          else if (error.status === 0) {
+          else if (
+            error.status === 0
+          ) {
 
             this.errorMessage =
               'Unable to connect to the Knowledge Base API.';
+
           }
 
 
@@ -306,6 +346,7 @@ export class KnowledgeBaseDetails implements OnInit {
 
             this.errorMessage =
               `Unable to load article. Error: ${error.status}`;
+
           }
 
 
@@ -314,6 +355,7 @@ export class KnowledgeBaseDetails implements OnInit {
         }
 
       });
+
   }
 
 
@@ -339,6 +381,7 @@ export class KnowledgeBaseDetails implements OnInit {
     if (!this.article) {
 
       return;
+
     }
 
 
@@ -360,18 +403,51 @@ export class KnowledgeBaseDetails implements OnInit {
     if (!this.article?.status) {
 
       return false;
+
     }
 
 
     const status =
       this.article.status
         .toLowerCase()
-        .replace(/[\s-]/g, '_');
+        .replace(
+          /[\s-]/g,
+          '_'
+        );
 
 
     return (
       status === 'published' ||
       status === 'publish'
+    );
+
+  }
+
+
+  // =======================================================
+  // CHECK DRAFT STATUS
+  // =======================================================
+
+  isDraft(): boolean {
+
+    if (!this.article?.status) {
+
+      return false;
+
+    }
+
+
+    const status =
+      this.article.status
+        .toLowerCase()
+        .replace(
+          /[\s-]/g,
+          '_'
+        );
+
+
+    return (
+      status === 'draft'
     );
 
   }
@@ -386,18 +462,19 @@ export class KnowledgeBaseDetails implements OnInit {
   //     ↓
   // Draft
   //
-  // IMPORTANT:
-  // This does NOT delete the article.
+  // This uses the existing backend /unpublish/ endpoint.
   // =======================================================
 
   unpublishArticle(): void {
 
     if (
       !this.article ||
-      this.unpublishing
+      this.unpublishing ||
+      this.publishing
     ) {
 
       return;
+
     }
 
 
@@ -410,6 +487,7 @@ export class KnowledgeBaseDetails implements OnInit {
     if (!confirmed) {
 
       return;
+
     }
 
 
@@ -419,18 +497,6 @@ export class KnowledgeBaseDetails implements OnInit {
     const articleId =
       this.article.id;
 
-
-    // -----------------------------------------------------
-    // Backend endpoint
-    //
-    // POST /kb/articles/{id}/unpublish/
-    //
-    // Expected backend behavior:
-    //
-    // Published → Draft
-    //
-    // The article itself must remain in the database.
-    // -----------------------------------------------------
 
     const url =
       `${this.apiUrl}${articleId}/unpublish/`;
@@ -470,12 +536,14 @@ export class KnowledgeBaseDetails implements OnInit {
           this.unpublishing = false;
 
 
-          // ------------------------------------------------
-          // IMPORTANT:
-          // Keep the article.
-          //
-          // Only change its status to Draft.
-          // ------------------------------------------------
+          /*
+           * IMPORTANT:
+           *
+           * Do NOT remove the article.
+           *
+           * Keep the existing article and
+           * only change its status.
+           */
 
           if (this.article) {
 
@@ -486,6 +554,27 @@ export class KnowledgeBaseDetails implements OnInit {
               status: 'draft',
 
               published_at: null
+
+            };
+
+          }
+
+
+          /*
+           * Use backend status if it returns one.
+           */
+
+          if (
+            response?.status &&
+            this.article
+          ) {
+
+            this.article = {
+
+              ...this.article,
+
+              status:
+                response.status
 
             };
 
@@ -588,11 +677,292 @@ export class KnowledgeBaseDetails implements OnInit {
 
 
   // =======================================================
+  // PUBLISH ARTICLE
+  //
+  // Draft
+  //     ↓
+  // Publish
+  //     ↓
+  // Published
+  //
+  // FRONTEND ONLY:
+  //
+  // Uses existing:
+  //
+  // PATCH /kb/articles/{id}/
+  //
+  // No backend changes required.
+  // =======================================================
+
+  publishArticle(): void {
+
+    if (
+      !this.article ||
+      this.publishing ||
+      this.unpublishing
+    ) {
+
+      return;
+
+    }
+
+
+    const confirmed =
+      window.confirm(
+        'Are you sure you want to publish this article?'
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    this.publishing = true;
+
+
+    const articleId =
+      this.article.id;
+
+
+    // -----------------------------------------------------
+    // EXISTING ARTICLE DETAIL ENDPOINT
+    //
+    // PATCH /kb/articles/{id}/
+    //
+    // The uploaded urls.py confirms PATCH is supported
+    // on this endpoint.
+    // -----------------------------------------------------
+
+    const url =
+      `${this.apiUrl}${articleId}/`;
+
+
+    const payload = {
+
+      status: 'published'
+
+    };
+
+
+    console.log(
+      'Publishing Knowledge Base Article:',
+      articleId
+    );
+
+
+    console.log(
+      'Publish API URL:',
+      url
+    );
+
+
+    console.log(
+      'Publish payload:',
+      payload
+    );
+
+
+    this.http
+      .patch<any>(
+        url,
+        payload
+      )
+      .subscribe({
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        next: (response) => {
+
+          console.log(
+            'Article published successfully:',
+            response
+          );
+
+
+          this.publishing = false;
+
+
+          /*
+           * IMPORTANT:
+           *
+           * Keep the same article.
+           *
+           * Only change its status.
+           */
+
+          if (this.article) {
+
+            this.article = {
+
+              ...this.article,
+
+              status: 'published',
+
+              published_at:
+                response?.published_at ??
+                this.article.published_at ??
+                new Date().toISOString()
+
+            };
+
+          }
+
+
+          /*
+           * If the backend returns the updated
+           * article, merge the response.
+           *
+           * This keeps title/content/etc. fresh.
+           */
+
+          if (
+            response &&
+            typeof response === 'object' &&
+            response.id &&
+            this.article
+          ) {
+
+            this.article = {
+
+              ...this.article,
+
+              ...response,
+
+              status:
+                response.status ||
+                'published'
+
+            };
+
+          }
+
+
+          /*
+           * Make absolutely sure the UI
+           * shows Published.
+           */
+
+          if (this.article) {
+
+            this.article = {
+
+              ...this.article,
+
+              status: 'published'
+
+            };
+
+          }
+
+
+          console.log(
+            'Article is now Published:',
+            this.article
+          );
+
+
+          this.cdr.detectChanges();
+
+
+          window.alert(
+            'Article published successfully.'
+          );
+
+        },
+
+
+        // =================================================
+        // ERROR
+        // =================================================
+
+        error: (error) => {
+
+          console.error(
+            'Publish article error:',
+            error
+          );
+
+
+          console.error(
+            'Status:',
+            error.status
+          );
+
+
+          console.error(
+            'Error body:',
+            error.error
+          );
+
+
+          console.error(
+            'URL:',
+            error.url
+          );
+
+
+          this.publishing = false;
+
+
+          let errorMessage =
+            'Unable to publish the article.';
+
+
+          if (
+            error.error?.detail
+          ) {
+
+            errorMessage =
+              error.error.detail;
+
+          }
+
+          else if (
+            error.error?.message
+          ) {
+
+            errorMessage =
+              error.error.message;
+
+          }
+
+          else if (
+            typeof error.error === 'string'
+          ) {
+
+            errorMessage =
+              error.error;
+
+          }
+
+
+          window.alert(
+            errorMessage
+          );
+
+
+          this.cdr.detectChanges();
+
+        }
+
+      });
+
+  }
+
+
+  // =======================================================
   // FEEDBACK
   // =======================================================
 
   submitFeedback(
-    type: 'like' | 'dislike'
+    type:
+      'like' |
+      'dislike'
   ): void {
 
     if (
@@ -601,6 +971,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return;
+
     }
 
 
@@ -610,21 +981,21 @@ export class KnowledgeBaseDetails implements OnInit {
 
 
     /*
-     * The current backend code does not expose
-     * a feedback endpoint.
-     *
-     * Therefore this currently updates the UI only.
+     * Feedback is currently UI-only.
      */
 
-
-    if (type === 'like') {
+    if (
+      type === 'like'
+    ) {
 
       this.article = {
 
         ...this.article,
 
         like_count:
-          this.getLikes(this.article) + 1
+          this.getLikes(
+            this.article
+          ) + 1
 
       };
 
@@ -638,7 +1009,9 @@ export class KnowledgeBaseDetails implements OnInit {
         ...this.article,
 
         dislike_count:
-          this.getDislikes(this.article) + 1
+          this.getDislikes(
+            this.article
+          ) + 1
 
       };
 
@@ -655,12 +1028,15 @@ export class KnowledgeBaseDetails implements OnInit {
   // =======================================================
 
   formatStatus(
-    status: string | undefined
+    status:
+      string |
+      undefined
   ): string {
 
     if (!status) {
 
       return '';
+
     }
 
 
@@ -673,7 +1049,8 @@ export class KnowledgeBaseDetails implements OnInit {
 
       .replace(
         /\b\w/g,
-        char => char.toUpperCase()
+        char =>
+          char.toUpperCase()
       );
 
   }
@@ -684,12 +1061,16 @@ export class KnowledgeBaseDetails implements OnInit {
   // =======================================================
 
   formatDate(
-    date: string | null | undefined
+    date:
+      string |
+      null |
+      undefined
   ): string {
 
     if (!date) {
 
       return '—';
+
     }
 
 
@@ -704,6 +1085,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return '—';
+
     }
 
 
@@ -738,6 +1120,7 @@ export class KnowledgeBaseDetails implements OnInit {
     if (!author) {
 
       return 'admin';
+
     }
 
 
@@ -746,6 +1129,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return author;
+
     }
 
 
@@ -786,6 +1170,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return article.likes;
+
     }
 
 
@@ -794,6 +1179,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return article.like_count;
+
     }
 
 
@@ -815,6 +1201,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return article.dislikes;
+
     }
 
 
@@ -823,6 +1210,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return article.dislike_count;
+
     }
 
 
@@ -842,6 +1230,7 @@ export class KnowledgeBaseDetails implements OnInit {
     if (!article.tags) {
 
       return [];
+
     }
 
 
@@ -850,6 +1239,7 @@ export class KnowledgeBaseDetails implements OnInit {
     ) {
 
       return article.tags;
+
     }
 
 
@@ -862,11 +1252,13 @@ export class KnowledgeBaseDetails implements OnInit {
         .split(',')
 
         .map(
-          tag => tag.trim()
+          tag =>
+            tag.trim()
         )
 
         .filter(
-          tag => !!tag
+          tag =>
+            !!tag
         );
 
     }

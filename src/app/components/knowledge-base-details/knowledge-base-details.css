@@ -189,7 +189,49 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+/* =========================================================
+   PUBLISH BUTTON
+   ========================================================= */
 
+.publish-button {
+  border-radius: 8px;
+
+  padding: 10px 16px;
+
+  border: 1px solid #a7e1c3;
+
+  background: #e7f8ef;
+
+  color: #168b57;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.publish-button:hover {
+  background: #d8f4e5;
+
+  border-color: #7dd3a8;
+
+  color: #117447;
+}
+
+
+.publish-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
 
 /* =========================================================
    ARTICLE CONTENT

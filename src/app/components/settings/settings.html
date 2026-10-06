@@ -7,11 +7,15 @@
   <div class="settings-header">
 
     <div>
-      <h1>Settings</h1>
+
+      <h1>
+        Settings
+      </h1>
 
       <p>
         Manage your account and application preferences.
       </p>
+
     </div>
 
   </div>
@@ -25,7 +29,6 @@
     class="settings-layout"
     *ngIf="!loading"
   >
-
 
     <!-- ===================================================
          SETTINGS MENU
@@ -189,18 +192,16 @@
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              USER SUMMARY
-             =============================================== -->
+             ================================================= -->
 
         <div class="profile-summary">
 
           <!-- DYNAMIC AVATAR -->
 
           <div class="large-avatar">
-
             {{ avatarLetter }}
-
           </div>
 
 
@@ -225,9 +226,9 @@
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              PROFILE FORM
-             =============================================== -->
+             ================================================= -->
 
         <div class="form-grid">
 
@@ -335,8 +336,9 @@
 
             <input
               type="text"
-              [value]="organizationName"
+              [value]="organizationName || '—'"
               disabled
+              readonly
             />
 
           </div>
@@ -344,9 +346,9 @@
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              SUCCESS MESSAGE
-             =============================================== -->
+             ================================================= -->
 
         <div
           class="success-message"
@@ -358,9 +360,9 @@
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              ERROR MESSAGE
-             =============================================== -->
+             ================================================= -->
 
         <div
           class="error-message"
@@ -372,9 +374,9 @@
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              ACTIONS
-             =============================================== -->
+             ================================================= -->
 
         <div class="card-actions">
 
@@ -441,6 +443,7 @@
 
             <input
               type="password"
+              [(ngModel)]="passwordForm.current_password"
               placeholder="Enter current password"
             />
 
@@ -457,6 +460,7 @@
 
             <input
               type="password"
+              [(ngModel)]="passwordForm.new_password"
               placeholder="New password"
             />
 
@@ -473,6 +477,7 @@
 
             <input
               type="password"
+              [(ngModel)]="passwordForm.confirm_password"
               placeholder="Confirm password"
             />
 
@@ -486,18 +491,50 @@
             <button
               type="button"
               class="secondary-button"
+              [disabled]="changingPassword"
+              (click)="changePassword()"
             >
-              Change Password
+
+              {{
+                changingPassword
+                  ? 'Changing...'
+                  : 'Change Password'
+              }}
+
             </button>
+
+          </div>
+
+
+          <!-- PASSWORD SUCCESS -->
+
+          <div
+            class="success-message"
+            *ngIf="passwordSuccessMessage"
+          >
+
+            {{ passwordSuccessMessage }}
+
+          </div>
+
+
+          <!-- PASSWORD ERROR -->
+
+          <div
+            class="error-message"
+            *ngIf="passwordErrorMessage"
+          >
+
+            {{ passwordErrorMessage }}
 
           </div>
 
         </div>
 
 
-        <!-- ===============================================
+        <!-- =================================================
              SESSIONS
-             =============================================== -->
+             ================================================= -->
 
         <div class="sessions-section">
 
@@ -529,7 +566,6 @@
               </span>
 
             </div>
-
 
             <span class="session-status">
               Active
@@ -582,12 +618,12 @@
         </div>
 
 
-        <!-- ===============================================
-             IN-APP NOTIFICATIONS
-             =============================================== -->
+        <!-- NOTIFICATION PREFERENCES -->
 
         <div class="notification-preferences">
 
+
+          <!-- IN-APP NOTIFICATIONS -->
 
           <div class="preference-section-title">
 
@@ -752,9 +788,7 @@
           </div>
 
 
-          <!-- =============================================
-               EMAIL
-               ============================================= -->
+          <!-- EMAIL -->
 
           <div class="preference-divider"></div>
 
@@ -871,9 +905,7 @@
           </div>
 
 
-          <!-- =============================================
-               SLACK
-               ============================================= -->
+          <!-- SLACK -->
 
           <div class="preference-divider"></div>
 
@@ -903,7 +935,7 @@
           </div>
 
 
-          <!-- Critical ALERTS -->
+          <!-- CRITICAL ALERTS -->
 
           <div class="preference-row">
 
@@ -988,9 +1020,7 @@
               type="button"
               class="save-button"
             >
-
               Save Preferences
-
             </button>
 
           </div>

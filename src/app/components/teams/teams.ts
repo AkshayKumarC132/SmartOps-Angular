@@ -1113,6 +1113,178 @@ export class Teams implements OnInit {
 
 
   /* =====================================================
+     TEAM MEMBER ROLE CHECK
+     ===================================================== */
+
+  isTeamMemberRole(
+    userId: number
+  ): boolean {
+
+    const user =
+      this.users.find(
+        currentUser =>
+          currentUser.id === userId
+      );
+
+
+    if (!user) {
+
+      return false;
+
+    }
+
+
+    return String(
+      (user as any).role || ''
+    )
+      .trim()
+      .toLowerCase() === 'team member';
+
+  }
+
+
+  /* =====================================================
+     NON TEAM MEMBER
+     ===================================================== */
+
+  isNonTeamMember(
+    userId: number
+  ): boolean {
+
+    return !this.isTeamMemberRole(
+      userId
+    );
+
+  }
+
+
+  /* =====================================================
+     GET OTHER TEAM FOR USER
+     ===================================================== */
+
+  getOtherTeamForUser(
+    userId: number
+  ): any | null {
+
+    if (
+      !userId ||
+      !this.selectedTeam
+    ) {
+
+      return null;
+
+    }
+
+
+    /*
+     * Find the user from the users
+     * already loaded by User Management.
+     */
+
+    const user =
+      this.users.find(
+        currentUser =>
+          currentUser.id === userId
+      );
+
+
+    if (!user) {
+
+      return null;
+
+    }
+
+
+    /*
+     * Only Team Members can belong to teams.
+     *
+     * Admins and Requesters cannot be
+     * added to teams.
+     */
+
+
+    /*
+     * Search all teams except the
+     * currently selected team.
+     */
+
+    const otherTeam =
+      this.teams.find(
+        team => {
+
+          if (!team) {
+
+            return false;
+
+          }
+
+
+          if (
+            team.id ===
+            this.selectedTeam.id
+          ) {
+
+            return false;
+
+          }
+
+
+          const memberIds =
+            this.getTeamMemberIds(
+              team
+            );
+
+
+          return memberIds
+            .includes(userId);
+
+        }
+      );
+
+
+    return otherTeam || null;
+
+  }
+
+
+  /* =====================================================
+     MEMBER OF ANOTHER TEAM
+     ===================================================== */
+
+  isMemberOfOtherTeam(
+    userId: number
+  ): boolean {
+
+    return !!this.getOtherTeamForUser(
+      userId
+    );
+
+  }
+
+
+  /* =====================================================
+     OTHER TEAM NAME
+     ===================================================== */
+
+  getOtherTeamName(
+    userId: number
+  ): string {
+
+    const team =
+      this.getOtherTeamForUser(
+        userId
+      );
+
+
+    return (
+      team?.team_name ||
+      'another team'
+    );
+
+  }
+
+
+  /* =====================================================
      USER SELECTED
      ===================================================== */
 
@@ -1135,8 +1307,41 @@ export class Teams implements OnInit {
     userId: number
   ): void {
 
+    /*
+     * Only Team Members can be added.
+     * Admins and Requesters are not allowed.
+     */
+
+    if (
+      !this.isTeamMemberRole(userId)
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * Do not allow users already in
+     * the current team.
+     */
+
     if (
       this.isExistingMember(userId)
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * Do not allow Team Members already
+     * assigned to another team.
+     */
+
+    if (
+      this.isMemberOfOtherTeam(userId)
     ) {
 
       return;
@@ -1228,6 +1433,35 @@ export class Teams implements OnInit {
 
 
     /*
+     * Extra frontend safety check.
+     *
+     * If a Team Member belongs to another
+     * team, remove that user from the IDs
+     * before sending the update.
+     */
+
+    const allowedSelectedUserIds =
+      this.selectedUserIds.filter(
+        userId =>
+          this.isTeamMemberRole(userId) &&
+          !this.isExistingMember(userId) &&
+          !this.isMemberOfOtherTeam(userId)
+      );
+
+
+    if (
+      allowedSelectedUserIds.length === 0
+    ) {
+
+      this.memberErrorMessage =
+        'Only unassigned Team Members can be added to a team.';
+
+      return;
+
+    }
+
+
+    /*
      * Preserve existing members.
      */
 
@@ -1238,14 +1472,14 @@ export class Teams implements OnInit {
 
 
     /*
-     * Add newly selected IDs.
+     * Add only allowed newly selected IDs.
      */
 
     const finalMemberIds =
       Array.from(
         new Set([
           ...existingIds,
-          ...this.selectedUserIds
+          ...allowedSelectedUserIds
         ])
       );
 
@@ -1283,8 +1517,13 @@ export class Teams implements OnInit {
     );
 
     console.log(
-      'New IDs:',
+      'Selected IDs:',
       this.selectedUserIds
+    );
+
+    console.log(
+      'Allowed IDs:',
+      allowedSelectedUserIds
     );
 
     console.log(
@@ -1667,10 +1906,30 @@ export class Teams implements OnInit {
 
         next: (response) => {
 
-          const updatedTeams =
-            Array.isArray(response)
-              ? response
-              : [];
+          let updatedTeams: any[] = [];
+
+
+          if (Array.isArray(response)) {
+
+            updatedTeams = response;
+
+          }
+
+          else if (
+            response &&
+            Array.isArray(
+              (response as {
+                results?: any[]
+              }).results
+            )
+          ) {
+
+            updatedTeams =
+              (response as {
+                results: any[]
+              }).results;
+
+          }
 
 
           this.teams =

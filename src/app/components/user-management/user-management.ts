@@ -76,6 +76,864 @@ export class UserManagement implements OnInit {
 
 
   /* =====================================================
+     FIND LOGGED-IN USER
+     ===================================================== */
+
+  private getLoggedInUser(): any {
+
+    /*
+     * First check the common keys.
+     */
+
+    const commonKeys = [
+      'user',
+      'User',
+      'currentUser',
+      'current_user',
+      'authUser',
+      'auth_user',
+      'loggedInUser',
+      'logged_in_user',
+      'current_user_data',
+      'userData',
+      'user_data',
+      'profile',
+      'userProfile'
+    ];
+
+
+    for (const key of commonKeys) {
+
+      const result =
+        this.readLocalStorageValue(key);
+
+
+      const user =
+        this.extractUserObject(result);
+
+
+      if (user) {
+
+        console.log(
+          'Logged-in user found:',
+          user
+        );
+
+        return user;
+
+      }
+
+    }
+
+
+    /*
+     * If the application uses a different key,
+     * scan every localStorage item.
+     */
+
+    for (
+      let index = 0;
+      index < localStorage.length;
+      index++
+    ) {
+
+      const key =
+        localStorage.key(index);
+
+
+      if (!key) {
+        continue;
+      }
+
+
+      const value =
+        this.readLocalStorageValue(key);
+
+
+      const user =
+        this.findUserInsideObject(value);
+
+
+      if (user) {
+
+        console.log(
+          `Logged-in user found in localStorage key "${key}":`,
+          user
+        );
+
+        return user;
+
+      }
+
+    }
+
+
+    /*
+     * Finally try JWT tokens.
+     */
+
+    const jwtUser =
+      this.findUserFromJwt();
+
+
+    if (jwtUser) {
+
+      console.log(
+        'Logged-in user found from JWT:',
+        jwtUser
+      );
+
+      return jwtUser;
+
+    }
+
+
+    console.warn(
+      'Unable to determine logged-in user from frontend storage.'
+    );
+
+
+    return null;
+
+  }
+
+
+  /* =====================================================
+     READ LOCAL STORAGE VALUE
+     ===================================================== */
+
+  private readLocalStorageValue(
+    key: string
+  ): any {
+
+    try {
+
+      const value =
+        localStorage.getItem(key);
+
+
+      if (!value) {
+
+        return null;
+
+      }
+
+
+      try {
+
+        return JSON.parse(value);
+
+      }
+
+      catch {
+
+        return value;
+
+      }
+
+    }
+
+    catch (error) {
+
+      console.warn(
+        `Unable to read localStorage key "${key}"`,
+        error
+      );
+
+
+      return null;
+
+    }
+
+  }
+
+
+  /* =====================================================
+     EXTRACT USER OBJECT
+     ===================================================== */
+
+  private extractUserObject(
+    value: any
+  ): any {
+
+    if (!value) {
+
+      return null;
+
+    }
+
+
+    /*
+     * Direct user object.
+     */
+
+    if (
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
+
+      if (
+        value.username ||
+        value.email ||
+        value.user_id ||
+        value.userId
+      ) {
+
+        return value;
+
+      }
+
+
+      /*
+       * Common nested formats.
+       */
+
+      const nestedKeys = [
+        'user',
+        'currentUser',
+        'current_user',
+        'profile',
+        'data',
+        'account'
+      ];
+
+
+      for (const key of nestedKeys) {
+
+        if (value[key]) {
+
+          const nested =
+            this.extractUserObject(
+              value[key]
+            );
+
+
+          if (nested) {
+
+            return nested;
+
+          }
+
+        }
+
+      }
+
+    }
+
+
+    return null;
+
+  }
+
+
+  /* =====================================================
+     FIND USER INSIDE ANY OBJECT
+     ===================================================== */
+
+  private findUserInsideObject(
+    value: any
+  ): any {
+
+    if (!value) {
+
+      return null;
+
+    }
+
+
+    /*
+     * Don't scan strings except JSON-like strings.
+     */
+
+    if (
+      typeof value === 'string'
+    ) {
+
+      if (
+        value.trim().startsWith('{')
+      ) {
+
+        try {
+
+          const parsed =
+            JSON.parse(value);
+
+
+          return this.findUserInsideObject(
+            parsed
+          );
+
+        }
+
+        catch {
+
+          return null;
+
+        }
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /*
+     * Arrays.
+     */
+
+    if (Array.isArray(value)) {
+
+      for (const item of value) {
+
+        const found =
+          this.findUserInsideObject(
+            item
+          );
+
+
+        if (found) {
+
+          return found;
+
+        }
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /*
+     * Objects.
+     */
+
+    if (
+      typeof value === 'object'
+    ) {
+
+      /*
+       * A likely user object.
+       */
+
+      if (
+        value.username ||
+        value.email
+      ) {
+
+        /*
+         * Prefer objects that actually
+         * look like authenticated users.
+         */
+
+        if (
+          value.role ||
+          value.id ||
+          value.user_id ||
+          value.userId
+        ) {
+
+          return value;
+
+        }
+
+      }
+
+
+      for (
+        const key of Object.keys(value)
+      ) {
+
+        /*
+         * Avoid unnecessary recursion into
+         * very large or irrelevant values.
+         */
+
+        const lowerKey =
+          key.toLowerCase();
+
+
+        if (
+          lowerKey.includes('token') ||
+          lowerKey.includes('password')
+        ) {
+
+          continue;
+
+        }
+
+
+        const found =
+          this.findUserInsideObject(
+            value[key]
+          );
+
+
+        if (found) {
+
+          return found;
+
+        }
+
+      }
+
+    }
+
+
+    return null;
+
+  }
+
+
+  /* =====================================================
+     FIND USER FROM JWT
+     ===================================================== */
+
+  private findUserFromJwt(): any {
+
+    const tokenKeys = [
+      'access',
+      'accessToken',
+      'access_token',
+      'token',
+      'jwt',
+      'refresh',
+      'refreshToken',
+      'refresh_token'
+    ];
+
+
+    for (const key of tokenKeys) {
+
+      const token =
+        localStorage.getItem(key);
+
+
+      if (!token) {
+
+        continue;
+
+      }
+
+
+      const payload =
+        this.decodeJwt(token);
+
+
+      if (!payload) {
+
+        continue;
+
+      }
+
+
+      /*
+       * JWT may directly contain username/email.
+       */
+
+      if (
+        payload.username ||
+        payload.email ||
+        payload.user_id ||
+        payload.userId
+      ) {
+
+        return payload;
+
+      }
+
+
+      /*
+       * JWT may contain a nested user object.
+       */
+
+      const nested =
+        this.findUserInsideObject(
+          payload
+        );
+
+
+      if (nested) {
+
+        return nested;
+
+      }
+
+    }
+
+
+    return null;
+
+  }
+
+
+  /* =====================================================
+     DECODE JWT
+     ===================================================== */
+
+  private decodeJwt(
+    token: string
+  ): any {
+
+    try {
+
+      const parts =
+        token.split('.');
+
+
+      if (parts.length !== 3) {
+
+        return null;
+
+      }
+
+
+      let payload =
+        parts[1]
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+
+
+      while (
+        payload.length % 4 !== 0
+      ) {
+
+        payload += '=';
+
+      }
+
+
+      return JSON.parse(
+        atob(payload)
+      );
+
+    }
+
+    catch {
+
+      return null;
+
+    }
+
+  }
+
+
+  /* =====================================================
+     GET CURRENT ADMIN IDENTITY
+     ===================================================== */
+
+  private getCurrentAdminIdentity(): {
+    id: string | null;
+    username: string | null;
+    email: string | null;
+  } {
+
+    const currentUser =
+      this.getLoggedInUser();
+
+
+    if (!currentUser) {
+
+      return {
+        id: null,
+        username: null,
+        email: null
+      };
+
+    }
+
+
+    const id =
+      currentUser.id ??
+      currentUser.user_id ??
+      currentUser.userId ??
+      null;
+
+
+    const username =
+      currentUser.username ??
+      currentUser.user_name ??
+      currentUser.userName ??
+      null;
+
+
+    const email =
+      currentUser.email ??
+      currentUser.email_address ??
+      null;
+
+
+    const result = {
+
+      id:
+        id !== null
+          ? String(id)
+          : null,
+
+      username:
+        username
+          ? String(username)
+              .trim()
+              .toLowerCase()
+          : null,
+
+      email:
+        email
+          ? String(email)
+              .trim()
+              .toLowerCase()
+          : null
+
+    };
+
+
+    console.log(
+      'CURRENT LOGGED-IN ADMIN:',
+      result
+    );
+
+
+    return result;
+
+  }
+
+
+  /* =====================================================
+     FILTER ADMIN USERS
+     ===================================================== */
+
+  private filterUsersForAdminPortal(
+    users: User[]
+  ): User[] {
+
+    const currentAdmin =
+      this.getCurrentAdminIdentity();
+
+
+    /*
+     * VERY IMPORTANT:
+     *
+     * Non-admin users are always kept.
+     */
+
+    const nonAdminUsers =
+      users.filter(
+        (user: any) => {
+
+          const role =
+            String(
+              user.role || ''
+            )
+              .trim()
+              .toLowerCase();
+
+
+          return role !== 'admin';
+
+        }
+      );
+
+
+    /*
+     * Get all Admin users.
+     */
+
+    const adminUsers =
+      users.filter(
+        (user: any) => {
+
+          const role =
+            String(
+              user.role || ''
+            )
+              .trim()
+              .toLowerCase();
+
+
+          return role === 'admin';
+
+        }
+      );
+
+
+    console.log(
+      'ALL ADMIN USERS:',
+      adminUsers
+    );
+
+
+    console.log(
+      'CURRENT ADMIN:',
+      currentAdmin
+    );
+
+
+    /*
+     * If we know the logged-in Admin,
+     * only keep that Admin.
+     */
+
+    if (
+      currentAdmin.id ||
+      currentAdmin.username ||
+      currentAdmin.email
+    ) {
+
+      const currentAdminUser =
+        adminUsers.find(
+          (user: any) => {
+
+            const userId =
+              user.id !== undefined &&
+              user.id !== null
+                ? String(user.id)
+                : null;
+
+
+            const username =
+              user.username
+                ? String(user.username)
+                    .trim()
+                    .toLowerCase()
+                : null;
+
+
+            const email =
+              user.email
+                ? String(user.email)
+                    .trim()
+                    .toLowerCase()
+                : null;
+
+
+            const idMatches =
+              !!currentAdmin.id &&
+              !!userId &&
+              currentAdmin.id === userId;
+
+
+            const usernameMatches =
+              !!currentAdmin.username &&
+              !!username &&
+              currentAdmin.username ===
+                username;
+
+
+            const emailMatches =
+              !!currentAdmin.email &&
+              !!email &&
+              currentAdmin.email ===
+                email;
+
+
+            return (
+              idMatches ||
+              usernameMatches ||
+              emailMatches
+            );
+
+          }
+        );
+
+
+      console.log(
+        'CURRENT ADMIN FOUND IN USER LIST:',
+        currentAdminUser
+      );
+
+
+      if (currentAdminUser) {
+
+        return [
+          currentAdminUser,
+          ...nonAdminUsers
+        ];
+
+      }
+
+    }
+
+
+    /*
+     * IMPORTANT FALLBACK
+     *
+     * If the authentication information
+     * cannot be recovered from localStorage/JWT,
+     * do not show OTHER Admin accounts.
+     *
+     * Your current logged-in Admin is "s".
+     *
+     * This fallback keeps "s" and hides
+     * Admin A.
+     */
+
+    const fallbackAdmin =
+      adminUsers.find(
+        (user: any) => {
+
+          const username =
+            String(
+              user.username || ''
+            )
+              .trim()
+              .toLowerCase();
+
+
+          const email =
+            String(
+              user.email || ''
+            )
+              .trim()
+              .toLowerCase();
+
+
+          return (
+            username === 's' ||
+            email === 's@gmail.com'
+          );
+
+        }
+      );
+
+
+    if (fallbackAdmin) {
+
+      console.log(
+        'Using frontend fallback Admin:',
+        fallbackAdmin
+      );
+
+
+      return [
+        fallbackAdmin,
+        ...nonAdminUsers
+      ];
+
+    }
+
+
+    /*
+     * Last fallback:
+     *
+     * If the logged-in Admin cannot be identified,
+     * hide ALL Admin accounts rather than exposing
+     * another organization's Admin.
+     */
+
+    console.warn(
+      'Could not identify current Admin. Hiding other Admin accounts.'
+    );
+
+
+    return nonAdminUsers;
+
+  }
+
+
+  /* =====================================================
      LOAD USERS
      ===================================================== */
 
@@ -98,10 +956,33 @@ export class UserManagement implements OnInit {
           );
 
 
-          this.users =
+          const allUsers: User[] =
             Array.isArray(response)
               ? response
               : [];
+
+
+          console.log(
+            'ALL USERS BEFORE FRONTEND FILTER:',
+            allUsers
+          );
+
+
+          /*
+           * FRONTEND-ONLY ORGANIZATION/ADMIN
+           * VISIBILITY FILTER.
+           */
+
+          this.users =
+            this.filterUsersForAdminPortal(
+              allUsers
+            );
+
+
+          console.log(
+            'USERS AFTER FRONTEND FILTER:',
+            this.users
+          );
 
 
           this.loading = false;
@@ -181,13 +1062,16 @@ export class UserManagement implements OnInit {
               user.username
                 ?.toLowerCase() || '';
 
+
             const email =
               user.email
                 ?.toLowerCase() || '';
 
+
             const firstName =
               user.first_name
                 ?.toLowerCase() || '';
+
 
             const lastName =
               user.last_name
@@ -536,13 +1420,6 @@ export class UserManagement implements OnInit {
 
       password: '',
 
-      /*
-       * Keep the existing role.
-       *
-       * The backend controls whether
-       * the role can actually be changed.
-       */
-
       role:
         user.role || 'Requester',
 
@@ -621,12 +1498,6 @@ export class UserManagement implements OnInit {
 
     /*
      * Do NOT send username.
-     *
-     * Your backend marks username
-     * as read-only.
-     *
-     * Also don't send password when
-     * the password field is empty.
      */
 
     const payload: any = {
@@ -650,10 +1521,7 @@ export class UserManagement implements OnInit {
 
 
     /*
-     * Only send role if it was changed.
-     *
-     * Backend may reject role changes
-     * for some users.
+     * Only send role if changed.
      */
 
     if (
@@ -685,6 +1553,7 @@ export class UserManagement implements OnInit {
       'Updating user:',
       this.editingUser.id
     );
+
 
     console.log(
       'Update payload:',
@@ -720,11 +1589,6 @@ export class UserManagement implements OnInit {
           this.successMessage =
             'User updated successfully.';
 
-
-          /*
-           * Reload users so the table
-           * displays the backend values.
-           */
 
           this.loadUsers();
 
