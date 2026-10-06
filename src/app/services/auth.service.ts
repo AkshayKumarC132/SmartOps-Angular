@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -14,7 +15,15 @@ export class AuthService {
     private http: HttpClient
   ) {}
 
-  login(username: string, password: string): Observable<any> {
+
+  // ============================================================
+  // LOGIN
+  // ============================================================
+
+  login(
+    username: string,
+    password: string
+  ): Observable<any> {
 
     return this.http.post<any>(
       `${this.apiUrl}/auth/login/`,
@@ -24,49 +33,153 @@ export class AuthService {
       }
     ).pipe(
 
-      tap((response) => {
+      tap((response: any) => {
 
         console.log(
           'Backend login response:',
           response
         );
 
-        /*
-         * Store access token
-         */
-        if (response?.Access) {
+        console.log(
+          'Backend login response JSON:',
+          JSON.stringify(response)
+        );
+
+
+        // ======================================================
+        // ACCESS TOKEN
+        // ======================================================
+
+        const accessToken =
+          response?.Access ??
+          response?.access ??
+          response?.access_token ??
+          response?.accessToken ??
+          null;
+
+
+        if (accessToken) {
 
           localStorage.setItem(
             'access_token',
-            response.Access
+            accessToken
           );
 
           console.log(
-            'Access token stored'
+            'Access token stored successfully'
+          );
+
+        } else {
+
+          console.error(
+            'Access token is missing from login response'
           );
         }
 
-        /*
-         * Store refresh token
-         */
-        if (response?.Refresh) {
+
+        // ======================================================
+        // REFRESH TOKEN
+        // ======================================================
+
+        const refreshToken =
+          response?.Refresh ??
+          response?.refresh ??
+          response?.refresh_token ??
+          response?.refreshToken ??
+          null;
+
+
+        if (refreshToken) {
 
           localStorage.setItem(
             'refresh_token',
-            response.Refresh
+            refreshToken
           );
 
           console.log(
-            'Refresh token stored'
+            'Refresh token stored successfully'
+          );
+
+        } else {
+
+          console.warn(
+            'Refresh token is missing from login response'
           );
         }
 
-        /*
-         * Backend sends the user as
-         * "User Information"
-         */
-        const userInformation =
-          response?.['User Information'];
+
+        // ======================================================
+        // USER INFORMATION
+        // ======================================================
+
+        let userInformation: any = null;
+
+
+        // Option 1:
+        // "User Information"
+
+        if (response?.['User Information']) {
+
+          userInformation =
+            response['User Information'];
+        }
+
+
+        // Option 2:
+        // "user"
+
+        else if (response?.user) {
+
+          userInformation =
+            response.user;
+        }
+
+
+        // Option 3:
+        // "User"
+
+        else if (response?.User) {
+
+          userInformation =
+            response.User;
+        }
+
+
+        // Option 4:
+        // "data.user"
+
+        else if (response?.data?.user) {
+
+          userInformation =
+            response.data.user;
+        }
+
+
+        // Option 5:
+        // "Data.User"
+
+        else if (response?.Data?.User) {
+
+          userInformation =
+            response.Data.User;
+        }
+
+
+        // Option 6:
+        // "Data.User Information"
+
+        else if (
+          response?.Data?.['User Information']
+        ) {
+
+          userInformation =
+            response.Data['User Information'];
+        }
+
+
+        // ======================================================
+        // STORE USER
+        // ======================================================
 
         if (userInformation) {
 
@@ -76,7 +189,7 @@ export class AuthService {
           );
 
           console.log(
-            'User stored:',
+            'User stored successfully:',
             userInformation
           );
 
@@ -88,7 +201,12 @@ export class AuthService {
         } else {
 
           console.error(
-            'User Information is missing from login response'
+            'User information could not be found in login response.'
+          );
+
+          console.error(
+            'Available login response keys:',
+            Object.keys(response || {})
           );
         }
 
@@ -96,6 +214,10 @@ export class AuthService {
     );
   }
 
+
+  // ============================================================
+  // GET ACCESS TOKEN
+  // ============================================================
 
   getAccessToken(): string | null {
 
@@ -105,6 +227,10 @@ export class AuthService {
   }
 
 
+  // ============================================================
+  // GET REFRESH TOKEN
+  // ============================================================
+
   getRefreshToken(): string | null {
 
     return localStorage.getItem(
@@ -113,15 +239,21 @@ export class AuthService {
   }
 
 
+  // ============================================================
+  // GET USER
+  // ============================================================
+
   getUser(): any {
 
-    const user = localStorage.getItem(
-      'user'
-    );
+    const user =
+      localStorage.getItem('user');
+
 
     if (!user) {
+
       return null;
     }
+
 
     try {
 
@@ -139,13 +271,21 @@ export class AuthService {
   }
 
 
+  // ============================================================
+  // GET USER ROLE
+  // ============================================================
+
   getUserRole(): string | null {
 
-    const user = this.getUser();
+    const user =
+      this.getUser();
+
 
     if (!user) {
+
       return null;
     }
+
 
     return (
       user.Role ||
@@ -155,11 +295,19 @@ export class AuthService {
   }
 
 
+  // ============================================================
+  // ADMIN
+  // ============================================================
+
   isAdmin(): boolean {
 
     return this.getUserRole() === 'Admin';
   }
 
+
+  // ============================================================
+  // TEAM MEMBER
+  // ============================================================
 
   isTeamMember(): boolean {
 
@@ -167,17 +315,29 @@ export class AuthService {
   }
 
 
+  // ============================================================
+  // REQUESTER
+  // ============================================================
+
   isRequester(): boolean {
 
     return this.getUserRole() === 'Requester';
   }
 
 
+  // ============================================================
+  // LOGIN STATUS
+  // ============================================================
+
   isLoggedIn(): boolean {
 
     return !!this.getAccessToken();
   }
 
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
 
   logout(): void {
 
@@ -193,4 +353,5 @@ export class AuthService {
       'user'
     );
   }
+
 }

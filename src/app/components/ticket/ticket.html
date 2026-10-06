@@ -1,5 +1,9 @@
 <div class="tickets-page">
 
+  <!-- ============================================
+       PAGE HEADER
+       ============================================ -->
+
   <div class="page-header">
 
     <div>
@@ -9,12 +13,17 @@
       </h1>
 
       <p>
-        Manage and  support tickets
+        Manage and support tickets
       </p>
 
     </div>
 
   </div>
+
+
+  <!-- ============================================
+       FILTERS
+       ============================================ -->
 
   <div class="filter-card">
 
@@ -40,11 +49,15 @@
 
     </div>
 
+
     <div class="filter-group">
+
+      <!-- STATUS -->
 
       <select
         [(ngModel)]="selectedStatus"
       >
+
         <option value="All">
           All Statuses
         </option>
@@ -71,9 +84,13 @@
 
       </select>
 
+
+      <!-- PRIORITY -->
+
       <select
         [(ngModel)]="selectedPriority"
       >
+
         <option value="All">
           All Priorities
         </option>
@@ -90,11 +107,14 @@
           High
         </option>
 
-        <option value="Urgent">
-          Urgent
+        <option value="Criticalal">
+          Critical
         </option>
 
       </select>
+
+
+      <!-- CLEAR -->
 
       <button
         type="button"
@@ -108,12 +128,22 @@
 
   </div>
 
+
+  <!-- ============================================
+       LOADING
+       ============================================ -->
+
   <div
     *ngIf="loading"
     class="state-message"
   >
     Loading tickets...
   </div>
+
+
+  <!-- ============================================
+       ERROR
+       ============================================ -->
 
   <div
     *ngIf="errorMessage"
@@ -122,10 +152,17 @@
     {{ errorMessage }}
   </div>
 
+
+  <!-- ============================================
+       TICKET TABLE
+       ============================================ -->
+
   <div
     *ngIf="!loading && !errorMessage"
     class="table-card"
   >
+
+    <!-- TABLE HEADER -->
 
     <div class="table-header">
 
@@ -147,6 +184,9 @@
       </div>
 
     </div>
+
+
+    <!-- TABLE -->
 
     <div class="table-wrapper">
 
@@ -192,6 +232,7 @@
 
         </thead>
 
+
         <tbody>
 
           <tr
@@ -199,6 +240,10 @@
               let ticket of filteredTickets
             "
           >
+
+            <!-- ====================================
+                 TICKET ID
+                 ==================================== -->
 
             <td>
 
@@ -211,6 +256,11 @@
               </button>
 
             </td>
+
+
+            <!-- ====================================
+                 TICKET NAME
+                 ==================================== -->
 
             <td>
 
@@ -227,20 +277,32 @@
 
             </td>
 
+
+            <!-- ====================================
+                 STATUS
+                 ==================================== -->
+
             <td>
 
               <span
                 class="status-badge"
                 [ngClass]="ticket.status"
               >
+
                 {{
                   formatStatus(
                     ticket.status
                   )
                 }}
+
               </span>
 
             </td>
+
+
+            <!-- ====================================
+                 PRIORITY
+                 ==================================== -->
 
             <td>
 
@@ -255,28 +317,54 @@
 
             </td>
 
+
+            <!-- ====================================
+                 CATEGORY
+                 ==================================== -->
+
             <td>
+
               {{
                 ticket.category ||
                 'Not specified'
               }}
+
             </td>
 
+
+            <!-- ====================================
+                 TEAM
+                 ==================================== -->
+
             <td>
+
               {{
                 getDisplayValue(
                   ticket.team
                 )
               }}
+
             </td>
 
+
+            <!-- ====================================
+                 ASSIGNED TO
+                 ==================================== -->
+
             <td>
+
               {{
                 getDisplayValue(
                   ticket.assigned_to
                 )
               }}
+
             </td>
+
+
+            <!-- ====================================
+                 VIEW
+                 ==================================== -->
 
             <td>
 
@@ -307,6 +395,11 @@
             </td>
 
           </tr>
+
+
+          <!-- ====================================
+               NO RESULTS
+               ==================================== -->
 
           <tr
             *ngIf="

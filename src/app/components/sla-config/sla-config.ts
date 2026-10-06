@@ -12,7 +12,7 @@ import { TicketService } from '../../services/ticket.service';
 
 interface SlaRule {
   id: number;
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   responseTime: string;
   resolutionTime: string;
 }
@@ -83,7 +83,7 @@ export class SlaConfig implements OnInit {
   ruleForm = {
     teamId: 0,
 
-    priority: 'URGENT' as SlaRule['priority'],
+    priority: 'CRITICAL' as SlaRule['priority'],
 
     responseTime: '',
 
@@ -107,7 +107,7 @@ export class SlaConfig implements OnInit {
   // =====================================================
 
   priorities: SlaRule['priority'][] = [
-    'URGENT',
+    'CRITICAL',
     'HIGH',
     'MEDIUM',
     'LOW'
@@ -336,7 +336,7 @@ export class SlaConfig implements OnInit {
           ? this.teams[0].id
           : 0,
 
-      priority: 'URGENT',
+      priority : 'CRITICAL',
 
       responseTime: '',
 
@@ -378,7 +378,7 @@ export class SlaConfig implements OnInit {
       priority:
         missing.length > 0
           ? missing[0]
-          : 'URGENT',
+          : 'CRITICAL',
 
       responseTime: '',
 
@@ -713,8 +713,8 @@ export class SlaConfig implements OnInit {
       priority?.toUpperCase()
     ) {
 
-      case 'URGENT':
-        return 'priority-urgent';
+      case 'Critical':
+        return 'priority-Critical';
 
       case 'HIGH':
         return 'priority-high';

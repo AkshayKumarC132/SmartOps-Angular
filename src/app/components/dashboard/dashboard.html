@@ -205,18 +205,18 @@
       </div>
 
 
-      <!-- URGENT -->
+      <!-- CRITICAL -->
 
       <div class="stat-card">
 
         <div class="stat-content">
 
           <span>
-            Urgent
+            Critical
           </span>
 
           <h2>
-            {{ urgentTickets }}
+            {{ CriticalTickets }}
           </h2>
 
         </div>
@@ -456,7 +456,7 @@
         </div>
 
 
-        <!-- No Tickets -->
+        <!-- NO TICKETS -->
 
         <div
           *ngIf="recentTickets.length === 0"
@@ -466,7 +466,7 @@
         </div>
 
 
-        <!-- Ticket List -->
+        <!-- TICKET LIST -->
 
         <div
           class="ticket-item"
@@ -497,7 +497,7 @@
 
             <span
               class="priority-badge"
-              [ngClass]="ticket.priority?.toLowerCase()"
+              [ngClass]="ticket.priority"
             >
 
               {{ ticket.priority }}
@@ -528,7 +528,7 @@
       <section class="recent-activity">
 
 
-        <!-- Activity Header -->
+        <!-- ACTIVITY HEADER -->
 
         <div class="activity-title">
 
@@ -564,17 +564,17 @@
           >
 
 
-            <!-- Activity Dot -->
+            <!-- ACTIVITY DOT -->
 
             <div class="activity-dot"></div>
 
 
-            <!-- Activity Content -->
+            <!-- ACTIVITY CONTENT -->
 
             <div class="activity-content">
 
 
-              <!-- Description -->
+              <!-- DESCRIPTION -->
 
               <div class="activity-description">
 
@@ -583,7 +583,7 @@
               </div>
 
 
-              <!-- User + Ticket -->
+              <!-- USER + TICKET -->
 
               <div class="activity-meta">
 
@@ -603,7 +603,7 @@
               </div>
 
 
-              <!-- Date / Time -->
+              <!-- DATE / TIME -->
 
               <div class="activity-time">
 

@@ -14,28 +14,58 @@ export class TicketService {
 
   constructor(private http: HttpClient) {}
 
-  getTickets(): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(this.apiUrl);
-  }
+  // ==============================
+  // GET ALL TICKETS
+  // ==============================
 
-  getTicket(id: number): Observable<Ticket> {
-    return this.http.get<Ticket>(
-      `${environment.apiUrl}/ticket_detail/${id}/`
+  getTickets(): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(
+      this.apiUrl
     );
   }
 
-  updateTicket(id: number, data: any): Observable<any> {
+
+  // ==============================
+  // GET SINGLE TICKET
+  // ==============================
+
+  getTicket(ticketId: number): Observable<Ticket> {
+    return this.http.get<Ticket>(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/`
+    );
+  }
+
+
+  // ==============================
+  // UPDATE TICKET
+  // ==============================
+
+  updateTicket(
+    ticketId: number,
+    data: any
+  ): Observable<any> {
+
     return this.http.put(
-      `${environment.apiUrl}/ticket_detail/${id}/`,
+      `${environment.apiUrl}/ticket_detail/${ticketId}/`,
       data
     );
   }
+
+
+  // ==============================
+  // GET TEAMS
+  // ==============================
 
   getTeams(): Observable<any[]> {
     return this.http.get<any[]>(
       `${environment.apiUrl}/teams/`
     );
   }
+
+
+  // ==============================
+  // CREATE TEAM
+  // ==============================
 
   createTeam(data: any): Observable<any> {
     return this.http.post(
@@ -44,27 +74,47 @@ export class TicketService {
     );
   }
 
-  updateTeam(id: number, data: any): Observable<any> {
+
+  // ==============================
+  // UPDATE TEAM
+  // ==============================
+
+  updateTeam(
+    id: number,
+    data: any
+  ): Observable<any> {
+
     return this.http.put(
       `${environment.apiUrl}/team_detail/${id}/`,
       data
     );
   }
 
-  createTicket(data: any): Observable<Ticket> {
+
+  // ==============================
+  // CREATE TICKET
+  // ==============================
+
+  createTicket(
+    data: any
+  ): Observable<Ticket> {
+
     return this.http.post<Ticket>(
       this.apiUrl,
       data
     );
   }
 
+
   // ==============================
   // AUDIT LOG / TICKET ACTIVITY
   // ==============================
 
   getAuditActivities(): Observable<any[]> {
+
     return this.http.get<any[]>(
       `${environment.apiUrl}/tickets-activity/`
     );
   }
+
 }

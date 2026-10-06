@@ -275,19 +275,68 @@ export class Notifications implements OnInit {
     notification: NotificationItem
   ): void {
 
+    // Mark notification as read
+
     this.notificationService.markAsRead(
       notification.id
     );
 
     notification.read = true;
 
+
+    // ============================================
+    // OPEN TICKET
+    // ============================================
+
     if (notification.ticket) {
 
-      this.router.navigate([
-        '/ticket',
-        notification.ticket
-      ]);
+      /*
+       * Notification contains the display ticket ID.
+       *
+       * Example:
+       * TKT-008
+       *
+       * Ticket details route requires:
+       * /ticket/8
+       *
+       * Extract the numeric database ID from
+       * the end of the ticket identifier.
+       */
+
+      const match =
+        notification.ticket.match(
+          /(\d+)$/
+        );
+
+
+      if (match) {
+
+        const ticketId =
+          Number(match[1]);
+
+
+        console.log(
+          'Opening ticket:',
+          notification.ticket,
+          '->',
+          ticketId
+        );
+
+
+        this.router.navigate([
+          '/ticket',
+          ticketId
+        ]);
+
+      } else {
+
+        console.error(
+          'Invalid ticket identifier:',
+          notification.ticket
+        );
+      }
     }
+
 
     this.cdr.detectChanges();
   }

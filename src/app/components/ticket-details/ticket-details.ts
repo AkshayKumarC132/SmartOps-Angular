@@ -6,6 +6,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
 import {
   ActivatedRoute,
   Router
@@ -16,15 +17,29 @@ import { TicketService } from '../../services/ticket.service';
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './ticket-details.html',
   styleUrl: './ticket-details.css'
 })
 export class TicketDetails implements OnInit {
 
+  // ============================================
+  // TICKET
+  // ============================================
+
   ticket: any = null;
 
+  // IMPORTANT:
+  // Backend uses numeric database primary key.
   ticketId: number | null = null;
+
+
+  // ============================================
+  // PAGE STATE
+  // ============================================
 
   loading = true;
 
@@ -34,9 +49,10 @@ export class TicketDetails implements OnInit {
 
   successMessage = '';
 
-  // ==============================
+
+  // ============================================
   // EDIT STATE
-  // ==============================
+  // ============================================
 
   isEditing = false;
 
@@ -44,9 +60,10 @@ export class TicketDetails implements OnInit {
 
   editPriority = '';
 
-  // ==============================
-  // AVAILABLE VALUES
-  // ==============================
+
+  // ============================================
+  // AVAILABLE STATUS VALUES
+  // ============================================
 
   statusOptions: string[] = [
     'Open',
@@ -57,12 +74,22 @@ export class TicketDetails implements OnInit {
     'ReOpened'
   ];
 
+
+  // ============================================
+  // AVAILABLE PRIORITY VALUES
+  // ============================================
+
   priorityOptions: string[] = [
     'Low',
     'Medium',
     'High',
-    'Urgent'
+    'Critical'
   ];
+
+
+  // ============================================
+  // CONSTRUCTOR
+  // ============================================
 
   constructor(
     private route: ActivatedRoute,
@@ -71,19 +98,40 @@ export class TicketDetails implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  // ==============================
+
+  // ============================================
   // INITIALIZE
-  // ==============================
+  // ============================================
 
   ngOnInit(): void {
 
-    console.log('TicketDetails component loaded');
+    console.log(
+      'TicketDetails component loaded'
+    );
 
-    const id = this.route.snapshot.paramMap.get('id');
 
-    console.log('Ticket ID from URL:', id);
+    // Get numeric database ID from URL
+    //
+    // Example:
+    // /ticket/4
+    //
+    // id = "4"
 
-    if (!id) {
+    const id =
+      this.route.snapshot.paramMap.get('id');
+
+
+    console.log(
+      'Ticket ID from URL:',
+      id
+    );
+
+
+    // ==========================================
+    // CHECK ID EXISTS
+    // ==========================================
+
+    if (!id || id.trim() === '') {
 
       this.loading = false;
 
@@ -95,9 +143,23 @@ export class TicketDetails implements OnInit {
       return;
     }
 
-    const parsedId = Number(id);
 
-    if (isNaN(parsedId)) {
+    // ==========================================
+    // CONVERT STRING ROUTE PARAMETER TO NUMBER
+    // ==========================================
+
+    const parsedId =
+      Number(id);
+
+
+    // ==========================================
+    // VALIDATE NUMERIC ID
+    // ==========================================
+
+    if (
+      isNaN(parsedId) ||
+      parsedId <= 0
+    ) {
 
       this.loading = false;
 
@@ -109,21 +171,44 @@ export class TicketDetails implements OnInit {
       return;
     }
 
-    this.ticketId = parsedId;
 
-    this.loadTicket(parsedId);
+    // ==========================================
+    // STORE DATABASE ID
+    // ==========================================
+
+    this.ticketId =
+      parsedId;
+
+
+    console.log(
+      'Parsed numeric ticket ID:',
+      this.ticketId
+    );
+
+
+    // ==========================================
+    // LOAD TICKET
+    // ==========================================
+
+    this.loadTicket(
+      this.ticketId
+    );
   }
 
-  // ==============================
-  // LOAD TICKET
-  // ==============================
 
-  loadTicket(id: number): void {
+  // ============================================
+  // LOAD TICKET
+  // ============================================
+
+  loadTicket(
+    id: number
+  ): void {
 
     console.log(
       'Calling API for ticket:',
       id
     );
+
 
     this.loading = true;
 
@@ -131,76 +216,158 @@ export class TicketDetails implements OnInit {
 
     this.successMessage = '';
 
+
+    // ==========================================
+    // CALL BACKEND
+    // ==========================================
+
     this.ticketService
       .getTicket(id)
       .subscribe({
 
-        next: (response: any) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any
+        ) => {
 
           console.log(
             'FULL TICKET RESPONSE:',
             response
           );
 
-          this.ticket = response;
 
-          // Keep edit values synchronized
+          // Store ticket response
+          this.ticket =
+            response;
+
+
+          // ====================================
+          // SYNC EDIT VALUES
+          // ====================================
+
           this.editStatus =
             this.ticket.status || '';
+
 
           this.editPriority =
             this.ticket.priority || '';
 
+
           this.loading = false;
+
 
           this.cdr.detectChanges();
         },
 
-        error: (error: any) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'TICKET DETAILS API ERROR:',
             error
           );
 
+
           this.ticket = null;
 
           this.loading = false;
 
-          if (error.status === 401) {
+
+          // ====================================
+          // 401
+          // ====================================
+
+          if (
+            error.status === 401
+          ) {
 
             this.errorMessage =
               'Authentication is required to view this ticket.';
+          }
 
-          } else if (error.status === 403) {
+
+          // ====================================
+          // 403
+          // ====================================
+
+          else if (
+            error.status === 403
+          ) {
 
             this.errorMessage =
               'You are not allowed to view this ticket.';
+          }
 
-          } else if (error.status === 404) {
+
+          // ====================================
+          // 404
+          // ====================================
+
+          else if (
+            error.status === 404
+          ) {
 
             this.errorMessage =
               `Ticket ${id} was not found.`;
+          }
 
-          } else if (error.status === 0) {
+
+          // ====================================
+          // 500
+          // ====================================
+
+          else if (
+            error.status === 500
+          ) {
+
+            this.errorMessage =
+              'Server error while loading ticket details.';
+          }
+
+
+          // ====================================
+          // CONNECTION ERROR
+          // ====================================
+
+          else if (
+            error.status === 0
+          ) {
 
             this.errorMessage =
               'Unable to connect to the backend server.';
+          }
 
-          } else {
+
+          // ====================================
+          // OTHER
+          // ====================================
+
+          else {
 
             this.errorMessage =
               `Unable to load ticket details. Server returned ${error.status}.`;
           }
 
+
           this.cdr.detectChanges();
         }
+
       });
   }
 
-  // ==============================
+
+  // ============================================
   // START EDITING
-  // ==============================
+  // ============================================
 
   startEditing(): void {
 
@@ -208,11 +375,14 @@ export class TicketDetails implements OnInit {
       return;
     }
 
+
     this.editStatus =
       this.ticket.status || '';
 
+
     this.editPriority =
       this.ticket.priority || '';
+
 
     this.errorMessage = '';
 
@@ -220,12 +390,14 @@ export class TicketDetails implements OnInit {
 
     this.isEditing = true;
 
+
     this.cdr.detectChanges();
   }
 
-  // ==============================
+
+  // ============================================
   // CANCEL EDITING
-  // ==============================
+  // ============================================
 
   cancelEditing(): void {
 
@@ -234,9 +406,11 @@ export class TicketDetails implements OnInit {
       this.editStatus =
         this.ticket.status || '';
 
+
       this.editPriority =
         this.ticket.priority || '';
     }
+
 
     this.isEditing = false;
 
@@ -244,20 +418,30 @@ export class TicketDetails implements OnInit {
 
     this.successMessage = '';
 
+
     this.cdr.detectChanges();
   }
 
-  // ==============================
+
+  // ============================================
   // SAVE CHANGES
-  // ==============================
+  // ============================================
 
   saveChanges(): void {
 
-    if (!this.ticket || !this.ticketId) {
+    // Make sure ticket and ID exist
+    if (
+      !this.ticket ||
+      this.ticketId === null
+    ) {
       return;
     }
 
-    // Basic validation
+
+    // ==========================================
+    // STATUS VALIDATION
+    // ==========================================
+
     if (!this.editStatus) {
 
       this.errorMessage =
@@ -265,6 +449,11 @@ export class TicketDetails implements OnInit {
 
       return;
     }
+
+
+    // ==========================================
+    // PRIORITY VALIDATION
+    // ==========================================
 
     if (!this.editPriority) {
 
@@ -274,23 +463,38 @@ export class TicketDetails implements OnInit {
       return;
     }
 
+
     this.saving = true;
 
     this.errorMessage = '';
 
     this.successMessage = '';
 
-    // IMPORTANT:
-    // Only status and priority are sent.
+
+    // ==========================================
+    // UPDATE DATA
+    // ==========================================
+
     const updateData = {
-      status: this.editStatus,
-      priority: this.editPriority
+
+      status:
+        this.editStatus,
+
+      priority:
+        this.editPriority
     };
+
 
     console.log(
       'Updating ticket:',
+      this.ticketId,
       updateData
     );
+
+
+    // ==========================================
+    // UPDATE API
+    // ==========================================
 
     this.ticketService
       .updateTicket(
@@ -299,95 +503,175 @@ export class TicketDetails implements OnInit {
       )
       .subscribe({
 
-        next: (response: any) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any
+        ) => {
 
           console.log(
             'Ticket update response:',
             response
           );
 
+
           this.saving = false;
 
           this.isEditing = false;
 
+
           this.successMessage =
             'Ticket updated successfully.';
 
-          /*
-           * Reload from backend instead of manually
-           * changing the ticket object.
-           *
-           * This ensures the UI displays the actual
-           * saved values from Django.
-           */
+
+          // Reload actual backend data
           this.loadTicket(
             this.ticketId!
           );
 
+
           this.cdr.detectChanges();
         },
 
-        error: (error: any) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'TICKET UPDATE ERROR:',
             error
           );
 
+
           this.saving = false;
 
-          if (error.status === 400) {
+
+          // ====================================
+          // 400
+          // ====================================
+
+          if (
+            error.status === 400
+          ) {
 
             this.errorMessage =
               'Invalid ticket data. Please check the selected values.';
+          }
 
-          } else if (error.status === 401) {
+
+          // ====================================
+          // 401
+          // ====================================
+
+          else if (
+            error.status === 401
+          ) {
 
             this.errorMessage =
               'Authentication is required to update this ticket.';
+          }
 
-          } else if (error.status === 403) {
+
+          // ====================================
+          // 403
+          // ====================================
+
+          else if (
+            error.status === 403
+          ) {
 
             this.errorMessage =
               'You do not have permission to update this ticket.';
+          }
 
-          } else if (error.status === 404) {
+
+          // ====================================
+          // 404
+          // ====================================
+
+          else if (
+            error.status === 404
+          ) {
 
             this.errorMessage =
               'Ticket was not found.';
+          }
 
-          } else if (error.status === 0) {
+
+          // ====================================
+          // 500
+          // ====================================
+
+          else if (
+            error.status === 500
+          ) {
+
+            this.errorMessage =
+              'Server error while updating ticket.';
+          }
+
+
+          // ====================================
+          // CONNECTION ERROR
+          // ====================================
+
+          else if (
+            error.status === 0
+          ) {
 
             this.errorMessage =
               'Unable to connect to the backend server.';
+          }
 
-          } else {
+
+          // ====================================
+          // OTHER
+          // ====================================
+
+          else {
 
             this.errorMessage =
               `Unable to update ticket. Server returned ${error.status}.`;
           }
 
+
           this.cdr.detectChanges();
         }
+
       });
   }
 
-  // ==============================
-  // FORMAT STATUS
-  // ==============================
 
-  formatStatus(status: string): string {
+  // ============================================
+  // FORMAT STATUS
+  // ============================================
+
+  formatStatus(
+    status: string
+  ): string {
 
     if (!status) {
       return '';
     }
 
-    return status.replace(/_/g, ' ');
+
+    return status.replace(
+      /_/g,
+      ' '
+    );
   }
 
-  // ==============================
-  // BACK
-  // ==============================
+
+  // ============================================
+  // BACK TO TICKETS
+  // ============================================
 
   goBack(): void {
 
@@ -395,4 +679,5 @@ export class TicketDetails implements OnInit {
       '/tickets'
     ]);
   }
+
 }

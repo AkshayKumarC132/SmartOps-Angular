@@ -1,4 +1,5 @@
 export interface Ticket {
+
   id: number;
 
   ticket_id: string;
@@ -9,21 +10,25 @@ export interface Ticket {
 
   summary: string;
 
-  category: any;
+  category: string;
 
   priority: string;
 
   status: string;
 
-  assigned_to: any;
-
-  team: any;
-
-  tags: any[];
-
-  attachments: any[];
-
   storage_type: string;
 
+  assigned_to?: string | null;
+
+  team?: string | null;
+
+  tags?: any[];
+
   is_locked: boolean;
+
+  attachments?: any[];
+
+  created_at: string;
+
+  updated_at: string;
 }

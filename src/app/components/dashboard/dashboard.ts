@@ -1,12 +1,27 @@
 import {
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+
+import {
+  NavigationEnd,
+  Router
+} from '@angular/router';
+
 import { HttpClient } from '@angular/common/http';
+
+import {
+  Subject
+} from 'rxjs';
+
+import {
+  filter,
+  takeUntil
+} from 'rxjs/operators';
 
 import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
@@ -32,6 +47,10 @@ interface TicketActivity {
 }
 
 
+// ============================================
+// DASHBOARD COMPONENT
+// ============================================
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -41,7 +60,8 @@ interface TicketActivity {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
+
 
   // ============================================
   // USER
@@ -80,6 +100,14 @@ export class Dashboard implements OnInit {
 
 
   // ============================================
+  // DESTROY SUBJECT
+  // ============================================
+
+  private destroy$ =
+    new Subject<void>();
+
+
+  // ============================================
   // CONSTRUCTOR
   // ============================================
 
@@ -98,8 +126,97 @@ export class Dashboard implements OnInit {
 
   ngOnInit(): void {
 
+    console.log(
+      'Dashboard component initialized'
+    );
+
+
+    // ==========================================
+    // GET CURRENT USER
+    // ==========================================
+
     this.user =
       this.authService.getUser();
+
+
+    // ==========================================
+    // INITIAL DATA LOAD
+    // ==========================================
+
+    this.loadDashboardData();
+
+
+    // ==========================================
+    // REFRESH WHEN DASHBOARD IS OPENED
+    // ==========================================
+
+    this.router.events
+      .pipe(
+        filter(
+          (
+            event
+          ): event is NavigationEnd =>
+            event instanceof NavigationEnd
+        ),
+        takeUntil(
+          this.destroy$
+        )
+      )
+      .subscribe(
+        (
+          event: NavigationEnd
+        ) => {
+
+          console.log(
+            'Navigation detected:',
+            event.urlAfterRedirects
+          );
+
+
+          if (
+            event.urlAfterRedirects ===
+            '/dashboard'
+          ) {
+
+            console.log(
+              'Dashboard opened - refreshing dashboard data'
+            );
+
+            this.loadDashboardData();
+          }
+
+        }
+      );
+  }
+
+
+  // ============================================
+  // DESTROY COMPONENT
+  // ============================================
+
+  ngOnDestroy(): void {
+
+    console.log(
+      'Dashboard component destroyed'
+    );
+
+
+    this.destroy$.next();
+
+    this.destroy$.complete();
+  }
+
+
+  // ============================================
+  // LOAD COMPLETE DASHBOARD
+  // ============================================
+
+  loadDashboardData(): void {
+
+    console.log(
+      'Loading dashboard data...'
+    );
+
 
     this.loadTickets();
 
@@ -109,7 +226,6 @@ export class Dashboard implements OnInit {
 
     this.loadUsers();
 
-    // Load Audit Log / Recent Activity
     this.loadAuditActivities();
   }
 
@@ -168,15 +284,17 @@ export class Dashboard implements OnInit {
 
 
   // ============================================
-  // URGENT TICKETS
+  // CRITICAL TICKETS
   // ============================================
 
-  get urgentTickets(): number {
+  get CriticalTickets(): number {
 
     return this.tickets.filter(
       ticket =>
-        ticket.priority?.toLowerCase() ===
-        'urgent'
+        String(
+          ticket.priority || ''
+        ).toLowerCase() ===
+        'critical'
     ).length;
   }
 
@@ -214,12 +332,23 @@ export class Dashboard implements OnInit {
   // ============================================
   // RECENT TICKETS
   // ============================================
+get recentTickets(): Ticket[] {
 
-  get recentTickets(): Ticket[] {
+  return [...this.tickets]
+    .sort((a: any, b: any) => {
 
-    return this.tickets.slice(0, 5);
-  }
+      const dateA = a.created_at
+        ? new Date(a.created_at).getTime()
+        : 0;
 
+      const dateB = b.created_at
+        ? new Date(b.created_at).getTime()
+        : 0;
+
+      return dateB - dateA;
+    })
+    .slice(0, 5);
+}
 
   // ============================================
   // LOAD TICKETS
@@ -227,54 +356,125 @@ export class Dashboard implements OnInit {
 
   loadTickets(): void {
 
+    console.log(
+      'Loading tickets for dashboard...'
+    );
+
+
     this.loading = true;
 
     this.errorMessage = '';
+
 
     this.ticketService
       .getTickets()
       .subscribe({
 
-        next: (response) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: Ticket[]
+        ) => {
 
           console.log(
-            'Tickets API Response:',
+            'Dashboard Tickets API Response:',
             response
           );
 
-          this.tickets = response;
+
+          // Make sure response is an array
+          if (
+            Array.isArray(response)
+          ) {
+
+            this.tickets =
+              response;
+
+          } else {
+
+            this.tickets = [];
+          }
+
+
+          console.log(
+            'Dashboard ticket count:',
+            this.tickets.length
+          );
+
+
+          // Debug priority values
+          console.log(
+            'Dashboard ticket priorities:',
+            this.tickets.map(
+              ticket => ({
+                id: ticket.id,
+                ticket_id:
+                  (ticket as any).ticket_id,
+                priority:
+                  ticket.priority
+              })
+            )
+          );
+
+
+          // Debug Critical count
+          console.log(
+            'Critical ticket count:',
+            this.CriticalTickets
+          );
+
 
           this.loading = false;
 
           this.cdr.detectChanges();
         },
 
-        error: (error) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'Tickets API Error:',
             error
           );
 
+
           this.loading = false;
 
-          if (error.status === 401) {
+          this.tickets = [];
+
+
+          if (
+            error.status === 401
+          ) {
 
             this.errorMessage =
               'Authentication failed. Please login again.';
 
-          } else if (
+          }
+
+          else if (
             error.status === 403
           ) {
 
             this.errorMessage =
               'You do not have permission to view tickets.';
 
-          } else {
+          }
+
+          else {
 
             this.errorMessage =
               'Unable to load tickets from the server.';
           }
+
 
           this.cdr.detectChanges();
         }
@@ -293,24 +493,50 @@ export class Dashboard implements OnInit {
       .getTeams()
       .subscribe({
 
-        next: (response) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any[]
+        ) => {
 
           console.log(
             'Dashboard Teams Response:',
             response
           );
 
-          this.teams = response;
+
+          if (
+            Array.isArray(response)
+          ) {
+
+            this.teams =
+              response;
+
+          } else {
+
+            this.teams = [];
+          }
+
 
           this.cdr.detectChanges();
         },
 
-        error: (error) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'Dashboard Teams Error:',
             error
           );
+
 
           this.teams = [];
 
@@ -333,39 +559,64 @@ export class Dashboard implements OnInit {
       )
       .subscribe({
 
-        next: (response) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any
+        ) => {
 
           console.log(
             'Dashboard KB Articles Response:',
             response
           );
 
-          if (Array.isArray(response)) {
 
-            this.kbArticles = response;
+          if (
+            Array.isArray(response)
+          ) {
 
-          } else if (
+            this.kbArticles =
+              response;
+
+          }
+
+          else if (
             response &&
-            Array.isArray(response.results)
+            Array.isArray(
+              response.results
+            )
           ) {
 
             this.kbArticles =
               response.results;
 
-          } else {
+          }
+
+          else {
 
             this.kbArticles = [];
           }
 
+
           this.cdr.detectChanges();
         },
 
-        error: (error) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'Dashboard KB Articles Error:',
             error
           );
+
 
           this.kbArticles = [];
 
@@ -388,15 +639,22 @@ export class Dashboard implements OnInit {
       )
       .subscribe({
 
-        next: (response) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any
+        ) => {
 
           console.log(
             'Dashboard Users Response:',
             response
           );
 
+
           /*
-           * Django REST Framework can return either:
+           * Django REST Framework can return:
            *
            * 1. Direct array
            *
@@ -404,6 +662,7 @@ export class Dashboard implements OnInit {
            *   {...},
            *   {...}
            * ]
+           *
            *
            * 2. Paginated response
            *
@@ -413,41 +672,62 @@ export class Dashboard implements OnInit {
            * }
            */
 
-          if (Array.isArray(response)) {
+
+          if (
+            Array.isArray(response)
+          ) {
 
             this.totalUsers =
               response.length;
 
-          } else if (
+          }
+
+          else if (
             response &&
-            typeof response.count === 'number'
+            typeof response.count ===
+            'number'
           ) {
 
             this.totalUsers =
               response.count;
 
-          } else if (
+          }
+
+          else if (
             response &&
-            Array.isArray(response.results)
+            Array.isArray(
+              response.results
+            )
           ) {
 
             this.totalUsers =
               response.results.length;
 
-          } else {
+          }
+
+          else {
 
             this.totalUsers = 0;
           }
 
+
           this.cdr.detectChanges();
         },
 
-        error: (error) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'Dashboard Users Error:',
             error
           );
+
 
           this.totalUsers = 0;
 
@@ -468,7 +748,13 @@ export class Dashboard implements OnInit {
       .getAuditActivities()
       .subscribe({
 
-        next: (response: any[]) => {
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        next: (
+          response: any[]
+        ) => {
 
           console.log(
             'Dashboard Audit Activity Response:',
@@ -476,26 +762,40 @@ export class Dashboard implements OnInit {
           );
 
 
-          // Make sure response is an array
-          if (Array.isArray(response)) {
+          if (
+            Array.isArray(response)
+          ) {
 
             /*
              * Sort newest activity first.
              *
-             * Backend currently returns activities
+             * Backend may return activities
              * ordered by created_at ascending,
              * so we reverse the order here.
              */
 
-            this.auditActivities = response
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at).getTime() -
-                  new Date(a.created_at).getTime()
-              )
-              .slice(0, 5);
+            this.auditActivities =
+              response
+                .sort(
+                  (
+                    a,
+                    b
+                  ) =>
+                    new Date(
+                      b.created_at
+                    ).getTime() -
+                    new Date(
+                      a.created_at
+                    ).getTime()
+                )
+                .slice(
+                  0,
+                  5
+                );
 
-          } else {
+          }
+
+          else {
 
             this.auditActivities = [];
           }
@@ -504,12 +804,20 @@ export class Dashboard implements OnInit {
           this.cdr.detectChanges();
         },
 
-        error: (error) => {
+
+        // ======================================
+        // ERROR
+        // ======================================
+
+        error: (
+          error: any
+        ) => {
 
           console.error(
             'Dashboard Audit Activity Error:',
             error
           );
+
 
           this.auditActivities = [];
 
@@ -524,7 +832,9 @@ export class Dashboard implements OnInit {
   // OPEN TICKET
   // ============================================
 
-  openTicket(id: number): void {
+  openTicket(
+    id: number
+  ): void {
 
     this.router.navigate([
       '/ticket',
