@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
+
 import {
   ActivatedRoute,
   Router
@@ -177,7 +178,6 @@ export class KnowledgeBaseDetails
       this.cdr.detectChanges();
 
       return;
-
     }
 
 
@@ -386,9 +386,13 @@ export class KnowledgeBaseDetails
 
 
     this.router.navigate([
+
       '/knowledge-base',
+
       this.article.id,
+
       'edit'
+
     ]);
 
   }
@@ -417,8 +421,11 @@ export class KnowledgeBaseDetails
 
 
     return (
+
       status === 'published' ||
+
       status === 'publish'
+
     );
 
   }
@@ -462,15 +469,36 @@ export class KnowledgeBaseDetails
   //     ↓
   // Draft
   //
-  // This uses the existing backend /unpublish/ endpoint.
+  // IMPORTANT:
+  // Do NOT call:
+  //
+  // POST /kb/articles/{id}/unpublish/
+  //
+  // because that backend endpoint deletes the article.
+  //
+  // Instead use the existing article update endpoint:
+  //
+  // PATCH /kb/articles/{id}/
+  //
+  // Payload:
+  //
+  // {
+  //   status: "draft"
+  // }
+  //
+  // NO BACKEND CHANGES.
   // =======================================================
 
   unpublishArticle(): void {
 
     if (
+
       !this.article ||
+
       this.unpublishing ||
+
       this.publishing
+
     ) {
 
       return;
@@ -480,7 +508,9 @@ export class KnowledgeBaseDetails
 
     const confirmed =
       window.confirm(
+
         'Are you sure you want to unpublish this article? It will be moved to Draft.'
+
       );
 
 
@@ -498,8 +528,19 @@ export class KnowledgeBaseDetails
       this.article.id;
 
 
+    // IMPORTANT:
+    // Use normal article PATCH endpoint.
+    // Do NOT use /unpublish/.
+
     const url =
-      `${this.apiUrl}${articleId}/unpublish/`;
+      `${this.apiUrl}${articleId}/`;
+
+
+    const payload = {
+
+      status: 'draft'
+
+    };
 
 
     console.log(
@@ -514,11 +555,22 @@ export class KnowledgeBaseDetails
     );
 
 
+    console.log(
+      'Unpublish payload:',
+      payload
+    );
+
+
     this.http
-      .post<any>(
+
+      .patch<any>(
+
         url,
-        {}
+
+        payload
+
       )
+
       .subscribe({
 
         // =================================================
@@ -536,14 +588,8 @@ export class KnowledgeBaseDetails
           this.unpublishing = false;
 
 
-          /*
-           * IMPORTANT:
-           *
-           * Do NOT remove the article.
-           *
-           * Keep the existing article and
-           * only change its status.
-           */
+          // Keep the article.
+          // Only change its publication state.
 
           if (this.article) {
 
@@ -551,30 +597,11 @@ export class KnowledgeBaseDetails
 
               ...this.article,
 
+              ...(response || {}),
+
               status: 'draft',
 
               published_at: null
-
-            };
-
-          }
-
-
-          /*
-           * Use backend status if it returns one.
-           */
-
-          if (
-            response?.status &&
-            this.article
-          ) {
-
-            this.article = {
-
-              ...this.article,
-
-              status:
-                response.status
 
             };
 
@@ -643,6 +670,7 @@ export class KnowledgeBaseDetails
 
           }
 
+
           else if (
             error.error?.message
           ) {
@@ -651,6 +679,7 @@ export class KnowledgeBaseDetails
               error.error.message;
 
           }
+
 
           else if (
             typeof error.error === 'string'
@@ -685,21 +714,29 @@ export class KnowledgeBaseDetails
   //     ↓
   // Published
   //
-  // FRONTEND ONLY:
-  //
-  // Uses existing:
+  // Existing backend endpoint:
   //
   // PATCH /kb/articles/{id}/
   //
-  // No backend changes required.
+  // Payload:
+  //
+  // {
+  //   status: "published"
+  // }
+  //
+  // NO BACKEND CHANGES.
   // =======================================================
 
   publishArticle(): void {
 
     if (
+
       !this.article ||
+
       this.publishing ||
+
       this.unpublishing
+
     ) {
 
       return;
@@ -726,15 +763,6 @@ export class KnowledgeBaseDetails
     const articleId =
       this.article.id;
 
-
-    // -----------------------------------------------------
-    // EXISTING ARTICLE DETAIL ENDPOINT
-    //
-    // PATCH /kb/articles/{id}/
-    //
-    // The uploaded urls.py confirms PATCH is supported
-    // on this endpoint.
-    // -----------------------------------------------------
 
     const url =
       `${this.apiUrl}${articleId}/`;
@@ -766,10 +794,15 @@ export class KnowledgeBaseDetails
 
 
     this.http
+
       .patch<any>(
+
         url,
+
         payload
+
       )
+
       .subscribe({
 
         // =================================================
@@ -788,11 +821,9 @@ export class KnowledgeBaseDetails
 
 
           /*
-           * IMPORTANT:
+           * Keep the existing article.
            *
-           * Keep the same article.
-           *
-           * Only change its status.
+           * Only change publication state.
            */
 
           if (this.article) {
@@ -801,7 +832,9 @@ export class KnowledgeBaseDetails
 
               ...this.article,
 
-              status: 'published',
+              status:
+                response?.status ||
+                'published',
 
               published_at:
                 response?.published_at ??
@@ -814,17 +847,18 @@ export class KnowledgeBaseDetails
 
 
           /*
-           * If the backend returns the updated
+           * If backend returns the updated
            * article, merge the response.
-           *
-           * This keeps title/content/etc. fresh.
            */
 
           if (
+
             response &&
+
             typeof response === 'object' &&
-            response.id &&
+
             this.article
+
           ) {
 
             this.article = {
@@ -922,6 +956,7 @@ export class KnowledgeBaseDetails
 
           }
 
+
           else if (
             error.error?.message
           ) {
@@ -930,6 +965,7 @@ export class KnowledgeBaseDetails
               error.error.message;
 
           }
+
 
           else if (
             typeof error.error === 'string'
@@ -960,14 +996,21 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   submitFeedback(
+
     type:
+
       'like' |
+
       'dislike'
+
   ): void {
 
     if (
+
       !this.article ||
+
       this.feedbackSubmitted
+
     ) {
 
       return;
@@ -985,7 +1028,9 @@ export class KnowledgeBaseDetails
      */
 
     if (
+
       type === 'like'
+
     ) {
 
       this.article = {
@@ -993,6 +1038,7 @@ export class KnowledgeBaseDetails
         ...this.article,
 
         like_count:
+
           this.getLikes(
             this.article
           ) + 1
@@ -1009,6 +1055,7 @@ export class KnowledgeBaseDetails
         ...this.article,
 
         dislike_count:
+
           this.getDislikes(
             this.article
           ) + 1
@@ -1028,9 +1075,13 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   formatStatus(
+
     status:
+
       string |
+
       undefined
+
   ): string {
 
     if (!status) {
@@ -1061,10 +1112,15 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   formatDate(
+
     date:
+
       string |
+
       null |
+
       undefined
+
   ): string {
 
     if (!date) {
@@ -1079,9 +1135,11 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       isNaN(
         parsedDate.getTime()
       )
+
     ) {
 
       return '—';
@@ -1090,7 +1148,9 @@ export class KnowledgeBaseDetails
 
 
     return parsedDate.toLocaleDateString(
+
       'en-IN',
+
       {
 
         day: 'numeric',
@@ -1100,6 +1160,7 @@ export class KnowledgeBaseDetails
         year: 'numeric'
 
       }
+
     );
 
   }
@@ -1110,7 +1171,9 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   getAuthor(
+
     article: KBArticle
+
   ): string {
 
     const author =
@@ -1125,7 +1188,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       typeof author === 'string'
+
     ) {
 
       return author;
@@ -1134,7 +1199,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       typeof author === 'object'
+
     ) {
 
       return (
@@ -1162,11 +1229,15 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   getLikes(
+
     article: KBArticle
+
   ): number {
 
     if (
+
       typeof article.likes === 'number'
+
     ) {
 
       return article.likes;
@@ -1175,7 +1246,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       typeof article.like_count === 'number'
+
     ) {
 
       return article.like_count;
@@ -1193,11 +1266,15 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   getDislikes(
+
     article: KBArticle
+
   ): number {
 
     if (
+
       typeof article.dislikes === 'number'
+
     ) {
 
       return article.dislikes;
@@ -1206,7 +1283,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       typeof article.dislike_count === 'number'
+
     ) {
 
       return article.dislike_count;
@@ -1224,7 +1303,9 @@ export class KnowledgeBaseDetails
   // =======================================================
 
   getTags(
+
     article: KBArticle
+
   ): string[] {
 
     if (!article.tags) {
@@ -1235,7 +1316,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       Array.isArray(article.tags)
+
     ) {
 
       return article.tags;
@@ -1244,7 +1327,9 @@ export class KnowledgeBaseDetails
 
 
     if (
+
       typeof article.tags === 'string'
+
     ) {
 
       return article.tags
@@ -1252,13 +1337,19 @@ export class KnowledgeBaseDetails
         .split(',')
 
         .map(
+
           tag =>
+
             tag.trim()
+
         )
 
         .filter(
+
           tag =>
+
             !!tag
+
         );
 
     }
