@@ -1,542 +1,729 @@
 <div class="ticket-details-page">
 
-  <!-- ============================================
-       PAGE HEADER
-       ============================================ -->
+  <!-- =====================================================
+       TOP HEADER
+       ===================================================== -->
 
-  <div class="page-header">
+  <div class="ticket-topbar">
 
-    <div>
+    <button
+      type="button"
+      class="back-link"
+      (click)="goBack()"
+    >
+      <span class="back-arrow">←</span>
+      <span>Back</span>
+    </button>
 
-      <h1>
-        Ticket Details
-      </h1>
-
-      <p>
-        View complete information about this ticket
-      </p>
-
+    <div
+      class="top-ticket-id"
+      *ngIf="ticket"
+    >
+      {{ ticket.ticket_id }}
     </div>
 
-    <div class="header-actions">
+    <div
+      class="top-status-area"
+      *ngIf="ticket"
+    >
+      <span
+        class="top-status-dot"
+        [ngClass]="ticket.status"
+      ></span>
 
-      <button
-        type="button"
-        class="back-button"
-        (click)="goBack()"
-      >
-        ← Back to Tickets
-      </button>
-
+      <span class="top-status-text">
+        {{ formatStatus(ticket.status) }}
+      </span>
     </div>
 
   </div>
 
 
-  <!-- ============================================
+  <!-- =====================================================
        LOADING
-       ============================================ -->
+       ===================================================== -->
 
   <div
     *ngIf="loading"
-    class="state-message"
+    class="state-card"
   >
-    Loading ticket details...
+    <div class="loading-spinner"></div>
+
+    <div>
+      <strong>Loading ticket</strong>
+      <p>Loading ticket details...</p>
+    </div>
   </div>
 
 
-  <!-- ============================================
+  <!-- =====================================================
        ERROR
-       ============================================ -->
+       ===================================================== -->
 
   <div
     *ngIf="!loading && errorMessage"
-    class="error-message"
+    class="error-card"
   >
-    {{ errorMessage }}
+    <div class="error-icon">!</div>
+
+    <div>
+      <strong>Unable to load ticket</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
   </div>
 
 
-  <!-- ============================================
+  <!-- =====================================================
        SUCCESS
-       ============================================ -->
+       ===================================================== -->
 
   <div
     *ngIf="!loading && successMessage"
     class="success-message"
   >
+    <span>✓</span>
     {{ successMessage }}
   </div>
 
 
-  <!-- ============================================
-       TICKET
-       ============================================ -->
+  <!-- =====================================================
+       MAIN CONTENT
+       ===================================================== -->
 
   <div
     *ngIf="!loading && ticket"
-    class="details-card"
+    class="ticket-layout"
   >
 
-    <!-- ==========================================
-         DETAILS HEADER
-         ========================================== -->
-
-    <div class="details-header">
-
-      <div>
-
-        <span class="ticket-number">
-          Ticket #{{ ticket.ticket_id }}
-        </span>
-
-        <h2>
-          {{ ticket.ticket_name }}
-        </h2>
-
-      </div>
-
-
-      <!-- HEADER STATUS -->
-
-      <span
-        *ngIf="!isEditing"
-        class="status-badge"
-        [ngClass]="ticket.status"
-      >
-        {{ formatStatus(ticket.status) }}
-      </span>
-
-    </div>
-
-
-    <!-- ==========================================
-         DETAILS BODY
-         ========================================== -->
-
-    <div class="details-body">
-
-
-      <!-- ========================================
-           TICKET ID
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Ticket ID
-        </label>
-
-        <div class="detail-value">
-          {{ ticket.ticket_id }}
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           TICKET NAME
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Ticket Name
-        </label>
-
-        <div class="detail-value">
-          {{ ticket.ticket_name }}
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           STATUS
-           EDITABLE
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Status
-        </label>
-
-        <div
-          *ngIf="!isEditing"
-          class="detail-value"
-        >
-
-          <span
-            class="status-badge"
-            [ngClass]="ticket.status"
-          >
-            {{ formatStatus(ticket.status) }}
-          </span>
-
-        </div>
-
-
-        <!-- EDIT STATUS -->
-
-        <select
-          *ngIf="isEditing"
-          class="edit-select"
-          [(ngModel)]="editStatus"
-        >
-
-          <option
-            *ngFor="let status of statusOptions"
-            [value]="status"
-          >
-            {{ formatStatus(status) }}
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <!-- ========================================
-           PRIORITY
-           EDITABLE
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Priority
-        </label>
-
-        <div
-          *ngIf="!isEditing"
-          class="detail-value"
-        >
-
-          <span
-            class="priority-badge"
-            [ngClass]="ticket.priority?.toLowerCase()"
-          >
-            {{ ticket.priority }}
-          </span>
-
-        </div>
-
-
-        <!-- EDIT PRIORITY -->
-
-        <select
-          *ngIf="isEditing"
-          class="edit-select"
-          [(ngModel)]="editPriority"
-        >
-
-          <option
-            *ngFor="let priority of priorityOptions"
-            [value]="priority"
-          >
-            {{ priority }}
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <!-- ========================================
-           CATEGORY
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Category
-        </label>
-
-        <div class="detail-value">
-
-          {{ ticket.category || 'No category' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           TEAM
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Team
-        </label>
-
-        <div class="detail-value">
-
-          {{ ticket.team || 'No team assigned' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           ASSIGNED USER
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Assigned To
-        </label>
-
-        <div class="detail-value">
-
-          {{ ticket.assigned_to || 'Unassigned' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           STORAGE TYPE
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Storage Type
-        </label>
-
-        <div class="detail-value">
-
-          {{ ticket.storage_type || 'N/A' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           LOCK STATUS
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item">
-
-        <label>
-          Lock Status
-        </label>
-
-        <div class="detail-value">
-
-          <span
-            class="lock-badge"
-            [ngClass]="
-              ticket.is_locked
-                ? 'locked'
-                : 'unlocked'
-            "
-          >
-
-            {{
-              ticket.is_locked
-                ? 'Locked'
-                : 'Unlocked'
-            }}
-
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           DESCRIPTION
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item full-width">
-
-        <label>
-          Description
-        </label>
-
-        <div class="detail-value description">
-
-          {{ ticket.description || 'No description' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           SUMMARY
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item full-width">
-
-        <label>
-          Summary
-        </label>
-
-        <div class="detail-value">
-
-          {{ ticket.summary || 'No summary' }}
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           TAGS
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item full-width">
-
-        <label>
-          Tags
-        </label>
-
-        <div class="detail-value">
-
-          <div
-            *ngIf="ticket.tags?.length"
-            class="tags-container"
-          >
-
-            <span
-              *ngFor="let tag of ticket.tags"
-              class="tag"
-            >
-              {{ tag }}
-            </span>
-
-          </div>
-
-          <span
-            *ngIf="!ticket.tags?.length"
-            class="no-value"
-          >
-            No tags
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <!-- ========================================
-           ATTACHMENTS
-           READ ONLY
-           ======================================== -->
-
-      <div class="detail-item full-width">
-
-        <label>
-          Attachments
-        </label>
-
-        <div class="detail-value">
-
-          <div
-            *ngIf="ticket.attachments?.length"
-            class="attachments-container"
-          >
-
-            <div
-              *ngFor="
-                let attachment
-                of ticket.attachments
-              "
-              class="attachment"
-            >
-
-              {{ attachment }}
+    <!-- =================================================
+         LEFT / MAIN CONTENT
+         ================================================= -->
+
+    <main class="ticket-main">
+
+      <!-- ===============================================
+           TICKET HEADER CARD
+           =============================================== -->
+
+      <section class="ticket-card ticket-header-card">
+
+        <div class="ticket-heading">
+
+          <div class="ticket-heading-left">
+
+            <div class="ticket-reference">
+              {{ ticket.ticket_id }}
+            </div>
+
+            <h1>
+              {{ ticket.ticket_name }}
+            </h1>
+
+            <div class="ticket-badges">
+
+              <span
+                class="status-badge"
+                [ngClass]="ticket.status"
+              >
+                {{ formatStatus(ticket.status) }}
+              </span>
+
+              <span
+                class="priority-badge"
+                [ngClass]="ticket.priority?.toLowerCase()"
+              >
+                {{ ticket.priority || 'No Priority' }}
+              </span>
+
+              <span
+                *ngIf="ticket.is_locked"
+                class="lock-badge locked"
+              >
+                🔒 Locked
+              </span>
 
             </div>
 
           </div>
 
-          <span
-            *ngIf="!ticket.attachments?.length"
-            class="no-value"
+          <!-- EDIT BUTTON -->
+
+          <div class="header-action">
+
+            <button
+              *ngIf="!isEditing"
+              type="button"
+              class="edit-button"
+              (click)="startEditing()"
+            >
+              <span>✎</span>
+              Edit Ticket
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           EDIT PANEL
+           =============================================== -->
+
+      <section
+        *ngIf="isEditing"
+        class="ticket-card edit-panel"
+      >
+
+        <div class="section-title-row">
+
+          <div>
+            <h2>Edit Ticket</h2>
+            <p>Update the ticket status and priority.</p>
+          </div>
+
+        </div>
+
+
+        <div class="edit-grid">
+
+          <!-- STATUS -->
+
+          <div class="edit-field">
+
+            <label for="ticket-status">
+              Status
+            </label>
+
+            <select
+              id="ticket-status"
+              class="edit-select"
+              [(ngModel)]="editStatus"
+            >
+              <option
+                *ngFor="let status of statusOptions"
+                [value]="status"
+              >
+                {{ formatStatus(status) }}
+              </option>
+            </select>
+
+          </div>
+
+
+          <!-- PRIORITY -->
+
+          <div class="edit-field">
+
+            <label for="ticket-priority">
+              Priority
+            </label>
+
+            <select
+              id="ticket-priority"
+              class="edit-select"
+              [(ngModel)]="editPriority"
+            >
+              <option
+                *ngFor="let priority of priorityOptions"
+                [value]="priority"
+              >
+                {{ priority }}
+              </option>
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <div class="edit-actions">
+
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="saving"
+            (click)="cancelEditing()"
           >
-            No attachments
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            class="save-button"
+            [disabled]="saving"
+            (click)="saveChanges()"
+          >
+            <span *ngIf="!saving">
+              Save Changes
+            </span>
+
+            <span *ngIf="saving">
+              Saving...
+            </span>
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           DESCRIPTION
+           =============================================== -->
+
+      <section class="ticket-card content-card">
+
+        <div class="section-heading">
+          <div class="section-icon">≡</div>
+
+          <div>
+            <h2>Description</h2>
+            <p>Ticket issue details</p>
+          </div>
+        </div>
+
+        <div class="description-content">
+          {{ ticket.description || 'No description provided.' }}
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           SUMMARY
+           =============================================== -->
+
+      <section class="ticket-card content-card">
+
+        <div class="section-heading">
+          <div class="section-icon">▤</div>
+
+          <div>
+            <h2>Summary</h2>
+            <p>Ticket summary</p>
+          </div>
+        </div>
+
+        <div class="summary-content">
+          {{ ticket.summary || 'No summary available.' }}
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           TAGS
+           =============================================== -->
+
+      <section class="ticket-card content-card">
+
+        <div class="section-heading">
+          <div class="section-icon">#</div>
+
+          <div>
+            <h2>Tags</h2>
+            <p>Ticket classification</p>
+          </div>
+        </div>
+
+
+        <div
+          *ngIf="ticket.tags?.length"
+          class="tags-container"
+        >
+
+          <span
+            *ngFor="let tag of ticket.tags"
+            class="tag"
+          >
+            {{ tag }}
           </span>
 
         </div>
 
-      </div>
 
-    </div>
+        <div
+          *ngIf="!ticket.tags?.length"
+          class="empty-value"
+        >
+          No tags assigned.
+        </div>
 
-
-    <!-- ==========================================
-         ACTIONS
-         ========================================== -->
-
-    <div class="ticket-actions">
-
-      <!-- EDIT -->
-
-      <button
-        *ngIf="!isEditing"
-        type="button"
-        class="edit-button"
-        (click)="startEditing()"
-      >
-        Edit Ticket
-      </button>
+      </section>
 
 
-      <!-- CANCEL -->
+      <!-- ===============================================
+           ATTACHMENTS
+           =============================================== -->
 
-      <button
-        *ngIf="isEditing"
-        type="button"
-        class="cancel-button"
-        [disabled]="saving"
-        (click)="cancelEditing()"
-      >
-        Cancel
-      </button>
+      <section class="ticket-card content-card">
+
+        <div class="section-heading">
+
+          <div class="section-icon">📎</div>
+
+          <div>
+            <h2>Attachments</h2>
+
+            <p>
+              {{ ticket.attachments?.length || 0 }}
+              attachment{{ ticket.attachments?.length === 1 ? '' : 's' }}
+            </p>
+          </div>
+
+        </div>
 
 
-      <!-- SAVE -->
+        <div
+          *ngIf="ticket.attachments?.length"
+          class="attachments-container"
+        >
 
-      <button
-        *ngIf="isEditing"
-        type="button"
-        class="save-button"
-        [disabled]="saving"
-        (click)="saveChanges()"
-      >
+          <div
+            *ngFor="let attachment of ticket.attachments"
+            class="attachment"
+          >
 
-        <span *ngIf="!saving">
-          Save Changes
-        </span>
+            <div class="attachment-icon">
+              📄
+            </div>
 
-        <span *ngIf="saving">
-          Saving...
-        </span>
+            <div class="attachment-name">
+              {{ attachment }}
+            </div>
 
-      </button>
+          </div>
 
-    </div>
+        </div>
+
+
+        <div
+          *ngIf="!ticket.attachments?.length"
+          class="empty-value"
+        >
+          No attachments available.
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- =================================================
+         RIGHT SIDEBAR
+         ================================================= -->
+
+    <aside class="ticket-sidebar">
+
+
+      <!-- ===============================================
+           DETAILS
+           =============================================== -->
+
+      <section class="sidebar-card">
+
+        <div class="sidebar-title">
+          Details
+        </div>
+
+
+        <!-- REQUESTER -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Requester
+          </span>
+
+          <span class="sidebar-value">
+            {{
+              ticket.created_by ||
+              ticket.requester ||
+              '—'
+            }}
+          </span>
+
+        </div>
+
+
+        <!-- ASSIGNED -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Assigned to
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.assigned_to || '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- TEAM -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Team
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.team || '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- CATEGORY -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Category
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.category || '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- PRIORITY -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Priority
+          </span>
+
+          <span class="sidebar-value">
+
+            <span
+              class="small-priority"
+              [ngClass]="ticket.priority?.toLowerCase()"
+            >
+              {{ ticket.priority || '—' }}
+            </span>
+
+          </span>
+
+        </div>
+
+
+        <!-- CREATED -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Created
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.created_at ? (ticket.created_at | date:'medium') : '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- UPDATED -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Updated
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.updated_at ? (ticket.updated_at | date:'medium') : '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- STORAGE -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Storage
+          </span>
+
+          <span class="sidebar-value">
+            {{ ticket.storage_type || '—' }}
+          </span>
+
+        </div>
+
+
+        <!-- LOCK -->
+
+        <div class="sidebar-row">
+
+          <span class="sidebar-label">
+            Lock status
+          </span>
+
+          <span class="sidebar-value">
+
+            <span
+              class="small-lock"
+              [ngClass]="ticket.is_locked ? 'locked' : 'unlocked'"
+            >
+              {{ ticket.is_locked ? 'Locked' : 'Unlocked' }}
+            </span>
+
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           ASSIGNMENT
+           =============================================== -->
+
+      <section class="sidebar-card assignment-card">
+
+        <div class="sidebar-title">
+          Assignment
+        </div>
+
+
+        <div class="current-assignment">
+
+          <div class="assignment-avatar">
+            {{
+              (ticket.assigned_to || 'U').charAt(0).toUpperCase()
+            }}
+          </div>
+
+          <div>
+
+            <div class="assignment-name">
+              {{ ticket.assigned_to || 'Unassigned' }}
+            </div>
+
+            <div class="assignment-team">
+              {{ ticket.team || 'No team assigned' }}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="assign-button"
+          *ngIf="ticket.assigned_to"
+        >
+          Assigned
+        </button>
+
+
+        <div
+          *ngIf="!ticket.assigned_to"
+          class="unassigned-message"
+        >
+          This ticket is currently unassigned.
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           STATUS
+           =============================================== -->
+
+      <section class="sidebar-card">
+
+        <div class="sidebar-title">
+          Current Status
+        </div>
+
+
+        <div class="sidebar-status">
+
+          <span
+            class="large-status-dot"
+            [ngClass]="ticket.status"
+          ></span>
+
+          <div>
+
+            <strong>
+              {{ formatStatus(ticket.status) }}
+            </strong>
+
+            <span>
+              Current ticket status
+            </span>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           QUICK INFORMATION
+           =============================================== -->
+
+      <section class="sidebar-card">
+
+        <div class="sidebar-title">
+          Ticket Information
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Ticket ID
+          </span>
+
+          <strong>
+            {{ ticket.ticket_id }}
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Database ID
+          </span>
+
+          <strong>
+            {{ ticket.id || ticketId }}
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Category
+          </span>
+
+          <strong>
+            {{ ticket.category || '—' }}
+          </strong>
+
+        </div>
+
+      </section>
+
+    </aside>
 
   </div>
 
