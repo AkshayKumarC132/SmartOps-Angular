@@ -41,14 +41,11 @@ export class UserManagement implements OnInit {
 
   selectedRole = 'All';
 
-
   showInviteModal = false;
 
   showEditModal = false;
 
-
   editingUser: User | null = null;
-
 
   userForm = {
     email: '',
@@ -69,9 +66,38 @@ export class UserManagement implements OnInit {
 
 
   ngOnInit(): void {
-
     this.loadUsers();
+  }
 
+
+  /* =====================================================
+     AI ACCESS RULE
+     ===================================================== */
+
+  canUseAI(role?: string): boolean {
+
+    const normalizedRole = String(role || '')
+      .trim()
+      .toLowerCase();
+
+    return (
+      normalizedRole === 'admin' ||
+      normalizedRole === 'team member' ||
+      normalizedRole === 'teammate'
+    );
+  }
+
+
+  /* =====================================================
+     NORMALIZE AI ACCESS
+     ===================================================== */
+
+  private normalizeAIAccess(user: User): User {
+
+    user.is_ai_enabled =
+      this.canUseAI(user.role);
+
+    return user;
   }
 
 
@@ -80,10 +106,6 @@ export class UserManagement implements OnInit {
      ===================================================== */
 
   private getLoggedInUser(): any {
-
-    /*
-     * First check the common keys.
-     */
 
     const commonKeys = [
       'user',
@@ -107,10 +129,8 @@ export class UserManagement implements OnInit {
       const result =
         this.readLocalStorageValue(key);
 
-
       const user =
         this.extractUserObject(result);
-
 
       if (user) {
 
@@ -120,16 +140,9 @@ export class UserManagement implements OnInit {
         );
 
         return user;
-
       }
-
     }
 
-
-    /*
-     * If the application uses a different key,
-     * scan every localStorage item.
-     */
 
     for (
       let index = 0;
@@ -140,7 +153,6 @@ export class UserManagement implements OnInit {
       const key =
         localStorage.key(index);
 
-
       if (!key) {
         continue;
       }
@@ -149,10 +161,8 @@ export class UserManagement implements OnInit {
       const value =
         this.readLocalStorageValue(key);
 
-
       const user =
         this.findUserInsideObject(value);
-
 
       if (user) {
 
@@ -162,19 +172,12 @@ export class UserManagement implements OnInit {
         );
 
         return user;
-
       }
-
     }
 
 
-    /*
-     * Finally try JWT tokens.
-     */
-
     const jwtUser =
       this.findUserFromJwt();
-
 
     if (jwtUser) {
 
@@ -184,7 +187,6 @@ export class UserManagement implements OnInit {
       );
 
       return jwtUser;
-
     }
 
 
@@ -192,9 +194,7 @@ export class UserManagement implements OnInit {
       'Unable to determine logged-in user from frontend storage.'
     );
 
-
     return null;
-
   }
 
 
@@ -211,11 +211,8 @@ export class UserManagement implements OnInit {
       const value =
         localStorage.getItem(key);
 
-
       if (!value) {
-
         return null;
-
       }
 
 
@@ -223,28 +220,20 @@ export class UserManagement implements OnInit {
 
         return JSON.parse(value);
 
-      }
-
-      catch {
+      } catch {
 
         return value;
-
       }
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
       console.warn(
         `Unable to read localStorage key "${key}"`,
         error
       );
 
-
       return null;
-
     }
-
   }
 
 
@@ -257,15 +246,9 @@ export class UserManagement implements OnInit {
   ): any {
 
     if (!value) {
-
       return null;
-
     }
 
-
-    /*
-     * Direct user object.
-     */
 
     if (
       typeof value === 'object' &&
@@ -280,13 +263,8 @@ export class UserManagement implements OnInit {
       ) {
 
         return value;
-
       }
 
-
-      /*
-       * Common nested formats.
-       */
 
       const nestedKeys = [
         'user',
@@ -307,22 +285,15 @@ export class UserManagement implements OnInit {
               value[key]
             );
 
-
           if (nested) {
-
             return nested;
-
           }
-
         }
-
       }
-
     }
 
 
     return null;
-
   }
 
 
@@ -335,19 +306,11 @@ export class UserManagement implements OnInit {
   ): any {
 
     if (!value) {
-
       return null;
-
     }
 
 
-    /*
-     * Don't scan strings except JSON-like strings.
-     */
-
-    if (
-      typeof value === 'string'
-    ) {
+    if (typeof value === 'string') {
 
       if (
         value.trim().startsWith('{')
@@ -358,76 +321,44 @@ export class UserManagement implements OnInit {
           const parsed =
             JSON.parse(value);
 
-
           return this.findUserInsideObject(
             parsed
           );
 
-        }
-
-        catch {
+        } catch {
 
           return null;
-
         }
-
       }
 
-
       return null;
-
     }
 
-
-    /*
-     * Arrays.
-     */
 
     if (Array.isArray(value)) {
 
       for (const item of value) {
 
         const found =
-          this.findUserInsideObject(
-            item
-          );
-
+          this.findUserInsideObject(item);
 
         if (found) {
-
           return found;
-
         }
-
       }
 
-
       return null;
-
     }
 
-
-    /*
-     * Objects.
-     */
 
     if (
       typeof value === 'object'
     ) {
 
-      /*
-       * A likely user object.
-       */
-
       if (
         value.username ||
         value.email
       ) {
-
-        /*
-         * Prefer objects that actually
-         * look like authenticated users.
-         */
 
         if (
           value.role ||
@@ -437,9 +368,7 @@ export class UserManagement implements OnInit {
         ) {
 
           return value;
-
         }
-
       }
 
 
@@ -447,22 +376,14 @@ export class UserManagement implements OnInit {
         const key of Object.keys(value)
       ) {
 
-        /*
-         * Avoid unnecessary recursion into
-         * very large or irrelevant values.
-         */
-
         const lowerKey =
           key.toLowerCase();
-
 
         if (
           lowerKey.includes('token') ||
           lowerKey.includes('password')
         ) {
-
           continue;
-
         }
 
 
@@ -471,20 +392,14 @@ export class UserManagement implements OnInit {
             value[key]
           );
 
-
         if (found) {
-
           return found;
-
         }
-
       }
-
     }
 
 
     return null;
-
   }
 
 
@@ -511,28 +426,18 @@ export class UserManagement implements OnInit {
       const token =
         localStorage.getItem(key);
 
-
       if (!token) {
-
         continue;
-
       }
 
 
       const payload =
         this.decodeJwt(token);
 
-
       if (!payload) {
-
         continue;
-
       }
 
-
-      /*
-       * JWT may directly contain username/email.
-       */
 
       if (
         payload.username ||
@@ -542,31 +447,21 @@ export class UserManagement implements OnInit {
       ) {
 
         return payload;
-
       }
 
-
-      /*
-       * JWT may contain a nested user object.
-       */
 
       const nested =
         this.findUserInsideObject(
           payload
         );
 
-
       if (nested) {
-
         return nested;
-
       }
-
     }
 
 
     return null;
-
   }
 
 
@@ -583,11 +478,8 @@ export class UserManagement implements OnInit {
       const parts =
         token.split('.');
 
-
       if (parts.length !== 3) {
-
         return null;
-
       }
 
 
@@ -602,7 +494,6 @@ export class UserManagement implements OnInit {
       ) {
 
         payload += '=';
-
       }
 
 
@@ -610,14 +501,10 @@ export class UserManagement implements OnInit {
         atob(payload)
       );
 
-    }
-
-    catch {
+    } catch {
 
       return null;
-
     }
-
   }
 
 
@@ -642,7 +529,6 @@ export class UserManagement implements OnInit {
         username: null,
         email: null
       };
-
     }
 
 
@@ -666,7 +552,7 @@ export class UserManagement implements OnInit {
       null;
 
 
-    const result = {
+    return {
 
       id:
         id !== null
@@ -686,18 +572,7 @@ export class UserManagement implements OnInit {
               .trim()
               .toLowerCase()
           : null
-
     };
-
-
-    console.log(
-      'CURRENT LOGGED-IN ADMIN:',
-      result
-    );
-
-
-    return result;
-
   }
 
 
@@ -713,12 +588,6 @@ export class UserManagement implements OnInit {
       this.getCurrentAdminIdentity();
 
 
-    /*
-     * VERY IMPORTANT:
-     *
-     * Non-admin users are always kept.
-     */
-
     const nonAdminUsers =
       users.filter(
         (user: any) => {
@@ -730,16 +599,10 @@ export class UserManagement implements OnInit {
               .trim()
               .toLowerCase();
 
-
           return role !== 'admin';
-
         }
       );
 
-
-    /*
-     * Get all Admin users.
-     */
 
     const adminUsers =
       users.filter(
@@ -752,29 +615,10 @@ export class UserManagement implements OnInit {
               .trim()
               .toLowerCase();
 
-
           return role === 'admin';
-
         }
       );
 
-
-    console.log(
-      'ALL ADMIN USERS:',
-      adminUsers
-    );
-
-
-    console.log(
-      'CURRENT ADMIN:',
-      currentAdmin
-    );
-
-
-    /*
-     * If we know the logged-in Admin,
-     * only keep that Admin.
-     */
 
     if (
       currentAdmin.id ||
@@ -809,40 +653,25 @@ export class UserManagement implements OnInit {
                 : null;
 
 
-            const idMatches =
-              !!currentAdmin.id &&
-              !!userId &&
-              currentAdmin.id === userId;
-
-
-            const usernameMatches =
-              !!currentAdmin.username &&
-              !!username &&
-              currentAdmin.username ===
-                username;
-
-
-            const emailMatches =
-              !!currentAdmin.email &&
-              !!email &&
-              currentAdmin.email ===
-                email;
-
-
             return (
-              idMatches ||
-              usernameMatches ||
-              emailMatches
+              (
+                !!currentAdmin.id &&
+                !!userId &&
+                currentAdmin.id === userId
+              ) ||
+              (
+                !!currentAdmin.username &&
+                !!username &&
+                currentAdmin.username === username
+              ) ||
+              (
+                !!currentAdmin.email &&
+                !!email &&
+                currentAdmin.email === email
+              )
             );
-
           }
         );
-
-
-      console.log(
-        'CURRENT ADMIN FOUND IN USER LIST:',
-        currentAdminUser
-      );
 
 
       if (currentAdminUser) {
@@ -851,24 +680,9 @@ export class UserManagement implements OnInit {
           currentAdminUser,
           ...nonAdminUsers
         ];
-
       }
-
     }
 
-
-    /*
-     * IMPORTANT FALLBACK
-     *
-     * If the authentication information
-     * cannot be recovered from localStorage/JWT,
-     * do not show OTHER Admin accounts.
-     *
-     * Your current logged-in Admin is "s".
-     *
-     * This fallback keeps "s" and hides
-     * Admin A.
-     */
 
     const fallbackAdmin =
       adminUsers.find(
@@ -894,42 +708,20 @@ export class UserManagement implements OnInit {
             username === 's' ||
             email === 's@gmail.com'
           );
-
         }
       );
 
 
     if (fallbackAdmin) {
 
-      console.log(
-        'Using frontend fallback Admin:',
-        fallbackAdmin
-      );
-
-
       return [
         fallbackAdmin,
         ...nonAdminUsers
       ];
-
     }
 
 
-    /*
-     * Last fallback:
-     *
-     * If the logged-in Admin cannot be identified,
-     * hide ALL Admin accounts rather than exposing
-     * another organization's Admin.
-     */
-
-    console.warn(
-      'Could not identify current Admin. Hiding other Admin accounts.'
-    );
-
-
     return nonAdminUsers;
-
   }
 
 
@@ -950,28 +742,25 @@ export class UserManagement implements OnInit {
 
         next: (response) => {
 
-          console.log(
-            'User Management Response:',
-            response
-          );
-
-
           const allUsers: User[] =
             Array.isArray(response)
               ? response
               : [];
 
 
-          console.log(
-            'ALL USERS BEFORE FRONTEND FILTER:',
-            allUsers
+          /*
+           * STRICT AI RULE
+           *
+           * Admin       -> Enabled
+           * Team Member -> Enabled
+           * Requester   -> Disabled
+           */
+          allUsers.forEach(
+            (user: User) => {
+              this.normalizeAIAccess(user);
+            }
           );
 
-
-          /*
-           * FRONTEND-ONLY ORGANIZATION/ADMIN
-           * VISIBILITY FILTER.
-           */
 
           this.users =
             this.filterUsersForAdminPortal(
@@ -979,16 +768,16 @@ export class UserManagement implements OnInit {
             );
 
 
-          console.log(
-            'USERS AFTER FRONTEND FILTER:',
-            this.users
+          this.users.forEach(
+            (user: User) => {
+              this.normalizeAIAccess(user);
+            }
           );
 
 
           this.loading = false;
 
           this.cdr.detectChanges();
-
         },
 
 
@@ -1010,29 +799,21 @@ export class UserManagement implements OnInit {
             this.errorMessage =
               'Authentication failed. Please login again.';
 
-          }
-
-          else if (error.status === 403) {
+          } else if (error.status === 403) {
 
             this.errorMessage =
               'Only Admin users can view User Management.';
 
-          }
-
-          else {
+          } else {
 
             this.errorMessage =
               'Unable to load users.';
-
           }
 
 
           this.cdr.detectChanges();
-
         }
-
       });
-
   }
 
 
@@ -1062,16 +843,13 @@ export class UserManagement implements OnInit {
               user.username
                 ?.toLowerCase() || '';
 
-
             const email =
               user.email
                 ?.toLowerCase() || '';
 
-
             const firstName =
               user.first_name
                 ?.toLowerCase() || '';
-
 
             const lastName =
               user.last_name
@@ -1084,10 +862,8 @@ export class UserManagement implements OnInit {
               firstName.includes(search) ||
               lastName.includes(search)
             );
-
           }
         );
-
     }
 
 
@@ -1101,12 +877,10 @@ export class UserManagement implements OnInit {
             user.role ===
             this.selectedRole
         );
-
     }
 
 
     return result;
-
   }
 
 
@@ -1128,9 +902,7 @@ export class UserManagement implements OnInit {
           roleSet.add(
             user.role
           );
-
         }
-
       }
     );
 
@@ -1138,7 +910,6 @@ export class UserManagement implements OnInit {
     return Array.from(
       roleSet
     );
-
   }
 
 
@@ -1160,7 +931,6 @@ export class UserManagement implements OnInit {
       user.username ||
       'User'
     );
-
   }
 
 
@@ -1181,7 +951,6 @@ export class UserManagement implements OnInit {
     return name
       .charAt(0)
       .toUpperCase();
-
   }
 
 
@@ -1201,8 +970,6 @@ export class UserManagement implements OnInit {
         return 'role-admin';
 
       case 'team member':
-        return 'role-teammate';
-
       case 'teammate':
         return 'role-teammate';
 
@@ -1214,9 +981,7 @@ export class UserManagement implements OnInit {
 
       default:
         return 'role-default';
-
     }
-
   }
 
 
@@ -1229,21 +994,13 @@ export class UserManagement implements OnInit {
     this.userForm = {
 
       email: '',
-
       username: '',
-
       first_name: '',
-
       last_name: '',
-
       password: '',
-
       role: 'Requester',
-
       is_ai_enabled: false,
-
       is_active: true
-
     };
 
 
@@ -1252,7 +1009,6 @@ export class UserManagement implements OnInit {
     this.successMessage = '';
 
     this.showInviteModal = true;
-
   }
 
 
@@ -1263,16 +1019,13 @@ export class UserManagement implements OnInit {
   closeInviteModal(): void {
 
     if (this.saving) {
-
       return;
-
     }
 
 
     this.showInviteModal = false;
 
     this.errorMessage = '';
-
   }
 
 
@@ -1295,7 +1048,6 @@ export class UserManagement implements OnInit {
         'Email is required.';
 
       return;
-
     }
 
 
@@ -1307,7 +1059,6 @@ export class UserManagement implements OnInit {
         'Username is required.';
 
       return;
-
     }
 
 
@@ -1317,7 +1068,25 @@ export class UserManagement implements OnInit {
         'Password is required.';
 
       return;
+    }
 
+
+    const allowedRoles = [
+      'Requester',
+      'Team Member'
+    ];
+
+
+    if (
+      !allowedRoles.includes(
+        this.userForm.role
+      )
+    ) {
+
+      this.errorMessage =
+        'Invalid user role.';
+
+      return;
     }
 
 
@@ -1334,7 +1103,6 @@ export class UserManagement implements OnInit {
 
       role:
         this.userForm.role
-
     };
 
 
@@ -1363,7 +1131,6 @@ export class UserManagement implements OnInit {
 
 
           this.loadUsers();
-
         },
 
 
@@ -1385,11 +1152,8 @@ export class UserManagement implements OnInit {
 
 
           this.cdr.detectChanges();
-
         }
-
       });
-
   }
 
 
@@ -1402,6 +1166,10 @@ export class UserManagement implements OnInit {
   ): void {
 
     this.editingUser = user;
+
+
+    const role =
+      user.role || 'Requester';
 
 
     this.userForm = {
@@ -1421,14 +1189,17 @@ export class UserManagement implements OnInit {
       password: '',
 
       role:
-        user.role || 'Requester',
+        role,
 
+      /*
+       * Do not trust old database value.
+       * AI is based on role.
+       */
       is_ai_enabled:
-        user.is_ai_enabled ?? false,
+        this.canUseAI(role),
 
       is_active:
         user.is_active ?? true
-
     };
 
 
@@ -1437,20 +1208,30 @@ export class UserManagement implements OnInit {
     this.successMessage = '';
 
     this.showEditModal = true;
-
   }
 
 
   /* =====================================================
-     CLOSE EDIT USER
+     ROLE CHANGE
+     ===================================================== */
+
+  onRoleChange(): void {
+
+    this.userForm.is_ai_enabled =
+      this.canUseAI(
+        this.userForm.role
+      );
+  }
+
+
+  /* =====================================================
+     CLOSE EDIT
      ===================================================== */
 
   closeEditModal(): void {
 
     if (this.saving) {
-
       return;
-
     }
 
 
@@ -1459,7 +1240,6 @@ export class UserManagement implements OnInit {
     this.editingUser = null;
 
     this.errorMessage = '';
-
   }
 
 
@@ -1480,7 +1260,6 @@ export class UserManagement implements OnInit {
         'Unable to identify the user.';
 
       return;
-
     }
 
 
@@ -1492,13 +1271,25 @@ export class UserManagement implements OnInit {
         'Email is required.';
 
       return;
-
     }
 
 
     /*
-     * Do NOT send username.
+     * STRICT RULE:
+     *
+     * Admin       -> true
+     * Team Member -> true
+     * Requester   -> false
      */
+    const aiEnabled =
+      this.canUseAI(
+        this.userForm.role
+      );
+
+
+    this.userForm.is_ai_enabled =
+      aiEnabled;
+
 
     const payload: any = {
 
@@ -1512,17 +1303,12 @@ export class UserManagement implements OnInit {
         this.userForm.last_name.trim(),
 
       is_ai_enabled:
-        this.userForm.is_ai_enabled,
+        aiEnabled,
 
       is_active:
         this.userForm.is_active
-
     };
 
-
-    /*
-     * Only send role if changed.
-     */
 
     if (
       this.userForm.role !==
@@ -1531,13 +1317,8 @@ export class UserManagement implements OnInit {
 
       payload.role =
         this.userForm.role;
-
     }
 
-
-    /*
-     * Only send password if entered.
-     */
 
     if (
       this.userForm.password.trim()
@@ -1545,14 +1326,7 @@ export class UserManagement implements OnInit {
 
       payload.password =
         this.userForm.password;
-
     }
-
-
-    console.log(
-      'Updating user:',
-      this.editingUser.id
-    );
 
 
     console.log(
@@ -1591,7 +1365,6 @@ export class UserManagement implements OnInit {
 
 
           this.loadUsers();
-
         },
 
 
@@ -1613,11 +1386,8 @@ export class UserManagement implements OnInit {
 
 
           this.cdr.detectChanges();
-
         }
-
       });
-
   }
 
 
@@ -1630,9 +1400,7 @@ export class UserManagement implements OnInit {
   ): void {
 
     if (!user?.id) {
-
       return;
-
     }
 
 
@@ -1643,9 +1411,7 @@ export class UserManagement implements OnInit {
 
 
     if (!confirmed) {
-
       return;
-
     }
 
 
@@ -1676,7 +1442,6 @@ export class UserManagement implements OnInit {
 
 
           this.loadUsers();
-
         },
 
 
@@ -1698,11 +1463,8 @@ export class UserManagement implements OnInit {
 
 
           this.cdr.detectChanges();
-
         }
-
       });
-
   }
 
 
@@ -1715,9 +1477,7 @@ export class UserManagement implements OnInit {
   ): string {
 
     if (!date) {
-
       return '—';
-
     }
 
 
@@ -1732,7 +1492,6 @@ export class UserManagement implements OnInit {
     ) {
 
       return '—';
-
     }
 
 
@@ -1745,7 +1504,6 @@ export class UserManagement implements OnInit {
           year: 'numeric'
         }
       );
-
   }
 
 
@@ -1783,18 +1541,14 @@ export class UserManagement implements OnInit {
               `${key}: ${value.join(', ')}`
             );
 
-          }
-
-          else if (
+          } else if (
             typeof value === 'string'
           ) {
 
             messages.push(
               `${key}: ${value}`
             );
-
           }
-
         }
       );
 
@@ -1804,33 +1558,25 @@ export class UserManagement implements OnInit {
           ? messages.join(' | ')
           : defaultMessage;
 
-    }
-
-    else if (
+    } else if (
       error.status === 401
     ) {
 
       this.errorMessage =
         'Authentication failed. Please login again.';
 
-    }
-
-    else if (
+    } else if (
       error.status === 403
     ) {
 
       this.errorMessage =
         'You do not have permission to perform this action.';
 
-    }
-
-    else {
+    } else {
 
       this.errorMessage =
         defaultMessage;
-
     }
-
   }
 
 
@@ -1844,7 +1590,6 @@ export class UserManagement implements OnInit {
   ): number {
 
     return user.id;
-
   }
 
 }

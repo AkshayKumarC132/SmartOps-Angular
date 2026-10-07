@@ -7,73 +7,57 @@
   <div class="page-header">
 
     <div>
-
-      <h1>
-        User Management
-      </h1>
+      <h1>User Management</h1>
 
       <p>
         Manage users, roles and account access.
       </p>
-
     </div>
-
 
     <button
       type="button"
       class="invite-button"
       (click)="openInviteModal()"
     >
-
       <svg
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
-
-        <path
-          d="M12 5v14"
-        ></path>
-
-        <path
-          d="M5 12h14"
-        ></path>
-
+        <path d="M12 5v14"></path>
+        <path d="M5 12h14"></path>
       </svg>
 
       Invite User
-
     </button>
 
   </div>
 
 
   <!-- =====================================================
-       SUCCESS
+       SUCCESS MESSAGE
        ===================================================== -->
 
   <div
     *ngIf="successMessage"
     class="success-message"
   >
-
     {{ successMessage }}
-
   </div>
 
 
   <!-- =====================================================
-       ERROR
+       ERROR MESSAGE
        ===================================================== -->
 
   <div
-    *ngIf="errorMessage &&
-           !showInviteModal &&
-           !showEditModal"
+    *ngIf="
+      errorMessage &&
+      !showInviteModal &&
+      !showEditModal
+    "
     class="error-message"
   >
-
     {{ errorMessage }}
-
   </div>
 
 
@@ -83,13 +67,14 @@
 
   <div class="filter-card">
 
+    <!-- SEARCH -->
+
     <div class="search-wrapper">
 
       <svg
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
-
         <circle
           cx="11"
           cy="11"
@@ -99,9 +84,7 @@
         <path
           d="M20 20l-4-4"
         ></path>
-
       </svg>
-
 
       <input
         type="text"
@@ -111,6 +94,8 @@
 
     </div>
 
+
+    <!-- ROLE FILTER -->
 
     <div class="role-filter">
 
@@ -131,9 +116,7 @@
           *ngFor="let role of roles"
           [value]="role"
         >
-
           {{ role }}
-
         </option>
 
       </select>
@@ -151,14 +134,12 @@
     *ngIf="loading"
     class="state-card"
   >
-
     Loading users...
-
   </div>
 
 
   <!-- =====================================================
-       TABLE
+       USERS TABLE
        ===================================================== -->
 
   <div
@@ -227,11 +208,8 @@
               <div class="user-cell">
 
                 <div class="user-avatar">
-
                   {{ getInitial(user) }}
-
                 </div>
-
 
                 <div class="user-info">
 
@@ -255,9 +233,7 @@
             <td>
 
               <span class="email-text">
-
                 {{ user.email }}
-
               </span>
 
             </td>
@@ -269,13 +245,9 @@
 
               <span
                 class="role-badge"
-                [ngClass]="
-                  getRoleClass(user.role)
-                "
+                [ngClass]="getRoleClass(user.role)"
               >
-
                 {{ user.role }}
-
               </span>
 
             </td>
@@ -287,17 +259,13 @@
 
               <span
                 class="ai-badge"
-                [class.ai-enabled]="
-                  user.is_ai_enabled
-                "
+                [class.ai-enabled]="canUseAI(user.role)"
               >
-
                 {{
-                  user.is_ai_enabled
+                  canUseAI(user.role)
                     ? 'Enabled'
                     : 'Disabled'
                 }}
-
               </span>
 
             </td>
@@ -309,20 +277,14 @@
 
               <span
                 class="status-badge"
-                [class.status-active]="
-                  user.is_active
-                "
-                [class.status-inactive]="
-                  !user.is_active
-                "
+                [class.status-active]="user.is_active"
+                [class.status-inactive]="!user.is_active"
               >
-
                 {{
                   user.is_active
                     ? 'Active'
                     : 'Inactive'
                 }}
-
               </span>
 
             </td>
@@ -333,9 +295,7 @@
             <td>
 
               <span class="joined-date">
-
                 {{ formatDate(user.created_at) }}
-
               </span>
 
             </td>
@@ -353,6 +313,7 @@
                   type="button"
                   class="action-button edit-action"
                   title="Edit user"
+                  [disabled]="saving"
                   (click)="openEditUser(user)"
                 >
 
@@ -436,9 +397,7 @@
     "
     class="state-card"
   >
-
     No users found.
-
   </div>
 
 </div>
@@ -459,6 +418,8 @@
     (click)="$event.stopPropagation()"
   >
 
+    <!-- MODAL HEADER -->
+
     <div class="modal-header">
 
       <div>
@@ -473,12 +434,12 @@
 
       </div>
 
-
       <button
         type="button"
         class="modal-close"
         [disabled]="saving"
         (click)="closeInviteModal()"
+        aria-label="Close"
       >
         ×
       </button>
@@ -486,28 +447,33 @@
     </div>
 
 
+    <!-- MODAL ERROR -->
+
     <div
       *ngIf="errorMessage"
       class="modal-error"
     >
-
       {{ errorMessage }}
-
     </div>
 
+
+    <!-- INVITE FORM -->
 
     <form
       class="user-form"
       (ngSubmit)="createUser()"
     >
 
+      <!-- EMAIL -->
+
       <div class="form-group">
 
-        <label>
+        <label for="inviteEmail">
           Email
         </label>
 
         <input
+          id="inviteEmail"
           type="email"
           name="inviteEmail"
           [(ngModel)]="userForm.email"
@@ -519,13 +485,16 @@
       </div>
 
 
+      <!-- USERNAME -->
+
       <div class="form-group">
 
-        <label>
+        <label for="inviteUsername">
           Username
         </label>
 
         <input
+          id="inviteUsername"
           type="text"
           name="inviteUsername"
           [(ngModel)]="userForm.username"
@@ -537,13 +506,16 @@
       </div>
 
 
+      <!-- ROLE -->
+
       <div class="form-group">
 
-        <label>
+        <label for="inviteRole">
           Role
         </label>
 
         <select
+          id="inviteRole"
           name="inviteRole"
           [(ngModel)]="userForm.role"
           [disabled]="saving"
@@ -562,13 +534,16 @@
       </div>
 
 
+      <!-- PASSWORD -->
+
       <div class="form-group">
 
-        <label>
+        <label for="invitePassword">
           Password
         </label>
 
         <input
+          id="invitePassword"
           type="password"
           name="invitePassword"
           [(ngModel)]="userForm.password"
@@ -580,6 +555,8 @@
       </div>
 
 
+      <!-- ACTIONS -->
+
       <div class="modal-actions">
 
         <button
@@ -588,24 +565,19 @@
           [disabled]="saving"
           (click)="closeInviteModal()"
         >
-
           Cancel
-
         </button>
-
 
         <button
           type="submit"
           class="save-button"
           [disabled]="saving"
         >
-
           {{
             saving
               ? 'Creating...'
               : 'Create User'
           }}
-
         </button>
 
       </div>
@@ -632,6 +604,10 @@
     (click)="$event.stopPropagation()"
   >
 
+    <!-- =================================================
+         EDIT MODAL HEADER
+         ================================================= -->
+
     <div class="modal-header">
 
       <div>
@@ -646,12 +622,12 @@
 
       </div>
 
-
       <button
         type="button"
         class="modal-close"
         [disabled]="saving"
         (click)="closeEditModal()"
+        aria-label="Close"
       >
         ×
       </button>
@@ -659,30 +635,39 @@
     </div>
 
 
+    <!-- =================================================
+         EDIT ERROR
+         ================================================= -->
+
     <div
       *ngIf="errorMessage"
       class="modal-error"
     >
-
       {{ errorMessage }}
-
     </div>
 
+
+    <!-- =================================================
+         EDIT FORM
+         ================================================= -->
 
     <form
       class="user-form"
       (ngSubmit)="updateUser()"
     >
 
-      <!-- USERNAME -->
+      <!-- ===============================================
+           USERNAME
+           =============================================== -->
 
       <div class="form-group">
 
-        <label>
+        <label for="editUsername">
           Username
         </label>
 
         <input
+          id="editUsername"
           type="text"
           name="editUsername"
           [(ngModel)]="userForm.username"
@@ -696,15 +681,18 @@
       </div>
 
 
-      <!-- EMAIL -->
+      <!-- ===============================================
+           EMAIL
+           =============================================== -->
 
       <div class="form-group">
 
-        <label>
+        <label for="editEmail">
           Email
         </label>
 
         <input
+          id="editEmail"
           type="email"
           name="editEmail"
           [(ngModel)]="userForm.email"
@@ -716,17 +704,22 @@
       </div>
 
 
-      <!-- FIRST NAME -->
+      <!-- ===============================================
+           FIRST + LAST NAME
+           =============================================== -->
 
       <div class="form-row">
 
+        <!-- FIRST NAME -->
+
         <div class="form-group">
 
-          <label>
+          <label for="editFirstName">
             First Name
           </label>
 
           <input
+            id="editFirstName"
             type="text"
             name="editFirstName"
             [(ngModel)]="userForm.first_name"
@@ -741,11 +734,12 @@
 
         <div class="form-group">
 
-          <label>
+          <label for="editLastName">
             Last Name
           </label>
 
           <input
+            id="editLastName"
             type="text"
             name="editLastName"
             [(ngModel)]="userForm.last_name"
@@ -758,18 +752,22 @@
       </div>
 
 
-      <!-- ROLE -->
+      <!-- ===============================================
+           ROLE
+           =============================================== -->
 
       <div class="form-group">
 
-        <label>
+        <label for="editRole">
           Role
         </label>
 
         <select
+          id="editRole"
           name="editRole"
           [(ngModel)]="userForm.role"
           [disabled]="saving"
+          (ngModelChange)="onRoleChange()"
         >
 
           <option value="Requester">
@@ -780,10 +778,13 @@
             Team Member
           </option>
 
+          <!--
+            Admin option is shown only when editing
+            the current Admin account.
+          -->
+
           <option
-            *ngIf="
-              editingUser?.role === 'Admin'
-            "
+            *ngIf="editingUser?.role === 'Admin'"
             value="Admin"
           >
             Admin
@@ -792,21 +793,24 @@
         </select>
 
         <small>
-          Admin role changes may be restricted by the backend.
+          AI access is automatically determined by role.
         </small>
 
       </div>
 
 
-      <!-- PASSWORD -->
+      <!-- ===============================================
+           NEW PASSWORD
+           =============================================== -->
 
       <div class="form-group">
 
-        <label>
+        <label for="editPassword">
           New Password
         </label>
 
         <input
+          id="editPassword"
           type="password"
           name="editPassword"
           [(ngModel)]="userForm.password"
@@ -817,9 +821,14 @@
       </div>
 
 
-      <!-- AI -->
+      <!-- ===============================================
+           AI ACCESS
+           =============================================== -->
 
-      <div class="form-toggle-row">
+      <div
+        class="form-toggle-row"
+        [class.ai-disabled]="!canUseAI(userForm.role)"
+      >
 
         <div>
 
@@ -828,7 +837,11 @@
           </strong>
 
           <span>
-            Allow AI features for this user.
+            {{
+              canUseAI(userForm.role)
+                ? 'AI access is enabled for this role.'
+                : 'AI access is available only for Admin and Team Member.'
+            }}
           </span>
 
         </div>
@@ -840,7 +853,10 @@
             type="checkbox"
             name="editAiEnabled"
             [(ngModel)]="userForm.is_ai_enabled"
-            [disabled]="saving"
+            [disabled]="
+              saving ||
+              !canUseAI(userForm.role)
+            "
           />
 
           <span class="slider"></span>
@@ -850,7 +866,9 @@
       </div>
 
 
-      <!-- ACTIVE -->
+      <!-- ===============================================
+           ACCOUNT ACTIVE
+           =============================================== -->
 
       <div class="form-toggle-row">
 
@@ -883,7 +901,9 @@
       </div>
 
 
-      <!-- ACTIONS -->
+      <!-- ===============================================
+           ACTIONS
+           =============================================== -->
 
       <div class="modal-actions">
 
@@ -893,9 +913,7 @@
           [disabled]="saving"
           (click)="closeEditModal()"
         >
-
           Cancel
-
         </button>
 
 
@@ -904,13 +922,11 @@
           class="save-button"
           [disabled]="saving"
         >
-
           {{
             saving
               ? 'Saving...'
               : 'Save Changes'
           }}
-
         </button>
 
       </div>

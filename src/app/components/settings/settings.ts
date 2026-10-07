@@ -7,12 +7,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
+
+import {
+  NotificationPreferences
+} from '../../models/users.model';
 
 
 @Component({
@@ -65,13 +68,9 @@ export class Settings implements OnInit {
   // =========================================================
 
   form = {
-
     first_name: '',
-
     last_name: '',
-
     email: ''
-
   };
 
 
@@ -80,15 +79,10 @@ export class Settings implements OnInit {
   // =========================================================
 
   passwordForm = {
-
     current_password: '',
-
     new_password: '',
-
     confirm_password: ''
-
   };
-
 
   changingPassword = false;
 
@@ -102,6 +96,45 @@ export class Settings implements OnInit {
   // =========================================================
 
   private currentUserId: number | null = null;
+
+
+  // =========================================================
+  // NOTIFICATION PREFERENCES
+  // FRONTEND ONLY
+  // =========================================================
+
+  notificationPreferences: NotificationPreferences = {
+
+    in_app: {
+      ticket_assigned: true,
+      ticket_status_changed: true,
+      ticket_comments: true,
+      sla_warnings: true,
+      ai_suggestions: true
+    },
+
+    email: {
+      ticket_updates: true,
+      weekly_digest: false,
+      mentions: true
+    },
+
+    slack: {
+      critical_alerts: true,
+      sla_alerts: true,
+      team_mentions: false
+    }
+
+  };
+
+
+  // =========================================================
+  // NOTIFICATION MESSAGES
+  // =========================================================
+
+  notificationSuccessMessage = '';
+
+  notificationErrorMessage = '';
 
 
   // =========================================================
@@ -187,16 +220,15 @@ export class Settings implements OnInit {
 
 
     // =======================================================
-    // FIRST: LOAD ORGANIZATION FROM LOGIN DATA
+    // LOAD FRONTEND NOTIFICATION PREFERENCES
     // =======================================================
 
-    /*
-     * The login API already provides organization
-     * information for the Admin user.
-     *
-     * We use this before calling the profile API so
-     * Organization does not depend on the UserSerializer.
-     */
+    this.loadNotificationPreferences();
+
+
+    // =======================================================
+    // ORGANIZATION FROM LOGIN DATA
+    // =======================================================
 
     this.setOrganizationFromUser(
       loggedInUser
@@ -247,14 +279,6 @@ export class Settings implements OnInit {
           // ORGANIZATION
           // =================================================
 
-          /*
-           * First try API response.
-           *
-           * If API response does not contain organization,
-           * setOrganizationFromUser() will leave the value
-           * already obtained from login data.
-           */
-
           this.setOrganizationFromUser(
             response,
             false
@@ -262,7 +286,7 @@ export class Settings implements OnInit {
 
 
           // =================================================
-          // FALLBACK TO LOGIN DATA IF NECESSARY
+          // FALLBACK TO LOGIN DATA
           // =================================================
 
           if (
@@ -351,7 +375,7 @@ export class Settings implements OnInit {
 
 
           // =================================================
-          // ORGANIZATION FROM LOGIN DATA
+          // ORGANIZATION
           // =================================================
 
           this.setOrganizationFromUser(
@@ -405,6 +429,215 @@ export class Settings implements OnInit {
 
 
   // =========================================================
+  // DEFAULT NOTIFICATION PREFERENCES
+  // =========================================================
+
+  private getDefaultNotificationPreferences():
+    NotificationPreferences {
+
+    return {
+
+      in_app: {
+        ticket_assigned: true,
+        ticket_status_changed: true,
+        ticket_comments: true,
+        sla_warnings: true,
+        ai_suggestions: true
+      },
+
+      email: {
+        ticket_updates: true,
+        weekly_digest: false,
+        mentions: true
+      },
+
+      slack: {
+        critical_alerts: true,
+        sla_alerts: true,
+        team_mentions: false
+      }
+
+    };
+
+  }
+
+
+  // =========================================================
+  // NOTIFICATION STORAGE KEY
+  // =========================================================
+
+  private getNotificationStorageKey(): string {
+
+    return `smartops_notification_preferences_${this.currentUserId}`;
+
+  }
+
+
+  // =========================================================
+  // LOAD NOTIFICATION PREFERENCES
+  // =========================================================
+
+  loadNotificationPreferences(): void {
+
+    if (!this.currentUserId) {
+
+      return;
+    }
+
+
+    const storageKey =
+      this.getNotificationStorageKey();
+
+
+    try {
+
+      const saved =
+        localStorage.getItem(storageKey);
+
+
+      if (!saved) {
+
+        this.notificationPreferences =
+          this.getDefaultNotificationPreferences();
+
+        return;
+      }
+
+
+      const parsed =
+        JSON.parse(saved);
+
+
+      this.notificationPreferences = {
+
+        ...this.getDefaultNotificationPreferences(),
+
+        ...parsed,
+
+        in_app: {
+          ...this.getDefaultNotificationPreferences().in_app,
+          ...(parsed?.in_app || {})
+        },
+
+        email: {
+          ...this.getDefaultNotificationPreferences().email,
+          ...(parsed?.email || {})
+        },
+
+        slack: {
+          ...this.getDefaultNotificationPreferences().slack,
+          ...(parsed?.slack || {})
+        }
+
+      };
+
+
+      console.log(
+        'Notification preferences loaded:',
+        this.notificationPreferences
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        'Unable to load notification preferences:',
+        error
+      );
+
+
+      this.notificationPreferences =
+        this.getDefaultNotificationPreferences();
+
+    }
+
+  }
+
+
+  // =========================================================
+  // SAVE NOTIFICATION PREFERENCES
+  // FRONTEND ONLY
+  // =========================================================
+
+  saveNotificationPreferences(): void {
+
+    this.notificationSuccessMessage = '';
+
+    this.notificationErrorMessage = '';
+
+
+    if (!this.currentUserId) {
+
+      this.notificationErrorMessage =
+        'Unable to identify the current user.';
+
+      return;
+    }
+
+
+    try {
+
+      const storageKey =
+        this.getNotificationStorageKey();
+
+
+      localStorage.setItem(
+
+        storageKey,
+
+        JSON.stringify(
+          this.notificationPreferences
+        )
+
+      );
+
+
+      this.notificationSuccessMessage =
+        'Notification preferences saved successfully.';
+
+
+      console.log(
+        'Notification preferences saved:',
+        this.notificationPreferences
+      );
+
+
+      this.cdr.detectChanges();
+
+
+      // Remove message after a few seconds.
+
+      setTimeout(() => {
+
+        this.notificationSuccessMessage = '';
+
+        this.cdr.detectChanges();
+
+      }, 3000);
+
+    }
+
+    catch (error) {
+
+      console.error(
+        'Unable to save notification preferences:',
+        error
+      );
+
+
+      this.notificationErrorMessage =
+        'Unable to save notification preferences.';
+
+
+      this.cdr.detectChanges();
+
+    }
+
+  }
+
+
+  // =========================================================
   // SET ORGANIZATION FROM USER RESPONSE
   // =========================================================
 
@@ -452,11 +685,6 @@ export class Settings implements OnInit {
         this.organizationName =
           name;
 
-        console.log(
-          'Organization name from object:',
-          this.organizationName
-        );
-
       }
 
       return;
@@ -464,7 +692,7 @@ export class Settings implements OnInit {
 
 
     // =======================================================
-    // ORGANIZATION RETURNED AS STRING
+    // ORGANIZATION STRING
     // =======================================================
 
     if (
@@ -478,11 +706,6 @@ export class Settings implements OnInit {
 
         this.organizationName =
           response.organization;
-
-        console.log(
-          'Organization name from string:',
-          this.organizationName
-        );
 
       }
 
@@ -506,11 +729,6 @@ export class Settings implements OnInit {
         this.organizationName =
           response.organization_name;
 
-        console.log(
-          'Organization name from organization_name:',
-          this.organizationName
-        );
-
       }
 
       return;
@@ -533,11 +751,6 @@ export class Settings implements OnInit {
         this.organizationName =
           response['Organization Name'];
 
-        console.log(
-          'Organization name from Organization Name:',
-          this.organizationName
-        );
-
       }
 
       return;
@@ -545,7 +758,7 @@ export class Settings implements OnInit {
 
 
     // =======================================================
-    // Organization OBJECT WITH CAPITAL O
+    // Organization OBJECT
     // =======================================================
 
     if (
@@ -577,11 +790,6 @@ export class Settings implements OnInit {
         this.organizationName =
           name;
 
-        console.log(
-          'Organization name from Organization object:',
-          this.organizationName
-        );
-
       }
 
       return;
@@ -589,7 +797,7 @@ export class Settings implements OnInit {
 
 
     // =======================================================
-    // Organization ID ONLY
+    // ORGANIZATION ID
     // =======================================================
 
     const organizationId =
@@ -607,19 +815,6 @@ export class Settings implements OnInit {
 
     if (organizationId) {
 
-      console.log(
-        'Organization ID found:',
-        organizationId
-      );
-
-
-      /*
-       * Keep the existing functionality of loading the
-       * organization if only an ID is available.
-       *
-       * This does NOT affect the normal login-data solution.
-       */
-
       this.loadOrganization(
         Number(organizationId)
       );
@@ -627,15 +822,6 @@ export class Settings implements OnInit {
       return;
     }
 
-
-    // =======================================================
-    // NOTHING FOUND
-    // =======================================================
-
-    /*
-     * Do not immediately overwrite an organization that
-     * was already obtained from login data.
-     */
 
     if (
       this.organizationName === '—'
@@ -694,12 +880,6 @@ export class Settings implements OnInit {
           }
 
 
-          console.log(
-            'Final Organization Name:',
-            this.organizationName
-          );
-
-
           this.cdr.detectChanges();
 
         },
@@ -712,11 +892,6 @@ export class Settings implements OnInit {
             error
           );
 
-
-          /*
-           * Do not erase an organization name that may
-           * already have been obtained from login data.
-           */
 
           if (
             !this.organizationName ||
@@ -790,10 +965,8 @@ export class Settings implements OnInit {
     const firstName =
       this.user?.first_name || '';
 
-
     const lastName =
       this.user?.last_name || '';
-
 
     const fullName =
       `${firstName} ${lastName}`.trim();
@@ -846,6 +1019,10 @@ export class Settings implements OnInit {
 
     this.passwordErrorMessage = '';
 
+    this.notificationSuccessMessage = '';
+
+    this.notificationErrorMessage = '';
+
   }
 
 
@@ -860,10 +1037,6 @@ export class Settings implements OnInit {
     this.errorMessage = '';
 
 
-    // =======================================================
-    // USER ID VALIDATION
-    // =======================================================
-
     if (!this.userId) {
 
       this.errorMessage =
@@ -872,10 +1045,6 @@ export class Settings implements OnInit {
       return;
     }
 
-
-    // =======================================================
-    // EMAIL VALIDATION
-    // =======================================================
 
     if (!this.form.email.trim()) {
 
@@ -888,10 +1057,6 @@ export class Settings implements OnInit {
 
     this.saving = true;
 
-
-    // =======================================================
-    // PAYLOAD
-    // =======================================================
 
     const payload = {
 
@@ -907,10 +1072,6 @@ export class Settings implements OnInit {
     };
 
 
-    // =======================================================
-    // UPDATE USER
-    // =======================================================
-
     this.userService
       .updateUser(
         this.userId,
@@ -925,10 +1086,6 @@ export class Settings implements OnInit {
             response
           );
 
-
-          // =================================================
-          // UPDATE SCREEN
-          // =================================================
 
           this.user = {
 
@@ -947,7 +1104,7 @@ export class Settings implements OnInit {
 
 
           // =================================================
-          // UPDATE LOCAL STORAGE
+          // UPDATE LOCAL USER DATA
           // =================================================
 
           const storedUser =
@@ -971,13 +1128,6 @@ export class Settings implements OnInit {
 
             };
 
-
-            /*
-             * Keep the existing organization data.
-             *
-             * Do not replace the complete localStorage
-             * object with the profile API response.
-             */
 
             localStorage.setItem(
               'user',
@@ -1071,10 +1221,6 @@ export class Settings implements OnInit {
     this.passwordErrorMessage = '';
 
 
-    // =======================================================
-    // CURRENT PASSWORD
-    // =======================================================
-
     if (
       !this.passwordForm
         .current_password
@@ -1087,10 +1233,6 @@ export class Settings implements OnInit {
       return;
     }
 
-
-    // =======================================================
-    // NEW PASSWORD
-    // =======================================================
 
     if (
       !this.passwordForm
@@ -1105,10 +1247,6 @@ export class Settings implements OnInit {
     }
 
 
-    // =======================================================
-    // CONFIRM PASSWORD
-    // =======================================================
-
     if (
       !this.passwordForm
         .confirm_password
@@ -1121,10 +1259,6 @@ export class Settings implements OnInit {
       return;
     }
 
-
-    // =======================================================
-    // PASSWORD LENGTH
-    // =======================================================
 
     if (
       this.passwordForm
@@ -1139,10 +1273,6 @@ export class Settings implements OnInit {
     }
 
 
-    // =======================================================
-    // PASSWORD MATCH
-    // =======================================================
-
     if (
       this.passwordForm
         .new_password !==
@@ -1156,10 +1286,6 @@ export class Settings implements OnInit {
       return;
     }
 
-
-    // =======================================================
-    // SAME PASSWORD
-    // =======================================================
 
     if (
       this.passwordForm
@@ -1177,10 +1303,6 @@ export class Settings implements OnInit {
 
     this.changingPassword = true;
 
-
-    // =======================================================
-    // CHANGE PASSWORD API
-    // =======================================================
 
     this.userService
       .changePassword(
@@ -1204,10 +1326,6 @@ export class Settings implements OnInit {
             response?.message ||
             'Password changed successfully.';
 
-
-          // =================================================
-          // CLEAR PASSWORD FIELDS
-          // =================================================
 
           this.passwordForm = {
 

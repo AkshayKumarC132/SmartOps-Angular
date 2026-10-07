@@ -399,6 +399,16 @@
 
 
 /* =========================================================
+   NOTIFICATION MESSAGE OVERRIDE
+   ========================================================= */
+
+.notification-message {
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+
+/* =========================================================
    CARD ACTIONS
    ========================================================= */
 
@@ -440,7 +450,8 @@
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
-    opacity 0.2s ease;
+    opacity 0.2s ease,
+    transform 0.15s ease;
 }
 
 
@@ -459,6 +470,10 @@
 .save-button:hover:not(:disabled) {
   background: #1d8e89;
   border-color: #1d8e89;
+}
+
+.save-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .save-button:disabled {
@@ -720,10 +735,14 @@
 }
 
 .toggle input {
-  width: 0;
-  height: 0;
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
 
   opacity: 0;
+
+  pointer-events: none;
 }
 
 .slider {
@@ -737,7 +756,9 @@
 
   background: #d5dae1;
 
-  transition: 0.2s ease;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .slider::before {
@@ -755,9 +776,11 @@
 
   background: #ffffff;
 
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15);
 
-  transition: 0.2s ease;
+  transition:
+    transform 0.2s ease;
 }
 
 .toggle input:checked + .slider {
@@ -766,6 +789,11 @@
 
 .toggle input:checked + .slider::before {
   transform: translateX(17px);
+}
+
+.toggle input:focus-visible + .slider {
+  box-shadow:
+    0 0 0 3px rgba(44, 168, 162, 0.18);
 }
 
 
@@ -979,6 +1007,14 @@
     align-items: flex-start;
 
     flex-direction: column;
+  }
+
+  .preference-row {
+    min-height: 56px;
+  }
+
+  .preference-row strong {
+    line-height: 1.4;
   }
 
 }
