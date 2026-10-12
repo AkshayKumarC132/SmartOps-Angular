@@ -1,3 +1,4 @@
+
 <div class="user-management-page">
 
   <!-- =====================================================
@@ -5,13 +6,9 @@
        ===================================================== -->
 
   <div class="page-header">
-
     <div>
       <h1>User Management</h1>
-
-      <p>
-        Manage users, roles and account access.
-      </p>
+      <p>Manage users, roles and account access.</p>
     </div>
 
     <button
@@ -19,71 +16,36 @@
       class="invite-button"
       (click)="openInviteModal()"
     >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 5v14"></path>
         <path d="M5 12h14"></path>
       </svg>
-
       Invite User
     </button>
-
   </div>
 
-
-  <!-- =====================================================
-       SUCCESS MESSAGE
-       ===================================================== -->
-
-  <div
-    *ngIf="successMessage"
-    class="success-message"
-  >
+  <!-- SUCCESS MESSAGE -->
+  <div *ngIf="successMessage" class="success-message">
     {{ successMessage }}
   </div>
 
-
-  <!-- =====================================================
-       ERROR MESSAGE
-       ===================================================== -->
-
+  <!-- ERROR MESSAGE -->
   <div
-    *ngIf="
-      errorMessage &&
-      !showInviteModal &&
-      !showEditModal
-    "
+    *ngIf="errorMessage && !showInviteModal && !showEditModal"
     class="error-message"
   >
     {{ errorMessage }}
   </div>
-
 
   <!-- =====================================================
        FILTERS
        ===================================================== -->
 
   <div class="filter-card">
-
-    <!-- SEARCH -->
-
     <div class="search-wrapper">
-
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <circle
-          cx="11"
-          cy="11"
-          r="7"
-        ></circle>
-
-        <path
-          d="M20 20l-4-4"
-        ></path>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-4-4"></path>
       </svg>
 
       <input
@@ -91,224 +53,112 @@
         [(ngModel)]="searchText"
         placeholder="Search users..."
       />
-
     </div>
-
-
-    <!-- ROLE FILTER -->
 
     <div class="role-filter">
+      <label for="roleFilter">Role</label>
 
-      <label for="roleFilter">
-        Role
-      </label>
-
-      <select
-        id="roleFilter"
-        [(ngModel)]="selectedRole"
-      >
-
-        <option value="All">
-          All Roles
-        </option>
-
-        <option
-          *ngFor="let role of roles"
-          [value]="role"
-        >
+      <select id="roleFilter" [(ngModel)]="selectedRole">
+        <option value="All">All Roles</option>
+        <option *ngFor="let role of roles" [value]="role">
           {{ role }}
         </option>
-
       </select>
-
     </div>
-
   </div>
 
-
-  <!-- =====================================================
-       LOADING
-       ===================================================== -->
-
-  <div
-    *ngIf="loading"
-    class="state-card"
-  >
+  <!-- LOADING -->
+  <div *ngIf="loading" class="state-card">
     Loading users...
   </div>
-
 
   <!-- =====================================================
        USERS TABLE
        ===================================================== -->
 
   <div
-    *ngIf="
-      !loading &&
-      !errorMessage &&
-      filteredUsers.length > 0
-    "
+    *ngIf="!loading && !errorMessage && filteredUsers.length > 0"
     class="table-card"
   >
-
     <div class="table-wrapper">
-
       <table class="users-table">
-
         <thead>
-
           <tr>
-
-            <th>
-              USER
-            </th>
-
-            <th>
-              EMAIL
-            </th>
-
-            <th>
-              ROLE
-            </th>
-
-            <th>
-              AI
-            </th>
-
-            <th>
-              STATUS
-            </th>
-
-            <th>
-              JOINED
-            </th>
-
-            <th>
-              ACTIONS
-            </th>
-
+            <th>USER</th>
+            <th>EMAIL</th>
+            <th>ROLE</th>
+            <th>AI</th>
+            <th>STATUS</th>
+            <th>JOINED</th>
+            <th>ACTIONS</th>
           </tr>
-
         </thead>
 
-
         <tbody>
-
           <tr
-            *ngFor="
-              let user of filteredUsers;
-              trackBy: trackByUser
-            "
+            *ngFor="let user of filteredUsers; trackBy: trackByUser"
           >
-
             <!-- USER -->
-
             <td>
-
               <div class="user-cell">
-
                 <div class="user-avatar">
                   {{ getInitial(user) }}
                 </div>
 
                 <div class="user-info">
-
-                  <strong>
-                    {{ getUserName(user) }}
-                  </strong>
-
-                  <span>
-                    @{{ user.username }}
-                  </span>
-
+                  <strong>{{ getUserName(user) }}</strong>
+                  <span>@{{ user.username }}</span>
                 </div>
-
               </div>
-
             </td>
-
 
             <!-- EMAIL -->
-
             <td>
-
-              <span class="email-text">
-                {{ user.email }}
-              </span>
-
+              <span class="email-text">{{ user.email }}</span>
             </td>
 
-
             <!-- ROLE -->
-
             <td>
-
               <span
                 class="role-badge"
                 [ngClass]="getRoleClass(user.role)"
               >
                 {{ user.role }}
               </span>
-
             </td>
 
-
             <!-- AI -->
-
             <td>
-
               <span
                 class="ai-badge"
                 [class.ai-enabled]="canUseAI(user.role)"
               >
-                {{
-                  canUseAI(user.role)
-                    ? 'Enabled'
-                    : 'Disabled'
-                }}
+                {{ canUseAI(user.role) ? 'Enabled' : 'Disabled' }}
               </span>
-
             </td>
 
-
             <!-- STATUS -->
-
             <td>
-
               <span
                 class="status-badge"
                 [class.status-active]="user.is_active"
                 [class.status-inactive]="!user.is_active"
               >
-                {{
-                  user.is_active
-                    ? 'Active'
-                    : 'Inactive'
-                }}
+                {{ user.is_active ? 'Active' : 'Inactive' }}
               </span>
-
             </td>
 
-
             <!-- JOINED -->
-
             <td>
-
               <span class="joined-date">
                 {{ formatDate(user.created_at) }}
               </span>
-
             </td>
 
-
             <!-- ACTIONS -->
-
             <td>
-
               <div class="action-buttons">
-
                 <!-- EDIT -->
-
                 <button
                   type="button"
                   class="action-button edit-action"
@@ -316,92 +166,45 @@
                   [disabled]="saving"
                   (click)="openEditUser(user)"
                 >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-
-                    <path
-                      d="M12 20h9"
-                    ></path>
-
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 20h9"></path>
                     <path
                       d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"
                     ></path>
-
                   </svg>
-
                 </button>
 
-
-                <!-- DEACTIVATE -->
-
+                <!-- DELETE -->
                 <button
                   type="button"
                   class="action-button delete-action"
-                  title="Deactivate user"
+                  title="Delete user"
                   [disabled]="saving"
                   (click)="deleteUser(user)"
                 >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-
-                    <path
-                      d="M4 7h16"
-                    ></path>
-
-                    <path
-                      d="M10 11v6M14 11v6"
-                    ></path>
-
-                    <path
-                      d="M6 7l1 13h10l1-13"
-                    ></path>
-
-                    <path
-                      d="M9 7V4h6v3"
-                    ></path>
-
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                    <path d="M6 7l1 13h10l1-13"></path>
+                    <path d="M9 7V4h6v3"></path>
                   </svg>
-
                 </button>
-
               </div>
-
             </td>
-
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
-
   </div>
 
-
-  <!-- =====================================================
-       NO USERS
-       ===================================================== -->
-
+  <!-- NO USERS -->
   <div
-    *ngIf="
-      !loading &&
-      !errorMessage &&
-      filteredUsers.length === 0
-    "
+    *ngIf="!loading && !errorMessage && filteredUsers.length === 0"
     class="state-card"
   >
     No users found.
   </div>
-
 </div>
-
 
 <!-- =====================================================
      INVITE USER MODAL
@@ -412,26 +215,13 @@
   class="modal-backdrop"
   (click)="closeInviteModal()"
 >
-
-  <div
-    class="user-modal"
-    (click)="$event.stopPropagation()"
-  >
+  <div class="user-modal" (click)="$event.stopPropagation()">
 
     <!-- MODAL HEADER -->
-
     <div class="modal-header">
-
       <div>
-
-        <h2>
-          Invite User
-        </h2>
-
-        <p>
-          Create a new SmartOps user.
-        </p>
-
+        <h2>Invite User</h2>
+        <p>Create a new SmartOps user.</p>
       </div>
 
       <button
@@ -443,34 +233,19 @@
       >
         ×
       </button>
-
     </div>
 
-
     <!-- MODAL ERROR -->
-
-    <div
-      *ngIf="errorMessage"
-      class="modal-error"
-    >
+    <div *ngIf="errorMessage" class="modal-error">
       {{ errorMessage }}
     </div>
 
-
     <!-- INVITE FORM -->
-
-    <form
-      class="user-form"
-      (ngSubmit)="createUser()"
-    >
+    <form class="user-form" (ngSubmit)="createUser()">
 
       <!-- EMAIL -->
-
       <div class="form-group">
-
-        <label for="inviteEmail">
-          Email
-        </label>
+        <label for="inviteEmail">Email</label>
 
         <input
           id="inviteEmail"
@@ -478,20 +253,48 @@
           name="inviteEmail"
           [(ngModel)]="userForm.email"
           placeholder="user@example.com"
+          autocomplete="email"
           [disabled]="saving"
           required
         />
+      </div>
+
+      <!-- FIRST NAME AND LAST NAME -->
+      <div class="form-row">
+
+        <div class="form-group">
+          <label for="inviteFirstName">First Name</label>
+
+          <input
+            id="inviteFirstName"
+            type="text"
+            name="inviteFirstName"
+            [(ngModel)]="userForm.first_name"
+            placeholder="Enter first name"
+            autocomplete="given-name"
+            [disabled]="saving"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="inviteLastName">Last Name</label>
+
+          <input
+            id="inviteLastName"
+            type="text"
+            name="inviteLastName"
+            [(ngModel)]="userForm.last_name"
+            placeholder="Enter last name"
+            autocomplete="family-name"
+            [disabled]="saving"
+          />
+        </div>
 
       </div>
 
-
       <!-- USERNAME -->
-
       <div class="form-group">
-
-        <label for="inviteUsername">
-          Username
-        </label>
+        <label for="inviteUsername">Username</label>
 
         <input
           id="inviteUsername"
@@ -499,20 +302,15 @@
           name="inviteUsername"
           [(ngModel)]="userForm.username"
           placeholder="username"
+          autocomplete="username"
           [disabled]="saving"
           required
         />
-
       </div>
 
-
       <!-- ROLE -->
-
       <div class="form-group">
-
-        <label for="inviteRole">
-          Role
-        </label>
+        <label for="inviteRole">Role</label>
 
         <select
           id="inviteRole"
@@ -520,27 +318,14 @@
           [(ngModel)]="userForm.role"
           [disabled]="saving"
         >
-
-          <option value="Requester">
-            Requester
-          </option>
-
-          <option value="Team Member">
-            Team Member
-          </option>
-
+          <option value="Requester">Requester</option>
+          <option value="Team Member">Team Member</option>
         </select>
-
       </div>
 
-
       <!-- PASSWORD -->
-
       <div class="form-group">
-
-        <label for="invitePassword">
-          Password
-        </label>
+        <label for="invitePassword">Password</label>
 
         <input
           id="invitePassword"
@@ -548,17 +333,15 @@
           name="invitePassword"
           [(ngModel)]="userForm.password"
           placeholder="Minimum 7 characters"
+          autocomplete="new-password"
+          minlength="7"
           [disabled]="saving"
           required
         />
-
       </div>
 
-
       <!-- ACTIONS -->
-
       <div class="modal-actions">
-
         <button
           type="button"
           class="cancel-button"
@@ -573,21 +356,13 @@
           class="save-button"
           [disabled]="saving"
         >
-          {{
-            saving
-              ? 'Creating...'
-              : 'Create User'
-          }}
+          {{ saving ? 'Creating...' : 'Create User' }}
         </button>
-
       </div>
 
     </form>
-
   </div>
-
 </div>
-
 
 <!-- =====================================================
      EDIT USER MODAL
@@ -598,28 +373,16 @@
   class="modal-backdrop"
   (click)="closeEditModal()"
 >
-
   <div
     class="user-modal edit-user-modal"
     (click)="$event.stopPropagation()"
   >
 
-    <!-- =================================================
-         EDIT MODAL HEADER
-         ================================================= -->
-
+    <!-- EDIT MODAL HEADER -->
     <div class="modal-header">
-
       <div>
-
-        <h2>
-          Edit User
-        </h2>
-
-        <p>
-          Update user account details.
-        </p>
-
+        <h2>Edit User</h2>
+        <p>Update user account details.</p>
       </div>
 
       <button
@@ -631,40 +394,19 @@
       >
         ×
       </button>
-
     </div>
 
-
-    <!-- =================================================
-         EDIT ERROR
-         ================================================= -->
-
-    <div
-      *ngIf="errorMessage"
-      class="modal-error"
-    >
+    <!-- EDIT ERROR -->
+    <div *ngIf="errorMessage" class="modal-error">
       {{ errorMessage }}
     </div>
 
+    <!-- EDIT FORM -->
+    <form class="user-form" (ngSubmit)="updateUser()">
 
-    <!-- =================================================
-         EDIT FORM
-         ================================================= -->
-
-    <form
-      class="user-form"
-      (ngSubmit)="updateUser()"
-    >
-
-      <!-- ===============================================
-           USERNAME
-           =============================================== -->
-
+      <!-- USERNAME -->
       <div class="form-group">
-
-        <label for="editUsername">
-          Username
-        </label>
+        <label for="editUsername">Username</label>
 
         <input
           id="editUsername"
@@ -674,22 +416,12 @@
           disabled
         />
 
-        <small>
-          Username cannot be changed.
-        </small>
-
+        <small>Username cannot be changed.</small>
       </div>
 
-
-      <!-- ===============================================
-           EMAIL
-           =============================================== -->
-
+      <!-- EMAIL -->
       <div class="form-group">
-
-        <label for="editEmail">
-          Email
-        </label>
+        <label for="editEmail">Email</label>
 
         <input
           id="editEmail"
@@ -700,23 +432,13 @@
           [disabled]="saving"
           required
         />
-
       </div>
 
-
-      <!-- ===============================================
-           FIRST + LAST NAME
-           =============================================== -->
-
+      <!-- FIRST NAME AND LAST NAME -->
       <div class="form-row">
 
-        <!-- FIRST NAME -->
-
         <div class="form-group">
-
-          <label for="editFirstName">
-            First Name
-          </label>
+          <label for="editFirstName">First Name</label>
 
           <input
             id="editFirstName"
@@ -726,17 +448,10 @@
             placeholder="First name"
             [disabled]="saving"
           />
-
         </div>
 
-
-        <!-- LAST NAME -->
-
         <div class="form-group">
-
-          <label for="editLastName">
-            Last Name
-          </label>
+          <label for="editLastName">Last Name</label>
 
           <input
             id="editLastName"
@@ -746,21 +461,13 @@
             placeholder="Last name"
             [disabled]="saving"
           />
-
         </div>
 
       </div>
 
-
-      <!-- ===============================================
-           ROLE
-           =============================================== -->
-
+      <!-- ROLE -->
       <div class="form-group">
-
-        <label for="editRole">
-          Role
-        </label>
+        <label for="editRole">Role</label>
 
         <select
           id="editRole"
@@ -769,45 +476,24 @@
           [disabled]="saving"
           (ngModelChange)="onRoleChange()"
         >
+          <option value="Requester">Requester</option>
+          <option value="Team Member">Team Member</option>
 
-          <option value="Requester">
-            Requester
-          </option>
-
-          <option value="Team Member">
-            Team Member
-          </option>
-
-          <!--
-            Admin option is shown only when editing
-            the current Admin account.
-          -->
-
+          <!-- Admin option is shown for an Admin account. -->
           <option
             *ngIf="editingUser?.role === 'Admin'"
             value="Admin"
           >
             Admin
           </option>
-
         </select>
 
-        <small>
-          AI access is automatically determined by role.
-        </small>
-
+        <small>AI access is automatically determined by role.</small>
       </div>
 
-
-      <!-- ===============================================
-           NEW PASSWORD
-           =============================================== -->
-
+      <!-- NEW PASSWORD -->
       <div class="form-group">
-
-        <label for="editPassword">
-          New Password
-        </label>
+        <label for="editPassword">New Password</label>
 
         <input
           id="editPassword"
@@ -817,24 +503,15 @@
           placeholder="Leave empty to keep current password"
           [disabled]="saving"
         />
-
       </div>
 
-
-      <!-- ===============================================
-           AI ACCESS
-           =============================================== -->
-
+      <!-- AI ACCESS -->
       <div
         class="form-toggle-row"
         [class.ai-disabled]="!canUseAI(userForm.role)"
       >
-
         <div>
-
-          <strong>
-            AI Enabled
-          </strong>
+          <strong>AI Enabled</strong>
 
           <span>
             {{
@@ -843,70 +520,39 @@
                 : 'AI access is available only for Admin and Team Member.'
             }}
           </span>
-
         </div>
 
-
         <label class="switch">
-
           <input
             type="checkbox"
             name="editAiEnabled"
             [(ngModel)]="userForm.is_ai_enabled"
-            [disabled]="
-              saving ||
-              !canUseAI(userForm.role)
-            "
+            [disabled]="saving || !canUseAI(userForm.role)"
           />
-
           <span class="slider"></span>
-
         </label>
-
       </div>
 
-
-      <!-- ===============================================
-           ACCOUNT ACTIVE
-           =============================================== -->
-
+      <!-- ACCOUNT ACTIVE -->
       <div class="form-toggle-row">
-
         <div>
-
-          <strong>
-            Account Active
-          </strong>
-
-          <span>
-            Allow this user to access SmartOps.
-          </span>
-
+          <strong>Account Active</strong>
+          <span>Allow this user to access SmartOps.</span>
         </div>
 
-
         <label class="switch">
-
           <input
             type="checkbox"
             name="editActive"
             [(ngModel)]="userForm.is_active"
             [disabled]="saving"
           />
-
           <span class="slider"></span>
-
         </label>
-
       </div>
 
-
-      <!-- ===============================================
-           ACTIONS
-           =============================================== -->
-
+      <!-- ACTIONS -->
       <div class="modal-actions">
-
         <button
           type="button"
           class="cancel-button"
@@ -916,23 +562,15 @@
           Cancel
         </button>
 
-
         <button
           type="submit"
           class="save-button"
           [disabled]="saving"
         >
-          {{
-            saving
-              ? 'Saving...'
-              : 'Save Changes'
-          }}
+          {{ saving ? 'Saving...' : 'Save Changes' }}
         </button>
-
       </div>
 
     </form>
-
   </div>
-
 </div>

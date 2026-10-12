@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -71,6 +72,9 @@ export class AuthService {
 
         } else {
 
+          // Avoid retaining a token from an older session.
+          localStorage.removeItem('access_token');
+
           console.error(
             'Access token is missing from login response'
           );
@@ -101,6 +105,8 @@ export class AuthService {
           );
 
         } else {
+
+          localStorage.removeItem('refresh_token');
 
           console.warn(
             'Refresh token is missing from login response'
@@ -181,7 +187,11 @@ export class AuthService {
         // STORE USER
         // ======================================================
 
-        if (userInformation) {
+        if (
+          userInformation &&
+          typeof userInformation === 'object' &&
+          !Array.isArray(userInformation)
+        ) {
 
           localStorage.setItem(
             'user',
@@ -199,6 +209,9 @@ export class AuthService {
           );
 
         } else {
+
+          // Do not reuse another user's stored role.
+          localStorage.removeItem('user');
 
           console.error(
             'User information could not be found in login response.'
@@ -257,7 +270,17 @@ export class AuthService {
 
     try {
 
-      return JSON.parse(user);
+      const parsedUser = JSON.parse(user);
+
+      if (
+        !parsedUser ||
+        typeof parsedUser !== 'object' ||
+        Array.isArray(parsedUser)
+      ) {
+        return null;
+      }
+
+      return parsedUser;
 
     } catch (error) {
 
@@ -265,6 +288,9 @@ export class AuthService {
         'Unable to parse stored user:',
         error
       );
+
+      // Remove invalid stored user information.
+      localStorage.removeItem('user');
 
       return null;
     }
@@ -287,11 +313,22 @@ export class AuthService {
     }
 
 
-    return (
-      user.Role ||
-      user.role ||
-      null
-    );
+    const role =
+      user.Role ??
+      user.role ??
+      null;
+
+
+    if (
+      typeof role !== 'string' ||
+      !role.trim()
+    ) {
+
+      return null;
+    }
+
+
+    return role.trim();
   }
 
 
@@ -301,7 +338,9 @@ export class AuthService {
 
   isAdmin(): boolean {
 
-    return this.getUserRole() === 'Admin';
+    return (
+      this.getUserRole()?.toLowerCase() === 'admin'
+    );
   }
 
 
@@ -311,7 +350,9 @@ export class AuthService {
 
   isTeamMember(): boolean {
 
-    return this.getUserRole() === 'Team Member';
+    return (
+      this.getUserRole()?.toLowerCase() === 'team member'
+    );
   }
 
 
@@ -321,7 +362,9 @@ export class AuthService {
 
   isRequester(): boolean {
 
-    return this.getUserRole() === 'Requester';
+    return (
+      this.getUserRole()?.toLowerCase() === 'requester'
+    );
   }
 
 

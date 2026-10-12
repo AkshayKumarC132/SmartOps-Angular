@@ -1,8 +1,19 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
+
+/* ============================================================
+   USER INTERFACES
+   ============================================================ */
+
+export interface NotificationPreferences {
+  email?: boolean;
+  in_app?: boolean;
+  [key: string]: any;
+}
 
 export interface User {
   id: number;
@@ -13,119 +24,117 @@ export interface User {
   role: string;
   is_ai_enabled?: boolean;
   ai_provider_config?: any;
-  is_active: boolean;
+  notification_preferences?: NotificationPreferences;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface ChangePasswordData {
-  current_password: string;
-  new_password: string;
-  confirm_password: string;
-}
+export type RegistrationRole = 'Requester' | 'Team Member';
+
+/* ============================================================
+   USER SERVICE
+   ============================================================ */
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
 
-  private apiUrl =
+  private readonly apiUrl =
     `${environment.apiUrl}/auth/users/`;
 
+  private readonly registerUrl =
+    `${environment.apiUrl}/auth/register/`;
 
-  constructor(
-    private http: HttpClient
-  ) {}
+  constructor(private http: HttpClient) {}
 
-
-  // =========================================================
-  // GET ALL USERS
-  // =========================================================
+  /* ============================================================
+     GET ALL USERS
+     ============================================================ */
 
   getUsers(): Observable<User[]> {
-
-    const url = this.apiUrl;
-
-    console.log(
-      'User Management API URL:',
-      url
-    );
-
-    return this.http.get<User[]>(url);
+    return this.http.get<User[]>(this.apiUrl);
   }
 
+  /* ============================================================
+     GET USER BY ID
+     ============================================================ */
 
-  // =========================================================
-  // GET USER
-  // =========================================================
-
-  getUser(
-    id: number
-  ): Observable<User> {
-
+  getUser(id: number): Observable<User> {
     return this.http.get<User>(
       `${this.apiUrl}${id}/`
     );
   }
 
+  /* ============================================================
+     CREATE USER
+     Uses POST /auth/register/
+     ============================================================ */
 
-  // =========================================================
-  // UPDATE USER
-  // =========================================================
+  registerUser(data: {
+    username: string;
+    email: string;
+    password: string;
+    role: RegistrationRole;
+    first_name?: string;
+    last_name?: string;
+  }): Observable<any> {
+
+    const payload = {
+      username: data.username.trim(),
+      email: data.email.trim(),
+      password: data.password,
+      role: data.role,
+      first_name: data.first_name?.trim() || '',
+      last_name: data.last_name?.trim() || ''
+    };
+
+    return this.http.post<any>(
+      this.registerUrl,
+      payload
+    );
+  }
+
+  /* ============================================================
+     UPDATE USER
+     ============================================================ */
 
   updateUser(
     id: number,
-    data: any
-  ): Observable<any> {
-
-    return this.http.patch(
+    data: Partial<User> & { password?: string }
+  ): Observable<User> {
+    return this.http.patch<User>(
       `${this.apiUrl}${id}/`,
       data
     );
   }
 
+  /* ============================================================
+     DELETE USER
+     Sends a DELETE request to the existing backend endpoint.
+     ============================================================ */
 
-  // =========================================================
-  // DELETE / DEACTIVATE USER
-  // =========================================================
-
-  deleteUser(
-    id: number
-  ): Observable<any> {
-
-    return this.http.delete(
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete<any>(
       `${this.apiUrl}${id}/`
     );
   }
 
+  /* ============================================================
+     CHANGE PASSWORD
+     ============================================================ */
 
-  // =========================================================
-  // REGISTER USER
-  // =========================================================
-
-  registerUser(
-    data: any
-  ): Observable<any> {
-
-    return this.http.post(
-      `${environment.apiUrl}/auth/register/`,
-      data
-    );
-  }
-
-
-  // =========================================================
-  // CHANGE PASSWORD
-  // =========================================================
-
-  changePassword(
-    data: ChangePasswordData
-  ): Observable<any> {
-
-    return this.http.post(
+  changePassword(data: {
+    old_password: string;
+    new_password: string;
+  }): Observable<any> {
+    return this.http.post<any>(
       `${environment.apiUrl}/auth/change-password/`,
-      data
+      {
+        old_password: data.old_password,
+        new_password: data.new_password
+      }
     );
   }
-
 }

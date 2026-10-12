@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -14,9 +15,7 @@ import {
 
 import { HttpClient } from '@angular/common/http';
 
-import {
-  Subject
-} from 'rxjs';
+import { Subject } from 'rxjs';
 
 import {
   filter,
@@ -62,7 +61,6 @@ interface TicketActivity {
 })
 export class Dashboard implements OnInit, OnDestroy {
 
-
   // ============================================
   // USER
   // ============================================
@@ -103,8 +101,7 @@ export class Dashboard implements OnInit, OnDestroy {
   // DESTROY SUBJECT
   // ============================================
 
-  private destroy$ =
-    new Subject<void>();
+  private destroy$ = new Subject<void>();
 
 
   // ============================================
@@ -130,21 +127,17 @@ export class Dashboard implements OnInit, OnDestroy {
       'Dashboard component initialized'
     );
 
-
     // ==========================================
     // GET CURRENT USER
     // ==========================================
 
-    this.user =
-      this.authService.getUser();
-
+    this.user = this.authService.getUser();
 
     // ==========================================
     // INITIAL DATA LOAD
     // ==========================================
 
     this.loadDashboardData();
-
 
     // ==========================================
     // REFRESH WHEN DASHBOARD IS OPENED
@@ -158,9 +151,7 @@ export class Dashboard implements OnInit, OnDestroy {
           ): event is NavigationEnd =>
             event instanceof NavigationEnd
         ),
-        takeUntil(
-          this.destroy$
-        )
+        takeUntil(this.destroy$)
       )
       .subscribe(
         (
@@ -172,10 +163,8 @@ export class Dashboard implements OnInit, OnDestroy {
             event.urlAfterRedirects
           );
 
-
           if (
-            event.urlAfterRedirects ===
-            '/dashboard'
+            event.urlAfterRedirects === '/dashboard'
           ) {
 
             console.log(
@@ -200,7 +189,6 @@ export class Dashboard implements OnInit, OnDestroy {
       'Dashboard component destroyed'
     );
 
-
     this.destroy$.next();
 
     this.destroy$.complete();
@@ -216,7 +204,6 @@ export class Dashboard implements OnInit, OnDestroy {
     console.log(
       'Loading dashboard data...'
     );
-
 
     this.loadTickets();
 
@@ -293,8 +280,7 @@ export class Dashboard implements OnInit, OnDestroy {
       ticket =>
         String(
           ticket.priority || ''
-        ).toLowerCase() ===
-        'critical'
+        ).toLowerCase() === 'critical'
     ).length;
   }
 
@@ -332,23 +318,25 @@ export class Dashboard implements OnInit, OnDestroy {
   // ============================================
   // RECENT TICKETS
   // ============================================
-get recentTickets(): Ticket[] {
 
-  return [...this.tickets]
-    .sort((a: any, b: any) => {
+  get recentTickets(): Ticket[] {
 
-      const dateA = a.created_at
-        ? new Date(a.created_at).getTime()
-        : 0;
+    return [...this.tickets]
+      .sort((a: any, b: any) => {
 
-      const dateB = b.created_at
-        ? new Date(b.created_at).getTime()
-        : 0;
+        const dateA = a.created_at
+          ? new Date(a.created_at).getTime()
+          : 0;
 
-      return dateB - dateA;
-    })
-    .slice(0, 5);
-}
+        const dateB = b.created_at
+          ? new Date(b.created_at).getTime()
+          : 0;
+
+        return dateB - dateA;
+      })
+      .slice(0, 5);
+  }
+
 
   // ============================================
   // LOAD TICKETS
@@ -360,11 +348,9 @@ get recentTickets(): Ticket[] {
       'Loading tickets for dashboard...'
     );
 
-
     this.loading = true;
 
     this.errorMessage = '';
-
 
     this.ticketService
       .getTickets()
@@ -383,54 +369,43 @@ get recentTickets(): Ticket[] {
             response
           );
 
+          // Make sure response is an array.
+          if (Array.isArray(response)) {
 
-          // Make sure response is an array
-          if (
-            Array.isArray(response)
-          ) {
-
-            this.tickets =
-              response;
+            this.tickets = response;
 
           } else {
 
             this.tickets = [];
           }
 
-
           console.log(
             'Dashboard ticket count:',
             this.tickets.length
           );
 
-
-          // Debug priority values
+          // Debug priority values.
           console.log(
             'Dashboard ticket priorities:',
             this.tickets.map(
               ticket => ({
                 id: ticket.id,
-                ticket_id:
-                  (ticket as any).ticket_id,
-                priority:
-                  ticket.priority
+                ticket_id: (ticket as any).ticket_id,
+                priority: ticket.priority
               })
             )
           );
 
-
-          // Debug Critical count
+          // Debug Critical count.
           console.log(
             'Critical ticket count:',
             this.CriticalTickets
           );
 
-
           this.loading = false;
 
           this.cdr.detectChanges();
         },
-
 
         // ======================================
         // ERROR
@@ -445,36 +420,25 @@ get recentTickets(): Ticket[] {
             error
           );
 
-
           this.loading = false;
 
           this.tickets = [];
 
-
-          if (
-            error.status === 401
-          ) {
+          if (error.status === 401) {
 
             this.errorMessage =
               'Authentication failed. Please login again.';
 
-          }
-
-          else if (
-            error.status === 403
-          ) {
+          } else if (error.status === 403) {
 
             this.errorMessage =
               'You do not have permission to view tickets.';
 
-          }
-
-          else {
+          } else {
 
             this.errorMessage =
               'Unable to load tickets from the server.';
           }
-
 
           this.cdr.detectChanges();
         }
@@ -506,23 +470,17 @@ get recentTickets(): Ticket[] {
             response
           );
 
+          if (Array.isArray(response)) {
 
-          if (
-            Array.isArray(response)
-          ) {
-
-            this.teams =
-              response;
+            this.teams = response;
 
           } else {
 
             this.teams = [];
           }
 
-
           this.cdr.detectChanges();
         },
-
 
         // ======================================
         // ERROR
@@ -536,7 +494,6 @@ get recentTickets(): Ticket[] {
             'Dashboard Teams Error:',
             error
           );
-
 
           this.teams = [];
 
@@ -572,37 +529,24 @@ get recentTickets(): Ticket[] {
             response
           );
 
+          if (Array.isArray(response)) {
 
-          if (
-            Array.isArray(response)
-          ) {
+            this.kbArticles = response;
 
-            this.kbArticles =
-              response;
-
-          }
-
-          else if (
+          } else if (
             response &&
-            Array.isArray(
-              response.results
-            )
+            Array.isArray(response.results)
           ) {
 
-            this.kbArticles =
-              response.results;
+            this.kbArticles = response.results;
 
-          }
-
-          else {
+          } else {
 
             this.kbArticles = [];
           }
 
-
           this.cdr.detectChanges();
         },
-
 
         // ======================================
         // ERROR
@@ -617,7 +561,6 @@ get recentTickets(): Ticket[] {
             error
           );
 
-
           this.kbArticles = [];
 
           this.cdr.detectChanges();
@@ -629,6 +572,7 @@ get recentTickets(): Ticket[] {
 
   // ============================================
   // LOAD USERS
+  // Count only active users returned by the API.
   // ============================================
 
   loadUsers(): void {
@@ -648,72 +592,51 @@ get recentTickets(): Ticket[] {
         ) => {
 
           console.log(
-            'Dashboard Users Response:',
+            'Dashboard Users API Response:',
             response
           );
-
 
           /*
            * Django REST Framework can return:
            *
-           * 1. Direct array
+           * 1. Direct array:
+           *    [{...}, {...}]
            *
-           * [
-           *   {...},
-           *   {...}
-           * ]
+           * 2. Paginated response:
+           *    { count: 10, results: [...] }
            *
-           *
-           * 2. Paginated response
-           *
-           * {
-           *   count: 10,
-           *   results: [...]
-           * }
+           * Count active users in the returned list.
            */
 
+          let users: any[] = [];
 
-          if (
-            Array.isArray(response)
-          ) {
+          if (Array.isArray(response)) {
 
-            this.totalUsers =
-              response.length;
+            users = response;
 
-          }
-
-          else if (
+          } else if (
             response &&
-            typeof response.count ===
-            'number'
+            Array.isArray(response.results)
           ) {
 
-            this.totalUsers =
-              response.count;
+            users = response.results;
 
           }
 
-          else if (
-            response &&
-            Array.isArray(
-              response.results
-            )
-          ) {
+          // Hide inactive users from the dashboard count.
+          const activeUsers = users.filter(
+            (user: any) => user.is_active === true
+          );
 
-            this.totalUsers =
-              response.results.length;
+          this.totalUsers = activeUsers.length;
 
-          }
-
-          else {
-
-            this.totalUsers = 0;
-          }
-
+          console.log(
+            'Dashboard active user count:',
+            this.totalUsers
+          );
 
           this.cdr.detectChanges();
         },
-
 
         // ======================================
         // ERROR
@@ -727,7 +650,6 @@ get recentTickets(): Ticket[] {
             'Dashboard Users Error:',
             error
           );
-
 
           this.totalUsers = 0;
 
@@ -761,49 +683,38 @@ get recentTickets(): Ticket[] {
             response
           );
 
-
-          if (
-            Array.isArray(response)
-          ) {
+          if (Array.isArray(response)) {
 
             /*
              * Sort newest activity first.
              *
              * Backend may return activities
              * ordered by created_at ascending,
-             * so we reverse the order here.
+             * so sort by newest date here.
              */
 
-            this.auditActivities =
-              response
-                .sort(
-                  (
-                    a,
-                    b
-                  ) =>
-                    new Date(
-                      b.created_at
-                    ).getTime() -
-                    new Date(
-                      a.created_at
-                    ).getTime()
-                )
-                .slice(
-                  0,
-                  5
-                );
+            this.auditActivities = response
+              .sort(
+                (
+                  a,
+                  b
+                ) =>
+                  new Date(
+                    b.created_at
+                  ).getTime() -
+                  new Date(
+                    a.created_at
+                  ).getTime()
+              )
+              .slice(0, 5);
 
-          }
-
-          else {
+          } else {
 
             this.auditActivities = [];
           }
 
-
           this.cdr.detectChanges();
         },
-
 
         // ======================================
         // ERROR
@@ -817,7 +728,6 @@ get recentTickets(): Ticket[] {
             'Dashboard Audit Activity Error:',
             error
           );
-
 
           this.auditActivities = [];
 

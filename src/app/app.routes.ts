@@ -1,4 +1,6 @@
+
 import { Routes } from '@angular/router';
+
 import { Login } from './components/login/login';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Tickets } from './components/ticket/ticket';
@@ -14,8 +16,9 @@ import { SlaConfig } from './components/sla-config/sla-config';
 import { AuditLog } from './components/audit-log/audit-log';
 import { Notifications } from './components/notifications/notifications';
 import { Settings } from './components/settings/settings';
-import { authGuard } from './auth/auth.guard';
 
+import { authGuard } from './auth/auth.guard';
+import { roleGuard } from './auth/role.guard';
 
 export const routes: Routes = [
 
@@ -33,7 +36,10 @@ export const routes: Routes = [
   {
     path: '',
     component: AdminLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: {
+      roles: ['Admin']
+    },
 
     children: [
 
