@@ -112,7 +112,7 @@ export class UserService {
 
   /* ============================================================
      DELETE USER
-     Sends a DELETE request to the existing backend endpoint.
+     Sends DELETE /auth/users/<id>/
      ============================================================ */
 
   deleteUser(id: number): Observable<any> {

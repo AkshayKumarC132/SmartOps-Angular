@@ -466,8 +466,7 @@ export class UserManagement implements OnInit {
           ? response
           : [];
 
-        // FRONTEND-ONLY CHANGE:
-        // Hide inactive users whenever the list is loaded.
+        // Frontend-only filtering: hide inactive users.
         const activeUsers = allUsers.filter(
           user => user.is_active === true
         );
@@ -716,7 +715,7 @@ export class UserManagement implements OnInit {
         this.showInviteModal = false;
         this.successMessage = 'User created successfully.';
 
-        // Reload the list; inactive users remain hidden.
+        // Refresh the displayed list.
         this.loadUsers();
         this.cdr.detectChanges();
       },
@@ -857,17 +856,22 @@ export class UserManagement implements OnInit {
 
   /* =====================================================
      DELETE USER
-     Confirms the delete request and removes the user
-     from the displayed list after backend success.
+     Sends DELETE to the existing backend endpoint.
+     Updates the frontend list only after success.
      ===================================================== */
 
   deleteUser(user: User): void {
     if (!user?.id) {
+      this.errorMessage = 'Unable to identify the user.';
+      return;
+    }
+
+    if (this.saving) {
       return;
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to permanently delete ${this.getUserName(user)}? This action cannot be undone.`
+      `Are you sure you want to delete ${this.getUserName(user)}?`
     );
 
     if (!confirmed) {
@@ -882,20 +886,29 @@ export class UserManagement implements OnInit {
       next: response => {
         console.log('Delete response:', response);
 
-        // Remove the user from the current UI list.
+        // Remove the user from the displayed list.
         this.users = this.users.filter(
           item => item.id !== user.id
         );
 
+        // Clear the edit modal if this user was being edited.
+        if (this.editingUser?.id === user.id) {
+          this.editingUser = null;
+          this.showEditModal = false;
+        }
+
         this.saving = false;
         this.successMessage =
-          'User removed from User Management successfully.';
+          'User removed from the displayed list successfully.';
 
         this.cdr.detectChanges();
       },
 
       error: error => {
-        console.error('User deletion request failed:', error);
+        console.error(
+          'User deletion request failed:',
+          error
+        );
 
         this.saving = false;
 
@@ -950,7 +963,7 @@ export class UserManagement implements OnInit {
 
     } else if (error.status === 405) {
       this.errorMessage =
-        'The registration endpoint does not accept POST requests. Check the Django RegisterUserView.';
+        'This HTTP method is not allowed for the requested endpoint.';
 
     } else if (error.status === 0) {
       this.errorMessage =
