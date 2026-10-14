@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { ApiErrorService } from '../../services/api-error.service';
 
 @Component({
   selector: 'app-login',
@@ -25,26 +26,36 @@ export class Login {
 
   constructor(
     private authService: AuthService,
+    private apiErrorService: ApiErrorService,
     private router: Router,
     private route: ActivatedRoute
   ) {
-    // Display the message when redirected by the role guard.
+    // Preserve the existing role-guard message.
     if (
       this.route.snapshot.queryParamMap.get('error') === 'not-admin'
     ) {
       this.errorMessage =
         'Access Denied: You are not an Admin. Please use an administrator account to access the Admin Portal.';
     }
+
+    // Preserve the existing session-expired redirect message.
+    if (
+      this.route.snapshot.queryParamMap.get('error') === 'session-expired'
+    ) {
+      this.errorMessage =
+        'Your session has expired. Please log in again.';
+    }
   }
 
   login(): void {
-
     this.errorMessage = '';
 
-    if (
-      !this.username ||
-      !this.password
-    ) {
+    // Prevent duplicate login submissions.
+    if (this.loading) {
+      return;
+    }
+
+    if (!this.username.trim() || !this.password) {
       this.errorMessage =
         'Username and password are required.';
       return;
@@ -54,42 +65,21 @@ export class Login {
 
     this.authService
       .login(
-        this.username,
+        this.username.trim(),
         this.password
       )
       .subscribe({
-
-        next: (response: any) => {
-
-          console.log(
-            'Login completed:',
-            response
-          );
-
+        next: () => {
           const accessToken =
             this.authService.getAccessToken();
 
           const user =
             this.authService.getUser();
 
-          console.log(
-            'Access token available:',
-            !!accessToken
-          );
-
-          console.log(
-            'Logged-in user:',
-            user
-          );
-
           this.loading = false;
 
-          // ==========================================
-          // VALIDATE AUTHENTICATION
-          // ==========================================
-
+          // Validate the access token.
           if (!accessToken) {
-
             this.authService.logout();
 
             this.errorMessage =
@@ -98,12 +88,8 @@ export class Login {
             return;
           }
 
-          // ==========================================
-          // VALIDATE USER INFORMATION
-          // ==========================================
-
+          // Validate the logged-in user.
           if (!user) {
-
             this.authService.logout();
 
             this.errorMessage =
@@ -112,10 +98,7 @@ export class Login {
             return;
           }
 
-          // ==========================================
-          // CHECK ADMIN ROLE
-          // ==========================================
-
+          // Preserve Admin-only access.
           const role =
             this.authService.getUserRole();
 
@@ -123,15 +106,12 @@ export class Login {
             !role ||
             role.trim().toLowerCase() !== 'admin'
           ) {
-
             console.warn(
               'Access denied. User role:',
               role
             );
 
-            // Clear the session for unauthorized users.
             this.authService.logout();
-
             this.password = '';
 
             this.errorMessage =
@@ -140,77 +120,47 @@ export class Login {
             return;
           }
 
-          // ==========================================
-          // ADMIN LOGIN SUCCESSFUL
-          // ==========================================
-
-          console.log(
-            'Admin login successful. Navigating to dashboard.'
-          );
-
-          this.router.navigate([
-            '/dashboard'
-          ]).then((navigated: boolean) => {
-
-            if (!navigated) {
+          // Navigate after successful Admin login.
+          this.router.navigate(['/dashboard'])
+            .then((navigated: boolean) => {
+              if (!navigated) {
+                this.errorMessage =
+                  'Login successful, but dashboard navigation failed. Please try again.';
+              }
+            })
+            .catch((error: unknown) => {
+              console.error(
+                'Dashboard navigation error:',
+                error
+              );
 
               this.errorMessage =
-                'Login successful, but dashboard navigation failed. Please try again.';
-            }
-
-          }).catch((error: any) => {
-
-            console.error(
-              'Dashboard navigation error:',
-              error
-            );
-
-            this.errorMessage =
-              'Unable to open the dashboard. Please try again.';
-
-          });
-
+                'Unable to open the dashboard. Please try again.';
+            });
         },
 
-        error: (error: any) => {
-
-          console.error(
-            'Login error:',
-            error
-          );
+        error: (error: unknown) => {
+          console.error('Login error:', error);
 
           this.loading = false;
 
+          // Preserve the specific invalid-credentials message.
           if (
+            typeof error === 'object' &&
+            error !== null &&
+            'status' in error &&
             error.status === 401
           ) {
-
             this.errorMessage =
               'Invalid username or password.';
 
-          } else if (
-            error.status === 400
-          ) {
-
-            this.errorMessage =
-              'Invalid login request.';
-
-          } else if (
-            error.status === 0
-          ) {
-
-            this.errorMessage =
-              'Unable to connect to the backend server.';
-
-          } else {
-
-            this.errorMessage =
-              'Unable to login. Please try again.';
+            return;
           }
 
+          // Use shared messages for other API errors.
+          this.errorMessage =
+            this.apiErrorService.getErrorMessage(error);
         }
-
       });
   }
-
 }

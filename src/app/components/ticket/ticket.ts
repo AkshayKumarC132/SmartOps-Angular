@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -9,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { TicketService } from '../../services/ticket.service';
+import { ApiErrorService } from '../../services/api-error.service';
 import { Ticket } from '../../models/tickets.model';
 
 @Component({
@@ -34,6 +36,7 @@ export class Tickets implements OnInit {
 
   constructor(
     private ticketService: TicketService,
+    private apiErrorService: ApiErrorService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -43,101 +46,69 @@ export class Tickets implements OnInit {
   }
 
   loadTickets(): void {
-
     this.loading = true;
     this.errorMessage = '';
 
-    this.ticketService
-      .getTickets()
-      .subscribe({
+    this.ticketService.getTickets().subscribe({
+      next: (response) => {
+        console.log('Admin Tickets Response:', response);
 
-        next: (response) => {
+        this.tickets = response;
+        this.loading = false;
 
-          console.log(
-            'Admin Tickets Response:',
-            response
-          );
+        this.cdr.detectChanges();
+      },
 
-          this.tickets = response;
+      error: (error) => {
+        console.error('Admin Tickets Error:', error);
 
-          this.loading = false;
+        this.loading = false;
 
-          this.cdr.detectChanges();
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Admin Tickets Error:',
-            error
-          );
-
-          this.loading = false;
-
-          if (error.status === 401) {
-
-            this.errorMessage =
-              'Authentication failed. Please login again.';
-
-          } else if (error.status === 403) {
-
-            this.errorMessage =
-              'You do not have permission to view tickets.';
-
-          } else {
-
-            this.errorMessage =
-              'Unable to load tickets.';
-          }
-
-          this.cdr.detectChanges();
+        // Preserve the existing ticket-specific messages.
+        if (error?.status === 401) {
+          this.errorMessage =
+            'Authentication failed. Please login again.';
+        } else if (error?.status === 403) {
+          this.errorMessage =
+            'You do not have permission to view tickets.';
+        } else {
+          // Use shared API error handling for other errors.
+          this.errorMessage =
+            this.apiErrorService.getErrorMessage(error);
         }
 
-      });
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   get filteredTickets(): Ticket[] {
-
     let result = [...this.tickets];
 
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
+    const search = this.searchText.trim().toLowerCase();
 
     if (search) {
-
       result = result.filter(ticket => {
-
         const ticketId =
-          ticket.ticket_id
-            ?.toLowerCase() || '';
+          ticket.ticket_id?.toLowerCase() || '';
 
         const ticketName =
-          ticket.ticket_name
-            ?.toLowerCase() || '';
+          ticket.ticket_name?.toLowerCase() || '';
 
         const category =
-          ticket.category
-            ?.toLowerCase() || '';
+          ticket.category?.toLowerCase() || '';
 
         const status =
-          ticket.status
-            ?.toLowerCase() || '';
+          ticket.status?.toLowerCase() || '';
 
         const priority =
-          ticket.priority
-            ?.toLowerCase() || '';
+          ticket.priority?.toLowerCase() || '';
 
         const team =
-          this.getDisplayValue(
-            ticket.team
-          ).toLowerCase();
+          this.getDisplayValue(ticket.team).toLowerCase();
 
         const assignedTo =
-          this.getDisplayValue(
-            ticket.assigned_to
-          ).toLowerCase();
+          this.getDisplayValue(ticket.assigned_to).toLowerCase();
 
         return (
           ticketId.includes(search) ||
@@ -152,22 +123,16 @@ export class Tickets implements OnInit {
     }
 
     if (this.selectedStatus !== 'All') {
-
       result = result.filter(
-        ticket =>
-          ticket.status ===
-          this.selectedStatus
+        ticket => ticket.status === this.selectedStatus
       );
     }
 
     if (this.selectedPriority !== 'All') {
-
       result = result.filter(
         ticket =>
-          ticket.priority
-            ?.toLowerCase() ===
-          this.selectedPriority
-            .toLowerCase()
+          ticket.priority?.toLowerCase() ===
+          this.selectedPriority.toLowerCase()
       );
     }
 
@@ -175,7 +140,6 @@ export class Tickets implements OnInit {
   }
 
   getDisplayValue(value: any): string {
-
     if (
       value === null ||
       value === undefined ||
@@ -202,26 +166,20 @@ export class Tickets implements OnInit {
   }
 
   formatStatus(status: string): string {
-
     if (!status) {
       return '';
     }
 
-    return status.replace(
-      /_/g,
-      ' '
-    );
+    return status.replace(/_/g, ' ');
   }
 
   clearFilters(): void {
-
     this.searchText = '';
     this.selectedStatus = 'All';
     this.selectedPriority = 'All';
   }
 
   openTicket(id: number): void {
-
     this.router.navigate([
       '/ticket',
       id

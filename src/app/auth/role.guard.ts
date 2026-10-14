@@ -8,6 +8,10 @@ import {
 
 import { AuthService } from '../services/auth.service';
 
+// ============================================================
+// ROLE GUARD
+// ============================================================
+
 export const roleGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot
 ) => {
@@ -15,38 +19,91 @@ export const roleGuard: CanActivateFn = (
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Check authentication first.
+  // ==========================================================
+  // CHECK AUTHENTICATION
+  // ==========================================================
+
   if (!authService.isLoggedIn()) {
     return router.createUrlTree(['/login']);
   }
 
-  // Read the allowed roles configured on the route.
-  const allowedRoles = route.data['roles'] as string[] | undefined;
-  const userRole = authService.getUserRole();
+  // ==========================================================
+  // GET ALLOWED ROLES AND CURRENT USER ROLE
+  // ==========================================================
 
-  // Deny access if role information or route configuration is missing.
-  if (!allowedRoles?.length || !userRole) {
+  const allowedRoles =
+    route.data['roles'] as string[] | undefined;
+
+  const userRole =
+    authService.getUserRole();
+
+  // ==========================================================
+  // VALIDATE ROLE CONFIGURATION
+  // ==========================================================
+
+  if (!allowedRoles?.length) {
     return router.createUrlTree(['/dashboard']);
   }
 
-  // Compare role names without case sensitivity.
+  if (!userRole) {
+    return router.createUrlTree(
+      ['/login'],
+      {
+        queryParams: {
+          error: 'role-unavailable'
+        }
+      }
+    );
+  }
+
+  // ==========================================================
+  // NORMALIZE AND VALIDATE ROLE NAMES
+  // ==========================================================
+
+  const normalizedUserRole =
+    userRole.trim().toLowerCase();
+
   const isAllowed = allowedRoles.some(
-    role => role.toLowerCase() === userRole.toLowerCase()
+    role =>
+      typeof role === 'string' &&
+      role.trim().toLowerCase() === normalizedUserRole
   );
+
+  // ==========================================================
+  // GRANT ACCESS TO AUTHORIZED ROLES
+  // ==========================================================
 
   if (isAllowed) {
     return true;
   }
 
-  // Show an access-denied message for non-admins attempting
-  // to access the Admin Portal.
-  if (allowedRoles.some(role => role.toLowerCase() === 'admin')) {
-    authService.logout();
+  // ==========================================================
+  // HANDLE ADMIN-ONLY ROUTES
+  // ==========================================================
 
-    return router.createUrlTree(['/login'], {
-      queryParams: { error: 'not-admin' }
-    });
+  const requiresAdmin = allowedRoles.some(
+    role =>
+      typeof role === 'string' &&
+      role.trim().toLowerCase() === 'admin'
+  );
+
+  if (requiresAdmin) {
+
+    // Preserve the valid session.
+    // Do not log out users simply because their role is restricted.
+    return router.createUrlTree(
+      ['/login'],
+      {
+        queryParams: {
+          error: 'not-admin'
+        }
+      }
+    );
   }
+
+  // ==========================================================
+  // DENY OTHER UNAUTHORIZED ROUTES
+  // ==========================================================
 
   return router.createUrlTree(['/dashboard']);
 };

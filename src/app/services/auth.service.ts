@@ -5,51 +5,107 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
+// ============================================================
+// USER INTERFACE
+// ============================================================
+
+export interface SmartOpsUser {
+  id?: number | string;
+  ID?: number | string;
+
+  username?: string;
+  Username?: string;
+
+  role?: string;
+  Role?: string;
+
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+
+  firstName?: string;
+  lastName?: string;
+
+  Organization?: string | number | Record<string, unknown> | null;
+
+  organization?: number | string | Record<string, unknown> | null;
+  organization_id?: number | string | null;
+  organization_name?: string;
+
+  [key: string]: unknown;
+}
+
+// ============================================================
+// LOGIN RESPONSE INTERFACE
+// ============================================================
+
+export interface LoginResponse {
+  Access?: string;
+  access?: string;
+  access_token?: string;
+  accessToken?: string;
+
+  Refresh?: string;
+  refresh?: string;
+  refresh_token?: string;
+  refreshToken?: string;
+
+  'User Information'?: SmartOpsUser;
+  user?: SmartOpsUser;
+  User?: SmartOpsUser;
+
+  data?: {
+    user?: SmartOpsUser;
+  };
+
+  Data?: {
+    User?: SmartOpsUser;
+    'User Information'?: SmartOpsUser;
+  };
+
+  [key: string]: unknown;
+}
+
+// ============================================================
+// AUTH SERVICE
+// ============================================================
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  private apiUrl = environment.apiUrl;
+  private readonly apiUrl =
+    environment.apiUrl.replace(/\/+$/, '');
 
   constructor(
-    private http: HttpClient
+    private readonly http: HttpClient
   ) {}
 
-
-  // ============================================================
+  // ==========================================================
   // LOGIN
-  // ============================================================
+  // ==========================================================
 
   login(
     username: string,
     password: string
-  ): Observable<any> {
+  ): Observable<LoginResponse> {
 
-    return this.http.post<any>(
+    // Clear stale information before starting a new login.
+    this.clearSession();
+
+    return this.http.post<LoginResponse>(
       `${this.apiUrl}/auth/login/`,
       {
         username,
         password
       }
     ).pipe(
+      tap((response: LoginResponse) => {
 
-      tap((response: any) => {
-
-        console.log(
-          'Backend login response:',
-          response
-        );
-
-        console.log(
-          'Backend login response JSON:',
-          JSON.stringify(response)
-        );
-
-
-        // ======================================================
+        // ====================================================
         // ACCESS TOKEN
-        // ======================================================
+        // ====================================================
 
         const accessToken =
           response?.Access ??
@@ -58,32 +114,9 @@ export class AuthService {
           response?.accessToken ??
           null;
 
-
-        if (accessToken) {
-
-          localStorage.setItem(
-            'access_token',
-            accessToken
-          );
-
-          console.log(
-            'Access token stored successfully'
-          );
-
-        } else {
-
-          // Avoid retaining a token from an older session.
-          localStorage.removeItem('access_token');
-
-          console.error(
-            'Access token is missing from login response'
-          );
-        }
-
-
-        // ======================================================
+        // ====================================================
         // REFRESH TOKEN
-        // ======================================================
+        // ====================================================
 
         const refreshToken =
           response?.Refresh ??
@@ -92,145 +125,110 @@ export class AuthService {
           response?.refreshToken ??
           null;
 
+        // ====================================================
+        // USER INFORMATION
+        // ====================================================
 
-        if (refreshToken) {
+        const userInformation =
+          this.extractUser(response);
 
+        // ====================================================
+        // VALIDATE ACCESS TOKEN
+        // ====================================================
+
+        if (
+          typeof accessToken !== 'string' ||
+          !accessToken.trim()
+        ) {
+          this.clearSession();
+
+          throw new Error(
+            'Login response did not contain a valid access token.'
+          );
+        }
+
+        // ====================================================
+        // VALIDATE USER INFORMATION
+        // ====================================================
+
+        if (!userInformation) {
+          this.clearSession();
+
+          throw new Error(
+            'Login response did not contain valid user information.'
+          );
+        }
+
+        // ====================================================
+        // STORE ACCESS TOKEN
+        // ====================================================
+
+        localStorage.setItem(
+          'access_token',
+          accessToken
+        );
+
+        // ====================================================
+        // STORE REFRESH TOKEN
+        // ====================================================
+
+        if (
+          typeof refreshToken === 'string' &&
+          refreshToken.trim()
+        ) {
           localStorage.setItem(
             'refresh_token',
             refreshToken
           );
-
-          console.log(
-            'Refresh token stored successfully'
-          );
-
-        } else {
-
-          localStorage.removeItem('refresh_token');
-
-          console.warn(
-            'Refresh token is missing from login response'
-          );
         }
 
+        // ====================================================
+        // STORE USER INFORMATION
+        // ====================================================
 
-        // ======================================================
-        // USER INFORMATION
-        // ======================================================
-
-        let userInformation: any = null;
-
-
-        // Option 1:
-        // "User Information"
-
-        if (response?.['User Information']) {
-
-          userInformation =
-            response['User Information'];
-        }
-
-
-        // Option 2:
-        // "user"
-
-        else if (response?.user) {
-
-          userInformation =
-            response.user;
-        }
-
-
-        // Option 3:
-        // "User"
-
-        else if (response?.User) {
-
-          userInformation =
-            response.User;
-        }
-
-
-        // Option 4:
-        // "data.user"
-
-        else if (response?.data?.user) {
-
-          userInformation =
-            response.data.user;
-        }
-
-
-        // Option 5:
-        // "Data.User"
-
-        else if (response?.Data?.User) {
-
-          userInformation =
-            response.Data.User;
-        }
-
-
-        // Option 6:
-        // "Data.User Information"
-
-        else if (
-          response?.Data?.['User Information']
-        ) {
-
-          userInformation =
-            response.Data['User Information'];
-        }
-
-
-        // ======================================================
-        // STORE USER
-        // ======================================================
-
-        if (
-          userInformation &&
-          typeof userInformation === 'object' &&
-          !Array.isArray(userInformation)
-        ) {
-
-          localStorage.setItem(
-            'user',
-            JSON.stringify(userInformation)
-          );
-
-          console.log(
-            'User stored successfully:',
-            userInformation
-          );
-
-          console.log(
-            'Stored user:',
-            localStorage.getItem('user')
-          );
-
-        } else {
-
-          // Do not reuse another user's stored role.
-          localStorage.removeItem('user');
-
-          console.error(
-            'User information could not be found in login response.'
-          );
-
-          console.error(
-            'Available login response keys:',
-            Object.keys(response || {})
-          );
-        }
+        localStorage.setItem(
+          'user',
+          JSON.stringify(userInformation)
+        );
 
       })
     );
   }
 
+  // ==========================================================
+  // EXTRACT USER FROM LOGIN RESPONSE
+  // ==========================================================
 
-  // ============================================================
+  private extractUser(
+    response: LoginResponse | null | undefined
+  ): SmartOpsUser | null {
+
+    const candidates: unknown[] = [
+      response?.['User Information'],
+      response?.user,
+      response?.User,
+      response?.data?.user,
+      response?.Data?.User,
+      response?.Data?.['User Information']
+    ];
+
+    for (const candidate of candidates) {
+
+      if (
+        candidate !== null &&
+        typeof candidate === 'object' &&
+        !Array.isArray(candidate)
+      ) {
+        return candidate as SmartOpsUser;
+      }
+    }
+
+    return null;
+  }
+
+  // ==========================================================
   // GET ACCESS TOKEN
-  // ============================================================
+  // ==========================================================
 
   getAccessToken(): string | null {
 
@@ -239,10 +237,9 @@ export class AuthService {
     );
   }
 
-
-  // ============================================================
+  // ==========================================================
   // GET REFRESH TOKEN
-  // ============================================================
+  // ==========================================================
 
   getRefreshToken(): string | null {
 
@@ -251,90 +248,67 @@ export class AuthService {
     );
   }
 
-
-  // ============================================================
+  // ==========================================================
   // GET USER
-  // ============================================================
+  // ==========================================================
 
-  getUser(): any {
+  getUser(): SmartOpsUser | null {
 
-    const user =
+    const storedUser =
       localStorage.getItem('user');
 
-
-    if (!user) {
-
+    if (!storedUser) {
       return null;
     }
-
 
     try {
 
-      const parsedUser = JSON.parse(user);
+      const parsedUser: unknown =
+        JSON.parse(storedUser);
 
       if (
-        !parsedUser ||
-        typeof parsedUser !== 'object' ||
-        Array.isArray(parsedUser)
+        parsedUser !== null &&
+        typeof parsedUser === 'object' &&
+        !Array.isArray(parsedUser)
       ) {
-        return null;
+        return parsedUser as SmartOpsUser;
       }
 
-      return parsedUser;
-
-    } catch (error) {
-
-      console.error(
-        'Unable to parse stored user:',
-        error
-      );
-
-      // Remove invalid stored user information.
-      localStorage.removeItem('user');
-
-      return null;
+    } catch {
+      // Invalid JSON must not be reused.
     }
+
+    this.clearSession();
+
+    return null;
   }
 
-
-  // ============================================================
+  // ==========================================================
   // GET USER ROLE
-  // ============================================================
+  // ==========================================================
 
   getUserRole(): string | null {
 
-    const user =
-      this.getUser();
-
-
-    if (!user) {
-
-      return null;
-    }
-
+    const user = this.getUser();
 
     const role =
-      user.Role ??
-      user.role ??
+      user?.Role ??
+      user?.role ??
       null;
-
 
     if (
       typeof role !== 'string' ||
       !role.trim()
     ) {
-
       return null;
     }
-
 
     return role.trim();
   }
 
-
-  // ============================================================
-  // ADMIN
-  // ============================================================
+  // ==========================================================
+  // ADMIN CHECK
+  // ==========================================================
 
   isAdmin(): boolean {
 
@@ -343,10 +317,9 @@ export class AuthService {
     );
   }
 
-
-  // ============================================================
-  // TEAM MEMBER
-  // ============================================================
+  // ==========================================================
+  // TEAM MEMBER CHECK
+  // ==========================================================
 
   isTeamMember(): boolean {
 
@@ -355,10 +328,9 @@ export class AuthService {
     );
   }
 
-
-  // ============================================================
-  // REQUESTER
-  // ============================================================
+  // ==========================================================
+  // REQUESTER CHECK
+  // ==========================================================
 
   isRequester(): boolean {
 
@@ -367,22 +339,23 @@ export class AuthService {
     );
   }
 
-
-  // ============================================================
+  // ==========================================================
   // LOGIN STATUS
-  // ============================================================
+  // ==========================================================
 
   isLoggedIn(): boolean {
 
-    return !!this.getAccessToken();
+    return (
+      !!this.getAccessToken() &&
+      !!this.getUser()
+    );
   }
 
+  // ==========================================================
+  // CLEAR SESSION
+  // ==========================================================
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  logout(): void {
+  clearSession(): void {
 
     localStorage.removeItem(
       'access_token'
@@ -395,6 +368,15 @@ export class AuthService {
     localStorage.removeItem(
       'user'
     );
+  }
+
+  // ==========================================================
+  // LOGOUT
+  // ==========================================================
+
+  logout(): void {
+
+    this.clearSession();
   }
 
 }

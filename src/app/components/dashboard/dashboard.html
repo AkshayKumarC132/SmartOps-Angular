@@ -1,643 +1,332 @@
+
 <div class="dashboard-page">
-
-  <!-- ============================================
-       PAGE HEADING
-       ============================================ -->
-
   <div class="page-heading">
+    <div class="page-heading-content">
+      <h1>Welcome back, {{ username }}</h1>
+      <p>Admin Dashboard</p>
 
-    <h1>
-      Welcome back, {{ username }}
-    </h1>
+      <p *ngIf="dashboardLastUpdated" class="last-updated">
+        Last updated:
+        {{ dashboardLastUpdated | date:'dd MMM yyyy, hh:mm a' }}
+      </p>
+    </div>
 
-    <p>
-      Admin Dashboard
-    </p>
-
+    <button
+      type="button"
+      class="dashboard-refresh"
+      (click)="refreshDashboard()"
+      [disabled]="ticketsLoading || teamsLoading || kbArticlesLoading || usersLoading || activitiesLoading"
+      aria-label="Refresh dashboard data"
+    >
+      {{ ticketsLoading || teamsLoading || kbArticlesLoading || usersLoading || activitiesLoading
+          ? 'Refreshing...'
+          : 'Refresh Dashboard' }}
+    </button>
   </div>
-
-
-  <!-- ============================================
-       ERROR MESSAGE
-       ============================================ -->
 
   <div
     *ngIf="errorMessage"
     class="error-message"
+    role="alert"
   >
     {{ errorMessage }}
   </div>
 
-
-  <!-- ============================================
-       LOADING
-       ============================================ -->
-
-  <div
-    *ngIf="loading"
-    class="loading"
-  >
+  <div *ngIf="loading" class="loading" role="status">
     Loading dashboard...
   </div>
 
-
   <ng-container *ngIf="!loading">
-
-
-    <!-- ==========================================
-         DASHBOARD ALERT
-         ========================================== -->
-
     <div class="dashboard-alert">
-
       <div class="alert-icon">
-
         <svg viewBox="0 0 24 24">
-
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-          ></circle>
-
-          <path
-            d="M12 7v5l3 2"
-          ></path>
-
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 7v5l3 2"></path>
         </svg>
-
       </div>
-
 
       <div class="alert-content">
-
-        <strong>
-          Ticket Overview
-        </strong>
-
+        <strong>Ticket Overview</strong>
         <p>
           {{ totalTickets }}
-          tickets are currently available
-          in SmartOps.
+          tickets are currently available in SmartOps.
         </p>
-
       </div>
-
     </div>
 
-
-    <!-- ==========================================
-         PRIMARY STATISTICS
-         ========================================== -->
-
+    <!-- Primary ticket statistics -->
     <div class="stats-grid">
-
-
-      <!-- OPEN TICKETS -->
-
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            Open Tickets
-          </span>
-
-          <h2>
-            {{ openTickets }}
-          </h2>
-
+          <span>Open Tickets</span>
+          <h2>{{ ticketsLoading ? '…' : openTickets }}</h2>
         </div>
-
-
         <div class="stat-icon blue">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0-0-4V7z"
-            ></path>
-
-            <path
-              d="M12 7v12"
-            ></path>
-
+            <path d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4V7z"></path>
+            <path d="M12 7v12"></path>
           </svg>
-
         </div>
-
       </div>
 
-
-      <!-- IN PROGRESS -->
-
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            In Progress
-          </span>
-
-          <h2>
-            {{ inProgressTickets }}
-          </h2>
-
+          <span>In Progress</span>
+          <h2>{{ ticketsLoading ? '…' : inProgressTickets }}</h2>
         </div>
-
-
         <div class="stat-icon orange">
-
           <svg viewBox="0 0 24 24">
-
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-            ></circle>
-
-            <path
-              d="M12 7v5l3 2"
-            ></path>
-
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v5l3 2"></path>
           </svg>
-
         </div>
-
       </div>
 
-
-      <!-- RESOLVED -->
-
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            Resolved
-          </span>
-
-          <h2>
-            {{ resolvedTickets }}
-          </h2>
-
+          <span>Resolved</span>
+          <h2>{{ ticketsLoading ? '…' : resolvedTickets }}</h2>
         </div>
-
-
         <div class="stat-icon green">
-
           <svg viewBox="0 0 24 24">
-
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-            ></circle>
-
-            <path
-              d="M8 12l3 3 5-6"
-            ></path>
-
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M8 12l3 3 5-6"></path>
           </svg>
-
         </div>
-
       </div>
 
-
-      <!-- CRITICAL -->
-
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            Critical
-          </span>
-
-          <h2>
-            {{ CriticalTickets }}
-          </h2>
-
+          <span>Critical</span>
+          <h2>{{ ticketsLoading ? '…' : CriticalTickets }}</h2>
         </div>
-
-
         <div class="stat-icon red">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M12 3L2.5 20h19L12 3z"
-            ></path>
-
-            <path
-              d="M12 9v4"
-            ></path>
-
-            <path
-              d="M12 17h.01"
-            ></path>
-
+            <path d="M12 3L2.5 20h19L12 3z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
           </svg>
-
         </div>
-
       </div>
-
     </div>
 
-
-    <!-- ==========================================
-         SECONDARY STATISTICS
-         ========================================== -->
-
+    <!-- Secondary statistics -->
     <div class="stats-grid secondary-stats">
-
-
-      <!-- TOTAL USERS -->
-
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            Total Users
-          </span>
-
-          <h2>
-            {{ totalUsers }}
-          </h2>
-
+          <span>Total Users</span>
+          <h2>{{ usersLoading ? '…' : totalUsers }}</h2>
+          <small *ngIf="usersError" class="metric-error">
+            {{ usersError }}
+          </small>
         </div>
-
-
         <div class="stat-icon teal">
-
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-
-            <path
-              d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-            ></path>
-
-            <circle
-              cx="9"
-              cy="7"
-              r="4"
-            ></circle>
-
-            <path
-              d="M22 21v-2a4 4 0 0 0-3-3.87"
-            ></path>
-
-            <path
-              d="M16 3.13a4 4 0 0 1 0 7.75"
-            ></path>
-
-          </svg>
-
-        </div>
-
-      </div>
-
-
-      <!-- TEAMS -->
-
-      <div class="stat-card">
-
-        <div class="stat-content">
-
-          <span>
-            Teams
-          </span>
-
-          <h2>
-            {{ totalTeams }}
-          </h2>
-
-        </div>
-
-
-        <div class="stat-icon teal">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M4 19V9"
-            ></path>
-
-            <path
-              d="M10 19V5"
-            ></path>
-
-            <path
-              d="M16 19v-7"
-            ></path>
-
-            <path
-              d="M22 19H2"
-            ></path>
-
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
-
         </div>
-
       </div>
-
-
-      <!-- KNOWLEDGE BASE ARTICLES -->
 
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            KB Articles
-          </span>
-
-          <h2>
-            {{ totalKbArticles }}
-          </h2>
-
+          <span>Teams</span>
+          <h2>{{ teamsLoading ? '…' : totalTeams }}</h2>
+          <small *ngIf="teamsError" class="metric-error">
+            {{ teamsError }}
+          </small>
         </div>
-
-
         <div class="stat-icon teal">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"
-            ></path>
-
-            <path
-              d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"
-            ></path>
-
+            <path d="M4 19V9"></path>
+            <path d="M10 19V5"></path>
+            <path d="M16 19v-7"></path>
+            <path d="M22 19H2"></path>
           </svg>
-
         </div>
-
       </div>
-
-
-      <!-- TOTAL TICKETS -->
 
       <div class="stat-card">
-
         <div class="stat-content">
-
-          <span>
-            Total Tickets
-          </span>
-
-          <h2>
-            {{ totalTickets }}
-          </h2>
-
+          <span>KB Articles</span>
+          <h2>{{ kbArticlesLoading ? '…' : totalKbArticles }}</h2>
+          <small *ngIf="kbArticlesError" class="metric-error">
+            {{ kbArticlesError }}
+          </small>
         </div>
-
-
         <div class="stat-icon teal">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M3 17l6-6 4 4 8-9"
-            ></path>
-
-            <path
-              d="M15 6h6v6"
-            ></path>
-
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path>
+            <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"></path>
           </svg>
-
         </div>
-
       </div>
 
+      <div class="stat-card">
+        <div class="stat-content">
+          <span>Total Tickets</span>
+          <h2>{{ ticketsLoading ? '…' : totalTickets }}</h2>
+        </div>
+        <div class="stat-icon teal">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 17l6-6 4 4 8-9"></path>
+            <path d="M15 6h6v6"></path>
+          </svg>
+        </div>
+      </div>
     </div>
-
-
-    <!-- ==========================================
-         BOTTOM SECTION
-         ========================================== -->
 
     <div class="dashboard-bottom">
-
-
-      <!-- ========================================
-           RECENT TICKETS
-           ======================================== -->
-
+      <!-- Recent tickets -->
       <section class="recent-tickets">
-
         <div class="section-header">
-
-          <h2>
-            Recent Tickets
-          </h2>
-
-          <button
-            type="button"
-            (click)="goToTickets()"
-          >
+          <h2>Recent Tickets</h2>
+          <button type="button" (click)="goToTickets()">
             View All
           </button>
-
         </div>
 
-
-        <!-- NO TICKETS -->
+        <div
+          *ngIf="ticketsLoading"
+          class="empty-message"
+          role="status"
+        >
+          Loading tickets...
+        </div>
 
         <div
-          *ngIf="recentTickets.length === 0"
+          *ngIf="!ticketsLoading && ticketsError"
+          class="error-message section-error"
+          role="alert"
+        >
+          <p>{{ ticketsError }}</p>
+          <button type="button" (click)="loadTickets()">
+            Retry
+          </button>
+        </div>
+
+        <div
+          *ngIf="!ticketsLoading && !ticketsError && recentTickets.length === 0"
           class="empty-message"
         >
           No tickets found.
         </div>
 
+        <ng-container *ngIf="!ticketsLoading && !ticketsError">
+          <div
+            class="ticket-item"
+            *ngFor="let ticket of recentTickets"
+            (click)="openTicket(ticket.id)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'Open ticket ' + ticket.ticket_id"
+            (keydown.enter)="openTicket(ticket.id)"
+            (keydown.space)="openTicket(ticket.id); $event.preventDefault()"
+          >
+            <div class="ticket-top">
+              <span class="ticket-id">
+                {{ ticket.ticket_id }}
+              </span>
 
-        <!-- TICKET LIST -->
+              <span
+                class="status-badge"
+                [ngClass]="ticket.status"
+              >
+                {{
+                  ticket.status === 'In_Progress'
+                    ? 'IN PROGRESS'
+                    : ticket.status
+                }}
+              </span>
 
-        <div
-          class="ticket-item"
-          *ngFor="let ticket of recentTickets"
-          (click)="openTicket(ticket.id)"
-        >
+              <span
+                class="priority-badge"
+                [ngClass]="(ticket.priority || '').toLowerCase()"
+              >
+                {{ ticket.priority }}
+              </span>
+            </div>
 
-          <div class="ticket-top">
+            <h3>
+              {{ ticket.ticket_name || 'Untitled ticket' }}
+            </h3>
 
-            <span class="ticket-id">
-              {{ ticket.ticket_id }}
-            </span>
-
-
-            <span
-              class="status-badge"
-              [ngClass]="ticket.status"
-            >
-
-              {{
-                ticket.status === 'In_Progress'
-                  ? 'IN PROGRESS'
-                  : ticket.status
-              }}
-
-            </span>
-
-
-            <span
-              class="priority-badge"
-              [ngClass]="ticket.priority"
-            >
-
-              {{ ticket.priority }}
-
-            </span>
-
+            <p>{{ ticket.category || 'No category' }}</p>
           </div>
-
-
-          <h3>
-            {{ ticket.ticket_name }}
-          </h3>
-
-
-          <p>
-            {{ ticket.category || 'No category' }}
-          </p>
-
-        </div>
-
+        </ng-container>
       </section>
 
-
-      <!-- ========================================
-           RECENT ACTIVITY / AUDIT LOG
-           ======================================== -->
-
+      <!-- Recent activity -->
       <section class="recent-activity">
-
-
-        <!-- ACTIVITY HEADER -->
-
         <div class="activity-title">
-
           <svg viewBox="0 0 24 24">
-
-            <path
-              d="M3 12h4l2-7 4 14 2-7h6"
-            ></path>
-
+            <path d="M3 12h4l2-7 4 14 2-7h6"></path>
           </svg>
-
-
-          <h2>
-            Recent Activity
-          </h2>
-
+          <h2>Recent Activity</h2>
         </div>
 
+        <div
+          *ngIf="activitiesLoading"
+          class="activity-placeholder"
+          role="status"
+        >
+          <p>Loading recent activity...</p>
+        </div>
 
-        <!-- ======================================
-             AUDIT ACTIVITIES
-             ====================================== -->
+        <div
+          *ngIf="!activitiesLoading && activitiesError"
+          class="activity-placeholder"
+          role="alert"
+        >
+          <div>
+            <p>{{ activitiesError }}</p>
+            <button type="button" (click)="loadAuditActivities()">
+              Retry
+            </button>
+          </div>
+        </div>
 
         <div
           class="activity-list"
-          *ngIf="auditActivities.length > 0"
+          *ngIf="!activitiesLoading && !activitiesError && auditActivities.length > 0"
         >
-
-
           <div
             class="activity-item"
             *ngFor="let activity of auditActivities"
           >
-
-
-            <!-- ACTIVITY DOT -->
-
             <div class="activity-dot"></div>
 
-
-            <!-- ACTIVITY CONTENT -->
-
             <div class="activity-content">
-
-
-              <!-- DESCRIPTION -->
-
               <div class="activity-description">
-
                 {{ activity.description }}
-
               </div>
-
-
-              <!-- USER + TICKET -->
 
               <div class="activity-meta">
-
                 <span>
-                  By
-                  {{ activity.performed_by || 'System' }}
+                  By {{ activity.performed_by || 'System' }}
                 </span>
 
-
-                <span
-                  *ngIf="activity.ticket"
-                >
-                  •
-                  {{ activity.ticket }}
+                <span *ngIf="activity.ticket">
+                  • {{ activity.ticket }}
                 </span>
-
               </div>
-
-
-              <!-- DATE / TIME -->
 
               <div class="activity-time">
-
                 {{ activity.created_at | date:'dd MMM yyyy, hh:mm a' }}
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
-
-        <!-- ======================================
-             NO ACTIVITY
-             ====================================== -->
 
         <div
           class="activity-placeholder"
-          *ngIf="auditActivities.length === 0"
+          *ngIf="!activitiesLoading && !activitiesError && auditActivities.length === 0"
         >
-
-          <p>
-            No recent activity found.
-          </p>
-
+          <p>No recent activity found.</p>
         </div>
-
-
       </section>
-
     </div>
-
   </ng-container>
-
 </div>

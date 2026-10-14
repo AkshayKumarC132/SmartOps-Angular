@@ -7,29 +7,15 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-
-import {
-  NavigationEnd,
-  Router
-} from '@angular/router';
-
+import { NavigationEnd, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-
 import { Subject, interval } from 'rxjs';
-
-import {
-  filter,
-  takeUntil
-} from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 
 import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 import { Ticket } from '../../models/tickets.model';
 import { environment } from '../../../environments/environment';
-
-// ============================================
-// TICKET ACTIVITY / AUDIT LOG INTERFACE
-// ============================================
 
 interface TicketActivity {
   id: number;
@@ -44,10 +30,6 @@ interface TicketActivity {
   created_at: string;
 }
 
-// ============================================
-// DASHBOARD COMPONENT
-// ============================================
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -56,44 +38,32 @@ interface TicketActivity {
   styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit, OnDestroy {
-
-  // ============================================
-  // USER
-  // ============================================
-
   user: any = null;
-
-  // ============================================
-  // DASHBOARD DATA
-  // ============================================
 
   tickets: Ticket[] = [];
   teams: any[] = [];
   kbArticles: any[] = [];
   totalUsers = 0;
-
-  // ============================================
-  // AUDIT LOG DATA
-  // ============================================
-
   auditActivities: TicketActivity[] = [];
-
-  // ============================================
-  // DASHBOARD STATE
-  // ============================================
 
   loading = true;
   errorMessage = '';
 
-  // ============================================
-  // DESTROY SUBJECT
-  // ============================================
+  ticketsLoading = true;
+  teamsLoading = true;
+  kbArticlesLoading = true;
+  usersLoading = true;
+  activitiesLoading = true;
+
+  ticketsError = '';
+  teamsError = '';
+  kbArticlesError = '';
+  usersError = '';
+  activitiesError = '';
+
+  dashboardLastUpdated: Date | null = null;
 
   private destroy$ = new Subject<void>();
-
-  // ============================================
-  // CONSTRUCTOR
-  // ============================================
 
   constructor(
     private ticketService: TicketService,
@@ -103,28 +73,16 @@ export class Dashboard implements OnInit, OnDestroy {
     private http: HttpClient
   ) {}
 
-  // ============================================
-  // INITIALIZE DASHBOARD
-  // ============================================
-
   ngOnInit(): void {
-    console.log('Dashboard component initialized');
-
     this.user = this.authService.getUser();
-
-    // Load all dashboard data immediately.
     this.loadDashboardData();
 
-    // Automatically refresh the user count every 30 seconds.
-    // The initial count is already loaded above.
+    // Preserve the existing automatic user-count refresh.
     interval(30000)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        console.log('Refreshing dashboard user count...');
-        this.loadUsers();
-      });
+      .subscribe(() => this.loadUsers());
 
-    // Refresh dashboard data when navigating back to Dashboard.
+    // Refresh dashboard data when returning to Dashboard.
     this.router.events
       .pipe(
         filter(
@@ -133,34 +91,19 @@ export class Dashboard implements OnInit, OnDestroy {
         ),
         takeUntil(this.destroy$)
       )
-      .subscribe((event: NavigationEnd) => {
+      .subscribe(event => {
         if (event.urlAfterRedirects === '/dashboard') {
-          console.log('Dashboard opened - refreshing dashboard data');
           this.loadDashboardData();
         }
       });
   }
 
-  // ============================================
-  // DESTROY COMPONENT
-  // ============================================
-
   ngOnDestroy(): void {
-    console.log('Dashboard component destroyed');
-
-    // Stops the automatic refresh and other subscriptions
-    // that use destroy$.
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // ============================================
-  // LOAD COMPLETE DASHBOARD
-  // ============================================
-
   loadDashboardData(): void {
-    console.log('Loading dashboard data...');
-
     this.loadTickets();
     this.loadTeams();
     this.loadKbArticles();
@@ -168,9 +111,9 @@ export class Dashboard implements OnInit, OnDestroy {
     this.loadAuditActivities();
   }
 
-  // ============================================
-  // USERNAME
-  // ============================================
+  refreshDashboard(): void {
+    this.loadDashboardData();
+  }
 
   get username(): string {
     return (
@@ -180,180 +123,155 @@ export class Dashboard implements OnInit, OnDestroy {
     );
   }
 
-  // ============================================
-  // OPEN TICKETS
-  // ============================================
+  private normalizeStatus(status: unknown): string {
+    return String(status ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+  }
 
   get openTickets(): number {
     return this.tickets.filter(
-      ticket => ticket.status === 'Open'
+      ticket => this.normalizeStatus(ticket.status) === 'open'
     ).length;
   }
-
-  // ============================================
-  // IN PROGRESS TICKETS
-  // ============================================
 
   get inProgressTickets(): number {
     return this.tickets.filter(
-      ticket => ticket.status === 'In_Progress'
+      ticket =>
+        this.normalizeStatus(ticket.status) === 'in_progress'
     ).length;
   }
-
-  // ============================================
-  // RESOLVED TICKETS
-  // ============================================
 
   get resolvedTickets(): number {
     return this.tickets.filter(
-      ticket => ticket.status === 'Resolved'
+      ticket => this.normalizeStatus(ticket.status) === 'resolved'
     ).length;
   }
-
-  // ============================================
-  // CRITICAL TICKETS
-  // ============================================
 
   get CriticalTickets(): number {
     return this.tickets.filter(
       ticket =>
-        String(ticket.priority || '').toLowerCase() === 'critical'
+        String(ticket.priority || '').trim().toLowerCase() === 'critical'
     ).length;
   }
-
-  // ============================================
-  // TOTAL TICKETS
-  // ============================================
 
   get totalTickets(): number {
     return this.tickets.length;
   }
 
-  // ============================================
-  // TOTAL TEAMS
-  // ============================================
-
   get totalTeams(): number {
     return this.teams.length;
   }
-
-  // ============================================
-  // TOTAL KB ARTICLES
-  // ============================================
 
   get totalKbArticles(): number {
     return this.kbArticles.length;
   }
 
-  // ============================================
-  // RECENT TICKETS
-  // ============================================
-
   get recentTickets(): Ticket[] {
+    const getTimestamp = (ticket: Ticket): number => {
+      const record = ticket as Ticket & {
+        created_at?: string | null;
+        updated_at?: string | null;
+      };
+
+      const date = record.created_at || record.updated_at;
+
+      if (!date) {
+        return 0;
+      }
+
+      const timestamp = new Date(date).getTime();
+      return Number.isFinite(timestamp) ? timestamp : 0;
+    };
+
     return [...this.tickets]
-      .sort((a: any, b: any) => {
-        const dateA = a.created_at
-          ? new Date(a.created_at).getTime()
-          : 0;
-
-        const dateB = b.created_at
-          ? new Date(b.created_at).getTime()
-          : 0;
-
-        return dateB - dateA;
-      })
+      .sort(
+        (a, b) => getTimestamp(b) - getTimestamp(a)
+      )
       .slice(0, 5);
   }
 
-  // ============================================
-  // LOAD TICKETS
-  // ============================================
-
   loadTickets(): void {
-    console.log('Loading tickets for dashboard...');
-
+    this.ticketsLoading = true;
     this.loading = true;
+    this.ticketsError = '';
     this.errorMessage = '';
 
-    this.ticketService.getTickets().subscribe({
-      next: (response: Ticket[]) => {
-        console.log('Dashboard Tickets API Response:', response);
+    this.ticketService.getTickets()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: Ticket[]) => {
+          this.tickets = Array.isArray(response)
+            ? response
+            : [];
 
-        this.tickets = Array.isArray(response) ? response : [];
+          this.ticketsLoading = false;
+          this.loading = false;
+          this.dashboardLastUpdated = new Date();
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          this.ticketsLoading = false;
+          this.loading = false;
+          this.tickets = [];
 
-        console.log('Dashboard ticket count:', this.tickets.length);
+          if (error?.status === 401) {
+            this.ticketsError =
+              'Your session has expired. Please log in again.';
+          } else if (error?.status === 403) {
+            this.ticketsError =
+              'You do not have permission to view tickets.';
+          } else if (error?.status === 0) {
+            this.ticketsError =
+              'Unable to connect to the server. Check your connection.';
+          } else {
+            this.ticketsError =
+              'Unable to load tickets. Please try again.';
+          }
 
-        console.log(
-          'Dashboard ticket priorities:',
-          this.tickets.map(ticket => ({
-            id: ticket.id,
-            ticket_id: (ticket as any).ticket_id,
-            priority: ticket.priority
-          }))
-        );
-
-        console.log('Critical ticket count:', this.CriticalTickets);
-
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-
-      error: (error: any) => {
-        console.error('Tickets API Error:', error);
-
-        this.loading = false;
-        this.tickets = [];
-
-        if (error.status === 401) {
-          this.errorMessage =
-            'Authentication failed. Please login again.';
-        } else if (error.status === 403) {
-          this.errorMessage =
-            'You do not have permission to view tickets.';
-        } else {
-          this.errorMessage =
-            'Unable to load tickets from the server.';
+          this.errorMessage = this.ticketsError;
+          this.cdr.detectChanges();
         }
-
-        this.cdr.detectChanges();
-      }
-    });
+      });
   }
-
-  // ============================================
-  // LOAD TEAMS
-  // ============================================
 
   loadTeams(): void {
-    this.ticketService.getTeams().subscribe({
-      next: (response: any[]) => {
-        console.log('Dashboard Teams Response:', response);
+    this.teamsLoading = true;
+    this.teamsError = '';
 
-        this.teams = Array.isArray(response) ? response : [];
+    this.ticketService.getTeams()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any[]) => {
+          this.teams = Array.isArray(response)
+            ? response
+            : [];
 
-        this.cdr.detectChanges();
-      },
+          this.teamsLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          this.teamsLoading = false;
+          this.teamsError = error?.status === 403
+            ? 'You do not have permission to view teams.'
+            : 'Unable to load teams. Please try again.';
 
-      error: (error: any) => {
-        console.error('Dashboard Teams Error:', error);
-
-        this.teams = [];
-        this.cdr.detectChanges();
-      }
-    });
+          this.teams = [];
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  // ============================================
-  // LOAD KNOWLEDGE BASE ARTICLES
-  // ============================================
-
   loadKbArticles(): void {
+    this.kbArticlesLoading = true;
+    this.kbArticlesError = '';
+
     this.http
       .get<any>(`${environment.apiUrl}/kb/articles/`)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('Dashboard KB Articles Response:', response);
-
           if (Array.isArray(response)) {
             this.kbArticles = response;
           } else if (
@@ -365,11 +283,14 @@ export class Dashboard implements OnInit, OnDestroy {
             this.kbArticles = [];
           }
 
+          this.kbArticlesLoading = false;
           this.cdr.detectChanges();
         },
-
         error: (error: any) => {
-          console.error('Dashboard KB Articles Error:', error);
+          this.kbArticlesLoading = false;
+          this.kbArticlesError = error?.status === 403
+            ? 'You do not have permission to view Knowledge Base articles.'
+            : 'Unable to load Knowledge Base articles. Please try again.';
 
           this.kbArticles = [];
           this.cdr.detectChanges();
@@ -377,24 +298,17 @@ export class Dashboard implements OnInit, OnDestroy {
       });
   }
 
-  // ============================================
-  // USER VISIBILITY
-  // Matches User Management's existing filtering.
-  // ============================================
-
+  // Preserve the existing dashboard user-visibility rules.
   private filterDashboardUsers(users: any[]): any[] {
-    // Exclude inactive users.
     const activeUsers = users.filter(
       user => user.is_active === true
     );
 
-    // Keep non-admin users.
     const nonAdminUsers = activeUsers.filter(
       user =>
         String(user.role || '').trim().toLowerCase() !== 'admin'
     );
 
-    // Find admin accounts.
     const adminUsers = activeUsers.filter(
       user =>
         String(user.role || '').trim().toLowerCase() === 'admin'
@@ -421,7 +335,6 @@ export class Dashboard implements OnInit, OnDestroy {
       ''
     ).trim().toLowerCase();
 
-    // Prefer the currently logged-in admin.
     const matchingAdmin = adminUsers.find(admin => {
       const idMatches =
         currentId !== null &&
@@ -442,7 +355,7 @@ export class Dashboard implements OnInit, OnDestroy {
       return idMatches || usernameMatches || emailMatches;
     });
 
-    // Preserve the fallback from the existing User Management code.
+    // Preserved from your existing implementation.
     const fallbackAdmin = adminUsers.find(admin => {
       const username = String(admin.username || '')
         .trim()
@@ -462,19 +375,15 @@ export class Dashboard implements OnInit, OnDestroy {
       : nonAdminUsers;
   }
 
-  // ============================================
-  // LOAD USERS
-  // Called initially and every 30 seconds.
-  // ============================================
-
   loadUsers(): void {
+    this.usersLoading = true;
+    this.usersError = '';
+
     this.http
       .get<any>(`${environment.apiUrl}/auth/users/`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('Dashboard Users API Response:', response);
-
           let users: any[] = [];
 
           if (Array.isArray(response)) {
@@ -486,87 +395,68 @@ export class Dashboard implements OnInit, OnDestroy {
             users = response.results;
           }
 
-          // Apply the same visibility rules as User Management.
-          const visibleUsers = this.filterDashboardUsers(users);
+          const visibleUsers =
+            this.filterDashboardUsers(users);
 
           this.totalUsers = visibleUsers.length;
-
-          console.log(
-            'Dashboard visible user count:',
-            this.totalUsers
-          );
-
-          console.log(
-            'Dashboard visible users:',
-            visibleUsers.map(user => ({
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              role: user.role,
-              is_active: user.is_active
-            }))
-          );
-
+          this.usersLoading = false;
           this.cdr.detectChanges();
         },
-
         error: (error: any) => {
-          console.error('Dashboard Users Error:', error);
+          this.usersLoading = false;
+          this.usersError = error?.status === 403
+            ? 'You do not have permission to view users.'
+            : 'Unable to load users. Please try again.';
 
-          // Keep the last successful count if a periodic
-          // refresh fails temporarily.
+          // Retain the last successful count on refresh failure.
           this.cdr.detectChanges();
         }
       });
   }
 
-  // ============================================
-  // LOAD AUDIT LOG / RECENT ACTIVITY
-  // ============================================
-
   loadAuditActivities(): void {
-    this.ticketService.getAuditActivities().subscribe({
-      next: (response: any[]) => {
-        console.log(
-          'Dashboard Audit Activity Response:',
-          response
-        );
+    this.activitiesLoading = true;
+    this.activitiesError = '';
 
-        if (Array.isArray(response)) {
-          this.auditActivities = [...response]
-            .sort(
-              (a, b) =>
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime()
-            )
-            .slice(0, 5);
-        } else {
+    this.ticketService.getAuditActivities()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any[]) => {
+          if (Array.isArray(response)) {
+            this.auditActivities = [...response]
+              .sort((a, b) => {
+                const dateA =
+                  new Date(a.created_at || '').getTime();
+                const dateB =
+                  new Date(b.created_at || '').getTime();
+
+                return (
+                  (Number.isFinite(dateB) ? dateB : 0) -
+                  (Number.isFinite(dateA) ? dateA : 0)
+                );
+              })
+              .slice(0, 5);
+          } else {
+            this.auditActivities = [];
+          }
+
+          this.activitiesLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.activitiesLoading = false;
+          this.activitiesError =
+            'Unable to load recent activity. Please try again.';
+
           this.auditActivities = [];
+          this.cdr.detectChanges();
         }
-
-        this.cdr.detectChanges();
-      },
-
-      error: (error: any) => {
-        console.error('Dashboard Audit Activity Error:', error);
-
-        this.auditActivities = [];
-        this.cdr.detectChanges();
-      }
-    });
+      });
   }
-
-  // ============================================
-  // OPEN TICKET
-  // ============================================
 
   openTicket(id: number): void {
     this.router.navigate(['/ticket', id]);
   }
-
-  // ============================================
-  // GO TO TICKETS
-  // ============================================
 
   goToTickets(): void {
     this.router.navigate(['/tickets']);

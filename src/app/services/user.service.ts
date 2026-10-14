@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
-/* ============================================================
-   USER INTERFACES
-   ============================================================ */
+// ============================================================
+// USER INTERFACES
+// ============================================================
 
 export interface NotificationPreferences {
   email?: boolean;
@@ -18,23 +18,51 @@ export interface NotificationPreferences {
 export interface User {
   id: number;
   username: string;
+
   first_name?: string;
   last_name?: string;
+
   email: string;
   role: string;
+
   is_ai_enabled?: boolean;
   ai_provider_config?: any;
   notification_preferences?: NotificationPreferences;
+
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
+
+  // ==========================================================
+  // ORGANIZATION / TENANT METADATA
+  // ==========================================================
+
+  organization_id?: number | string | null;
+  organizationId?: number | string | null;
+
+  organization?:
+    | number
+    | string
+    | {
+        id?: number | string;
+        ID?: number | string;
+        pk?: number | string;
+      }
+    | null;
+
+  tenant_id?: number | string | null;
+  tenantId?: number | string | null;
 }
+
+// ============================================================
+// REGISTRATION ROLE
+// ============================================================
 
 export type RegistrationRole = 'Requester' | 'Team Member';
 
-/* ============================================================
-   USER SERVICE
-   ============================================================ */
+// ============================================================
+// USER SERVICE
+// ============================================================
 
 @Injectable({
   providedIn: 'root'
@@ -42,35 +70,44 @@ export type RegistrationRole = 'Requester' | 'Team Member';
 export class UserService {
 
   private readonly apiUrl =
-    `${environment.apiUrl}/auth/users/`;
+    `${environment.apiUrl.replace(/\/+$/, '')}/auth/users/`;
 
   private readonly registerUrl =
-    `${environment.apiUrl}/auth/register/`;
+    `${environment.apiUrl.replace(/\/+$/, '')}/auth/register/`;
 
-  constructor(private http: HttpClient) {}
+  private readonly changePasswordUrl =
+    `${environment.apiUrl.replace(/\/+$/, '')}/auth/change-password/`;
 
-  /* ============================================================
-     GET ALL USERS
-     ============================================================ */
+  constructor(
+    private readonly http: HttpClient
+  ) {}
+
+  // ==========================================================
+  // GET ALL USERS
+  // ==========================================================
 
   getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl);
+
+    return this.http.get<User[]>(
+      this.apiUrl
+    );
   }
 
-  /* ============================================================
-     GET USER BY ID
-     ============================================================ */
+  // ==========================================================
+  // GET USER BY ID
+  // ==========================================================
 
   getUser(id: number): Observable<User> {
+
     return this.http.get<User>(
       `${this.apiUrl}${id}/`
     );
   }
 
-  /* ============================================================
-     CREATE USER
-     Uses POST /auth/register/
-     ============================================================ */
+  // ==========================================================
+  // CREATE USER
+  // Uses POST /auth/register/
+  // ==========================================================
 
   registerUser(data: {
     username: string;
@@ -96,41 +133,44 @@ export class UserService {
     );
   }
 
-  /* ============================================================
-     UPDATE USER
-     ============================================================ */
+  // ==========================================================
+  // UPDATE USER
+  // ==========================================================
 
   updateUser(
     id: number,
     data: Partial<User> & { password?: string }
   ): Observable<User> {
+
     return this.http.patch<User>(
       `${this.apiUrl}${id}/`,
       data
     );
   }
 
-  /* ============================================================
-     DELETE USER
-     Sends DELETE /auth/users/<id>/
-     ============================================================ */
+  // ==========================================================
+  // DELETE USER
+  // Uses DELETE /auth/users/<id>/
+  // ==========================================================
 
   deleteUser(id: number): Observable<any> {
+
     return this.http.delete<any>(
       `${this.apiUrl}${id}/`
     );
   }
 
-  /* ============================================================
-     CHANGE PASSWORD
-     ============================================================ */
+  // ==========================================================
+  // CHANGE PASSWORD
+  // ==========================================================
 
   changePassword(data: {
     old_password: string;
     new_password: string;
   }): Observable<any> {
+
     return this.http.post<any>(
-      `${environment.apiUrl}/auth/change-password/`,
+      this.changePasswordUrl,
       {
         old_password: data.old_password,
         new_password: data.new_password

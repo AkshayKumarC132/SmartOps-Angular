@@ -14,6 +14,8 @@ import {
   RegistrationRole
 } from '../../services/user.service';
 
+import { ApiErrorService } from '../../services/api-error.service';
+
 @Component({
   selector: 'app-user-management',
   standalone: true,
@@ -55,6 +57,7 @@ export class UserManagement implements OnInit {
 
   constructor(
     private userService: UserService,
+    private apiErrorService: ApiErrorService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -62,9 +65,9 @@ export class UserManagement implements OnInit {
     this.loadUsers();
   }
 
-  /* =====================================================
-     AI ACCESS
-     ===================================================== */
+  // =====================================================
+  // AI ACCESS
+  // =====================================================
 
   canUseAI(role?: string): boolean {
     const normalizedRole = String(role || '')
@@ -83,9 +86,9 @@ export class UserManagement implements OnInit {
     return user;
   }
 
-  /* =====================================================
-     LOCAL STORAGE HELPERS
-     ===================================================== */
+  // =====================================================
+  // LOCAL STORAGE HELPERS
+  // =====================================================
 
   private readLocalStorageValue(key: string): any {
     try {
@@ -374,9 +377,9 @@ export class UserManagement implements OnInit {
     };
   }
 
-  /* =====================================================
-     FILTER USERS FOR ADMIN PORTAL
-     ===================================================== */
+  // =====================================================
+  // ADMIN PORTAL USER FILTERING
+  // =====================================================
 
   private filterUsersForAdminPortal(
     users: User[]
@@ -431,6 +434,7 @@ export class UserManagement implements OnInit {
       }
     }
 
+    // Preserve the existing fallback administrator behaviour.
     const fallbackAdmin = adminUsers.find(user => {
       const username = String(user.username || '')
         .trim()
@@ -451,10 +455,9 @@ export class UserManagement implements OnInit {
       : nonAdminUsers;
   }
 
-  /* =====================================================
-     LOAD USERS
-     Hide inactive users in the frontend.
-     ===================================================== */
+  // =====================================================
+  // LOAD USERS
+  // =====================================================
 
   loadUsers(): void {
     this.loading = true;
@@ -466,17 +469,16 @@ export class UserManagement implements OnInit {
           ? response
           : [];
 
-        // Frontend-only filtering: hide inactive users.
+        // Preserve existing frontend-only active-user filtering.
         const activeUsers = allUsers.filter(
           user => user.is_active === true
         );
 
-        // Preserve organization-admin display filtering.
         this.users = this.filterUsersForAdminPortal(
           activeUsers
         );
 
-        // Preserve existing AI access behavior.
+        // Preserve existing AI-access behaviour.
         this.users.forEach(user => {
           this.normalizeAIAccess(user);
         });
@@ -486,22 +488,20 @@ export class UserManagement implements OnInit {
       },
 
       error: error => {
-        console.error(
-          'User Management Error:',
-          error
-        );
+        console.error('User Management Error:', error);
 
         this.users = [];
         this.loading = false;
 
-        if (error.status === 401) {
+        if (error?.status === 401) {
           this.errorMessage =
             'Authentication failed. Please login again.';
-        } else if (error.status === 403) {
+        } else if (error?.status === 403) {
           this.errorMessage =
             'Only Admin users can view User Management.';
         } else {
-          this.errorMessage = 'Unable to load users.';
+          this.errorMessage =
+            this.apiErrorService.getErrorMessage(error);
         }
 
         this.cdr.detectChanges();
@@ -509,9 +509,9 @@ export class UserManagement implements OnInit {
     });
   }
 
-  /* =====================================================
-     SEARCH AND ROLE FILTER
-     ===================================================== */
+  // =====================================================
+  // SEARCH AND ROLE FILTER
+  // =====================================================
 
   get filteredUsers(): User[] {
     let result = [...this.users];
@@ -522,10 +522,8 @@ export class UserManagement implements OnInit {
       result = result.filter(user => {
         const username = user.username?.toLowerCase() || '';
         const email = user.email?.toLowerCase() || '';
-        const firstName =
-          user.first_name?.toLowerCase() || '';
-        const lastName =
-          user.last_name?.toLowerCase() || '';
+        const firstName = user.first_name?.toLowerCase() || '';
+        const lastName = user.last_name?.toLowerCase() || '';
 
         return (
           username.includes(search) ||
@@ -557,9 +555,9 @@ export class UserManagement implements OnInit {
     return Array.from(roleSet);
   }
 
-  /* =====================================================
-     DISPLAY HELPERS
-     ===================================================== */
+  // =====================================================
+  // DISPLAY HELPERS
+  // =====================================================
 
   getUserName(user: User): string {
     const fullName =
@@ -619,9 +617,9 @@ export class UserManagement implements OnInit {
     return user.id;
   }
 
-  /* =====================================================
-     INVITE USER
-     ===================================================== */
+  // =====================================================
+  // INVITE USER
+  // =====================================================
 
   openInviteModal(): void {
     this.userForm = {
@@ -649,14 +647,18 @@ export class UserManagement implements OnInit {
     this.errorMessage = '';
   }
 
-  /* =====================================================
-     CREATE USER
-     Uses POST /auth/register/
-     ===================================================== */
+  // =====================================================
+  // CREATE USER
+  // Uses existing POST /auth/register/ service method.
+  // =====================================================
 
   createUser(): void {
     this.errorMessage = '';
     this.successMessage = '';
+
+    if (this.saving) {
+      return;
+    }
 
     if (!this.userForm.email.trim()) {
       this.errorMessage = 'Email is required.';
@@ -715,7 +717,6 @@ export class UserManagement implements OnInit {
         this.showInviteModal = false;
         this.successMessage = 'User created successfully.';
 
-        // Refresh the displayed list.
         this.loadUsers();
         this.cdr.detectChanges();
       },
@@ -724,19 +725,15 @@ export class UserManagement implements OnInit {
         console.error('User creation error:', error);
 
         this.saving = false;
-        this.handleError(
-          error,
-          'Unable to create user.'
-        );
-
+        this.handleError(error, 'Unable to create user.');
         this.cdr.detectChanges();
       }
     });
   }
 
-  /* =====================================================
-     EDIT USER
-     ===================================================== */
+  // =====================================================
+  // EDIT USER
+  // =====================================================
 
   openEditUser(user: User): void {
     this.editingUser = user;
@@ -775,13 +772,17 @@ export class UserManagement implements OnInit {
     this.errorMessage = '';
   }
 
-  /* =====================================================
-     UPDATE USER
-     ===================================================== */
+  // =====================================================
+  // UPDATE USER
+  // =====================================================
 
   updateUser(): void {
     this.errorMessage = '';
     this.successMessage = '';
+
+    if (this.saving) {
+      return;
+    }
 
     if (!this.editingUser?.id) {
       this.errorMessage = 'Unable to identify the user.';
@@ -835,7 +836,6 @@ export class UserManagement implements OnInit {
         this.editingUser = null;
         this.successMessage = 'User updated successfully.';
 
-        // Reload and apply active-user filtering.
         this.loadUsers();
         this.cdr.detectChanges();
       },
@@ -844,21 +844,15 @@ export class UserManagement implements OnInit {
         console.error('User update error:', error);
 
         this.saving = false;
-        this.handleError(
-          error,
-          'Unable to update user.'
-        );
-
+        this.handleError(error, 'Unable to update user.');
         this.cdr.detectChanges();
       }
     });
   }
 
-  /* =====================================================
-     DELETE USER
-     Sends DELETE to the existing backend endpoint.
-     Updates the frontend list only after success.
-     ===================================================== */
+  // =====================================================
+  // DELETE USER
+  // =====================================================
 
   deleteUser(user: User): void {
     if (!user?.id) {
@@ -886,12 +880,11 @@ export class UserManagement implements OnInit {
       next: response => {
         console.log('Delete response:', response);
 
-        // Remove the user from the displayed list.
+        // Update the displayed list only after the API succeeds.
         this.users = this.users.filter(
           item => item.id !== user.id
         );
 
-        // Clear the edit modal if this user was being edited.
         if (this.editingUser?.id === user.id) {
           this.editingUser = null;
           this.showEditModal = false;
@@ -899,82 +892,72 @@ export class UserManagement implements OnInit {
 
         this.saving = false;
         this.successMessage =
-          'User removed from the displayed list successfully.';
+          'User deleted successfully.';
 
         this.cdr.detectChanges();
       },
 
       error: error => {
-        console.error(
-          'User deletion request failed:',
-          error
-        );
+        console.error('User deletion request failed:', error);
 
         this.saving = false;
-
-        this.handleError(
-          error,
-          'Unable to delete user.'
-        );
-
+        this.handleError(error, 'Unable to delete user.');
         this.cdr.detectChanges();
       }
     });
   }
 
-  /* =====================================================
-     ERROR HANDLING
-     ===================================================== */
+  // =====================================================
+  // SHARED ERROR HANDLING
+  // =====================================================
 
   handleError(
-    error: any,
+    error: unknown,
     defaultMessage: string
   ): void {
-    if (error.status === 400 && error.error) {
-      const messages: string[] = [];
+    const httpError = error as {
+      status?: number;
+      error?: unknown;
+    };
 
-      Object.keys(error.error).forEach(key => {
-        const value = error.error[key];
+    // Preserve readable Django field-validation errors.
+    if (
+      httpError?.status === 400 &&
+      httpError.error &&
+      typeof httpError.error === 'object' &&
+      !Array.isArray(httpError.error)
+    ) {
+      const messages: string[] = [];
+      const responseBody =
+        httpError.error as Record<string, unknown>;
+
+      Object.keys(responseBody).forEach(key => {
+        const value = responseBody[key];
 
         if (Array.isArray(value)) {
-          messages.push(
-            `${key}: ${value.join(', ')}`
-          );
-        } else if (typeof value === 'string') {
+          const items = value.map(item => String(item));
+          messages.push(`${key}: ${items.join(', ')}`);
+        } else if (
+          typeof value === 'string' &&
+          value.trim()
+        ) {
           messages.push(`${key}: ${value}`);
         }
       });
 
       this.errorMessage = messages.length
         ? messages.join(' | ')
-        : defaultMessage;
+        : this.apiErrorService.getErrorMessage(error);
 
-    } else if (error.status === 401) {
-      this.errorMessage =
-        'Authentication failed. Please login again.';
+      if (!this.errorMessage) {
+        this.errorMessage = defaultMessage;
+      }
 
-    } else if (error.status === 403) {
-      this.errorMessage =
-        'You do not have permission to perform this action.';
-
-    } else if (error.status === 404) {
-      this.errorMessage =
-        'The requested endpoint was not found.';
-
-    } else if (error.status === 405) {
-      this.errorMessage =
-        'This HTTP method is not allowed for the requested endpoint.';
-
-    } else if (error.status === 0) {
-      this.errorMessage =
-        'Unable to connect to the backend server.';
-
-    } else if (error.status >= 500) {
-      this.errorMessage =
-        'The backend encountered an error. Check the Django server logs.';
-
-    } else {
-      this.errorMessage = defaultMessage;
+      return;
     }
+
+    this.errorMessage =
+      this.apiErrorService.getErrorMessage(error) ||
+      defaultMessage;
   }
 }
