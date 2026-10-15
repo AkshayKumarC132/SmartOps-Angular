@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -12,6 +13,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
+import { ApiErrorService } from '../../services/api-error.service';
 
 import {
   NotificationPreferences
@@ -122,7 +124,8 @@ export class Settings implements OnInit {
     private userService: UserService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private http: HttpClient
+    private http: HttpClient,
+    private apiErrorService: ApiErrorService
   ) {}
 
   // =========================================================
@@ -250,6 +253,7 @@ export class Settings implements OnInit {
             'Unable to connect to the backend server.';
         } else {
           this.errorMessage =
+            this.apiErrorService.getErrorMessage(error) ||
             'Unable to load your profile.';
         }
 
@@ -741,6 +745,7 @@ export class Settings implements OnInit {
               'Unable to connect to the backend server.';
           } else {
             this.errorMessage =
+              this.apiErrorService.getErrorMessage(error) ||
               'Unable to update profile.';
           }
 
@@ -859,6 +864,7 @@ export class Settings implements OnInit {
             'Unable to connect to the backend server.';
         } else {
           this.passwordErrorMessage =
+            this.apiErrorService.getErrorMessage(error) ||
             'Unable to change password.';
         }
 

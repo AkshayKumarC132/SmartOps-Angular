@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -11,6 +12,8 @@ import {
   NotificationItem,
   NotificationService
 } from '../../services/notifications.service';
+
+import { ApiErrorService } from '../../services/api-error.service';
 
 @Component({
   selector: 'app-notifications',
@@ -37,6 +40,7 @@ export class Notifications implements OnInit {
   constructor(
     private notificationService: NotificationService,
     private router: Router,
+    private apiErrorService: ApiErrorService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -100,6 +104,7 @@ export class Notifications implements OnInit {
           } else {
 
             this.errorMessage =
+              this.apiErrorService.getErrorMessage(error) ||
               'Unable to load notifications.';
           }
 

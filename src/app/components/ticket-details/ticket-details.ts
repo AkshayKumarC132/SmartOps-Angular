@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -13,6 +14,7 @@ import {
 } from '@angular/router';
 
 import { TicketService } from '../../services/ticket.service';
+import { ApiErrorService } from '../../services/api-error.service';
 
 @Component({
   selector: 'app-ticket-details',
@@ -95,6 +97,7 @@ export class TicketDetails implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private ticketService: TicketService,
+    private apiErrorService: ApiErrorService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -354,7 +357,10 @@ export class TicketDetails implements OnInit {
           else {
 
             this.errorMessage =
-              `Unable to load ticket details. Server returned ${error.status}.`;
+              this.getSharedErrorMessage(
+                error,
+                `Unable to load ticket details. Server returned ${error?.status ?? 'an unknown error'}.`
+              );
           }
 
 
@@ -638,7 +644,10 @@ export class TicketDetails implements OnInit {
           else {
 
             this.errorMessage =
-              `Unable to update ticket. Server returned ${error.status}.`;
+              this.getSharedErrorMessage(
+                error,
+                `Unable to update ticket. Server returned ${error?.status ?? 'an unknown error'}.`
+              );
           }
 
 
@@ -646,6 +655,25 @@ export class TicketDetails implements OnInit {
         }
 
       });
+  }
+
+
+  // ============================================
+  // SHARED API ERROR HANDLING
+  // ============================================
+
+  private getSharedErrorMessage(
+    error: any,
+    fallback: string
+  ): string {
+
+    const message =
+      this.apiErrorService.getErrorMessage(error);
+
+    return message &&
+      message !== 'An unexpected error occurred.'
+      ? message
+      : fallback;
   }
 
 
@@ -669,7 +697,7 @@ export class TicketDetails implements OnInit {
   }
 
 
-  // ============================================
+  // ====================================================
   // BACK TO TICKETS
   // ============================================
 

@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -8,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
+import { ApiErrorService } from '../../services/api-error.service';
 
 interface AuditActivity {
   id: number;
@@ -50,7 +52,8 @@ export class AuditLog implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private apiErrorService: ApiErrorService
   ) {}
 
   ngOnInit(): void {
@@ -114,6 +117,7 @@ export class AuditLog implements OnInit {
         } else {
 
           this.errorMessage =
+            this.apiErrorService.getErrorMessage(error) ||
             'Unable to load audit log.';
         }
 

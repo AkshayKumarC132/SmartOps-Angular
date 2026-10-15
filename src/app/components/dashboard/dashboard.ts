@@ -14,6 +14,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 
 import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
+import { ApiErrorService } from '../../services/api-error.service';
 import { Ticket } from '../../models/tickets.model';
 import { environment } from '../../../environments/environment';
 
@@ -70,7 +71,8 @@ export class Dashboard implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private http: HttpClient
+    private http: HttpClient,
+    private apiErrorService: ApiErrorService
   ) {}
 
   ngOnInit(): void {
@@ -226,8 +228,10 @@ export class Dashboard implements OnInit, OnDestroy {
             this.ticketsError =
               'Unable to connect to the server. Check your connection.';
           } else {
-            this.ticketsError =
-              'Unable to load tickets. Please try again.';
+            this.ticketsError = this.getSharedErrorMessage(
+              error,
+              'Unable to load tickets. Please try again.'
+            );
           }
 
           this.errorMessage = this.ticketsError;
@@ -255,7 +259,10 @@ export class Dashboard implements OnInit, OnDestroy {
           this.teamsLoading = false;
           this.teamsError = error?.status === 403
             ? 'You do not have permission to view teams.'
-            : 'Unable to load teams. Please try again.';
+            : this.getSharedErrorMessage(
+                error,
+                'Unable to load teams. Please try again.'
+              );
 
           this.teams = [];
           this.cdr.detectChanges();
@@ -290,7 +297,10 @@ export class Dashboard implements OnInit, OnDestroy {
           this.kbArticlesLoading = false;
           this.kbArticlesError = error?.status === 403
             ? 'You do not have permission to view Knowledge Base articles.'
-            : 'Unable to load Knowledge Base articles. Please try again.';
+            : this.getSharedErrorMessage(
+                error,
+                'Unable to load Knowledge Base articles. Please try again.'
+              );
 
           this.kbArticles = [];
           this.cdr.detectChanges();
@@ -406,7 +416,10 @@ export class Dashboard implements OnInit, OnDestroy {
           this.usersLoading = false;
           this.usersError = error?.status === 403
             ? 'You do not have permission to view users.'
-            : 'Unable to load users. Please try again.';
+            : this.getSharedErrorMessage(
+                error,
+                'Unable to load users. Please try again.'
+              );
 
           // Retain the last successful count on refresh failure.
           this.cdr.detectChanges();
@@ -443,15 +456,34 @@ export class Dashboard implements OnInit, OnDestroy {
           this.activitiesLoading = false;
           this.cdr.detectChanges();
         },
-        error: () => {
+        error: (error: any) => {
           this.activitiesLoading = false;
-          this.activitiesError =
-            'Unable to load recent activity. Please try again.';
+          this.activitiesError = this.getSharedErrorMessage(
+            error,
+            'Unable to load recent activity. Please try again.'
+          );
 
           this.auditActivities = [];
           this.cdr.detectChanges();
         }
       });
+  }
+
+  // ============================================
+  // SHARED API ERROR HANDLING
+  // ============================================
+
+  private getSharedErrorMessage(
+    error: any,
+    fallback: string
+  ): string {
+    const message =
+      this.apiErrorService.getErrorMessage(error);
+
+    return message &&
+      message !== 'An unexpected error occurred.'
+      ? message
+      : fallback;
   }
 
   openTicket(id: number): void {

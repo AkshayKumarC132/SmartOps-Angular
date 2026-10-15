@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component
@@ -8,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { TicketService } from '../../services/ticket.service';
+import { ApiErrorService } from '../../services/api-error.service';
 
 @Component({
   selector: 'app-raise-ticket',
@@ -34,7 +36,8 @@ export class RaiseTicket {
   constructor(
     private ticketService: TicketService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private apiErrorService: ApiErrorService
   ) {}
 
   submitTicket(): void {
@@ -84,13 +87,13 @@ export class RaiseTicket {
 
         this.loading = false;
 
-        if (error.error) {
-          this.errorMessage =
-            JSON.stringify(error.error);
-        } else {
-          this.errorMessage =
-            'Unable to raise ticket.';
-        }
+        this.errorMessage =
+          this.apiErrorService.getErrorMessage(error) ||
+          (
+            error.error
+              ? JSON.stringify(error.error)
+              : 'Unable to raise ticket.'
+          );
 
         this.cdr.detectChanges();
       }

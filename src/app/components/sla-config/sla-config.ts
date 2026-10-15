@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -8,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { TicketService } from '../../services/ticket.service';
+import { ApiErrorService } from '../../services/api-error.service';
 
 
 interface SlaRule {
@@ -120,7 +122,8 @@ export class SlaConfig implements OnInit {
 
   constructor(
     private ticketService: TicketService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private apiErrorService: ApiErrorService
   ) {}
 
 
@@ -256,6 +259,7 @@ export class SlaConfig implements OnInit {
         else {
 
           this.teamError =
+            this.apiErrorService.getErrorMessage(error) ||
             'Unable to load teams.';
 
         }
@@ -336,7 +340,7 @@ export class SlaConfig implements OnInit {
           ? this.teams[0].id
           : 0,
 
-      priority : 'CRITICAL',
+      priority: 'CRITICAL',
 
       responseTime: '',
 
