@@ -2,20 +2,13 @@
 import { Routes } from '@angular/router';
 
 import { Login } from './components/login/login';
-import { Dashboard } from './components/dashboard/dashboard';
+import { AdminLayout } from './components/admin-layout/admin-layout';
 import { Tickets } from './components/ticket/ticket';
 import { TicketDetails } from './components/ticket-details/ticket-details';
 import { Teams } from './components/teams/teams';
 import { KnowledgeBase } from './components/knowledge-base/knowledge-base';
-import { AiResults } from './components/ai-results/ai-results';
-import { AdminLayout } from './components/admin-layout/admin-layout';
 import { KnowledgeBaseDetails } from './components/knowledge-base-details/knowledge-base-details';
 import { KnowledgeBaseEdit } from './components/knowledge-base-edit/knowledge-base-edit';
-import { UserManagement } from './components/user-management/user-management';
-import { SlaConfig } from './components/sla-config/sla-config';
-import { AuditLog } from './components/audit-log/audit-log';
-import { Notifications } from './components/notifications/notifications';
-import { Settings } from './components/settings/settings';
 
 import { authGuard } from './auth/auth.guard';
 import { roleGuard } from './auth/role.guard';
@@ -45,7 +38,9 @@ export const routes: Routes = [
 
       {
         path: 'dashboard',
-        component: Dashboard
+        loadComponent: () =>
+          import('./components/dashboard/dashboard')
+            .then(m => m.Dashboard)
       },
 
       {
@@ -75,7 +70,9 @@ export const routes: Routes = [
 
       {
         path: 'ai-results',
-        component: AiResults
+        loadComponent: () =>
+          import('./components/ai-results/ai-results')
+            .then(m => m.AiResults)
       },
 
       {
@@ -85,27 +82,37 @@ export const routes: Routes = [
 
       {
         path: 'user-management',
-        component: UserManagement
+        loadComponent: () =>
+          import('./components/user-management/user-management')
+            .then(m => m.UserManagement)
       },
 
       {
         path: 'sla-config',
-        component: SlaConfig
+        loadComponent: () =>
+          import('./components/sla-config/sla-config')
+            .then(m => m.SlaConfig)
       },
 
       {
         path: 'audit-log',
-        component: AuditLog
+        loadComponent: () =>
+          import('./components/audit-log/audit-log')
+            .then(m => m.AuditLog)
       },
 
       {
         path: 'notifications',
-        component: Notifications
+        loadComponent: () =>
+          import('./components/notifications/notifications')
+            .then(m => m.Notifications)
       },
 
       {
         path: 'settings',
-        component: Settings
+        loadComponent: () =>
+          import('./components/settings/settings')
+            .then(m => m.Settings)
       }
 
     ]

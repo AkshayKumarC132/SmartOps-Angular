@@ -481,7 +481,7 @@ export class Dashboard implements OnInit, OnDestroy {
       this.apiErrorService.getErrorMessage(error);
 
     return message &&
-      message !== 'An unexpected error occurred.'
+      message !== 'An unexpected error occurred. Please try again.'
       ? message
       : fallback;
   }

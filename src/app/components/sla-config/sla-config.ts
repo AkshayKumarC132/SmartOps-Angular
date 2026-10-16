@@ -340,7 +340,7 @@ export class SlaConfig implements OnInit {
           ? this.teams[0].id
           : 0,
 
-      priority: 'CRITICAL',
+      priority : 'CRITICAL',
 
       responseTime: '',
 

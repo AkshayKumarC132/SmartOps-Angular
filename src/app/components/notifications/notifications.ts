@@ -40,8 +40,8 @@ export class Notifications implements OnInit {
   constructor(
     private notificationService: NotificationService,
     private router: Router,
-    private apiErrorService: ApiErrorService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private apiErrorService: ApiErrorService
   ) {}
 
 

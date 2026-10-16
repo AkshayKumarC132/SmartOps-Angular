@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnDestroy,
@@ -24,6 +25,8 @@ import { AuthService } from '../../services/auth.service';
 import {
   NotificationService
 } from '../../services/notifications.service';
+
+import { ApiErrorService } from '../../services/api-error.service';
 
 
 @Component({
@@ -70,7 +73,9 @@ export class AdminLayout
     private notificationService:
       NotificationService,
 
-    private router: Router
+    private router: Router,
+
+    private apiErrorService: ApiErrorService
   ) {}
 
 
@@ -179,6 +184,7 @@ export class AdminLayout
 
           console.error(
             'Unable to load notification count:',
+            this.apiErrorService.getErrorMessage(error),
             error
           );
 
