@@ -1,4 +1,3 @@
-
 import {
   ChangeDetectorRef,
   Component,
@@ -7,6 +6,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
 
 import {
   NotificationItem,
@@ -18,24 +18,16 @@ import { ApiErrorService } from '../../services/api-error.service';
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [
-    CommonModule
-  ],
+  imports: [CommonModule],
   templateUrl: './notifications.html',
   styleUrl: './notifications.css'
 })
 export class Notifications implements OnInit {
-
   notifications: NotificationItem[] = [];
-
   loading = true;
-
   errorMessage = '';
-
   selectedFilter = 'All';
-
   selectedType = 'All';
-
 
   constructor(
     private notificationService: NotificationService,
@@ -44,148 +36,98 @@ export class Notifications implements OnInit {
     private apiErrorService: ApiErrorService
   ) {}
 
-
   ngOnInit(): void {
-
     this.loadNotifications();
   }
 
-
   // =========================================================
-  // LOAD
+  // LOAD NOTIFICATIONS
   // =========================================================
 
   loadNotifications(): void {
-
     this.loading = true;
-
     this.errorMessage = '';
 
-    this.notificationService
-      .getNotifications()
-      .subscribe({
+    this.notificationService.getNotifications().subscribe({
+      next: (notifications) => {
+        this.notifications = Array.isArray(notifications)
+          ? notifications
+          : [];
 
-        next: (notifications) => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Unable to load notifications:', error);
 
-          this.notifications =
-            notifications;
+        this.notifications = [];
+        this.loading = false;
 
-          this.loading = false;
-
-          this.cdr.detectChanges();
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Unable to load notifications:',
-            error
-          );
-
-          this.notifications = [];
-
-          this.loading = false;
-
-          if (error.status === 401) {
-
-            this.errorMessage =
-              'Authentication failed. Please login again.';
-
-          } else if (error.status === 403) {
-
-            this.errorMessage =
-              'You do not have permission to view notifications.';
-
-          } else if (error.status === 0) {
-
-            this.errorMessage =
-              'Unable to connect to the backend server.';
-
-          } else {
-
-            this.errorMessage =
-              this.apiErrorService.getErrorMessage(error) ||
-              'Unable to load notifications.';
-          }
-
-          this.cdr.detectChanges();
+        if (error.status === 401) {
+          this.errorMessage =
+            'Authentication failed. Please login again.';
+        } else if (error.status === 403) {
+          this.errorMessage =
+            'You do not have permission to view notifications.';
+        } else if (error.status === 0) {
+          this.errorMessage =
+            'Unable to connect to the backend server.';
+        } else {
+          this.errorMessage =
+            this.apiErrorService.getErrorMessage(error) ||
+            'Unable to load notifications.';
         }
 
-      });
+        this.cdr.detectChanges();
+      }
+    });
   }
-
 
   // =========================================================
   // UNREAD COUNT
   // =========================================================
 
   get unreadCount(): number {
-
     return this.notifications.filter(
       notification => !notification.read
     ).length;
   }
 
-
   // =========================================================
   // FILTERED NOTIFICATIONS
   // =========================================================
 
-  get filteredNotifications():
-    NotificationItem[] {
-
-    let result =
-      [...this.notifications];
-
-
-    // Read filter
+  get filteredNotifications(): NotificationItem[] {
+    let result = [...this.notifications];
 
     if (this.selectedFilter === 'Unread') {
-
-      result =
-        result.filter(
-          notification =>
-            !notification.read
-        );
-
+      result = result.filter(
+        notification => !notification.read
+      );
     }
 
-
-    // Event filter
-
-    if (
-      this.selectedType !== 'All'
-    ) {
-
-      result =
-        result.filter(
-          notification =>
-            this.getDisplayEvent(
-              notification.action
-            ) === this.selectedType
-        );
+    if (this.selectedType !== 'All') {
+      result = result.filter(
+        notification =>
+          this.getDisplayEvent(notification.action) ===
+          this.selectedType
+      );
     }
-
 
     return result;
   }
 
-
   // =========================================================
-  // DISPLAY EVENT
+  // EVENT LABEL
   // =========================================================
 
-  getDisplayEvent(
-    action: string
-  ): string {
+  getDisplayEvent(action: string): string {
+    const normalizedAction = String(action || '')
+      .replace(/[()'",]/g, '')
+      .trim()
+      .toUpperCase();
 
-    switch (
-      String(action || '')
-        .replace(/[()'",]/g, '')
-        .trim()
-        .toUpperCase()
-    ) {
-
+    switch (normalizedAction) {
       case 'STATUS_CHANGED':
         return 'Status Change';
 
@@ -193,6 +135,7 @@ export class Notifications implements OnInit {
         return 'Assignment';
 
       case 'ATTACHMENT_ADDED':
+      case 'ATTACHMENT_DELETED':
         return 'Attachment Added';
 
       case 'CREATED':
@@ -209,20 +152,15 @@ export class Notifications implements OnInit {
     }
   }
 
-
   // =========================================================
-  // ICON
+  // NOTIFICATION ICON
   // =========================================================
 
-  getNotificationIcon(
-    notification: NotificationItem
-  ): string {
-
-    const action =
-      String(notification.action || '')
-        .replace(/[()'",]/g, '')
-        .trim()
-        .toUpperCase();
+  getNotificationIcon(notification: NotificationItem): string {
+    const action = String(notification.action || '')
+      .replace(/[()'",]/g, '')
+      .trim()
+      .toUpperCase();
 
     if (action === 'STATUS_CHANGED') {
       return 'status';
@@ -246,158 +184,191 @@ export class Notifications implements OnInit {
     return 'default';
   }
 
-
   // =========================================================
-  // DATE
+  // DATE FORMATTING
   // =========================================================
 
-  formatDate(
-    date: string
-  ): string {
-
+  formatDate(date: string): string {
     if (!date) {
       return '-';
     }
 
-    return new Date(date).toLocaleString(
-      'en-US',
-      {
-        month: 'numeric',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      }
-    );
-  }
+    const parsedDate = new Date(date);
 
-
-  // =========================================================
-  // OPEN TICKET
-  // =========================================================
-
-  openNotification(
-    notification: NotificationItem
-  ): void {
-
-    // Mark notification as read
-
-    this.notificationService.markAsRead(
-      notification.id
-    );
-
-    notification.read = true;
-
-
-    // ============================================
-    // OPEN TICKET
-    // ============================================
-
-    if (notification.ticket) {
-
-      /*
-       * Notification contains the display ticket ID.
-       *
-       * Example:
-       * TKT-008
-       *
-       * Ticket details route requires:
-       * /ticket/8
-       *
-       * Extract the numeric database ID from
-       * the end of the ticket identifier.
-       */
-
-      const match =
-        notification.ticket.match(
-          /(\d+)$/
-        );
-
-
-      if (match) {
-
-        const ticketId =
-          Number(match[1]);
-
-
-        console.log(
-          'Opening ticket:',
-          notification.ticket,
-          '->',
-          ticketId
-        );
-
-
-        this.router.navigate([
-          '/ticket',
-          ticketId
-        ]);
-
-      } else {
-
-        console.error(
-          'Invalid ticket identifier:',
-          notification.ticket
-        );
-      }
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '-';
     }
 
+    return parsedDate.toLocaleString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  // =========================================================
+  // EXTRACT DATABASE TICKET ID
+  // =========================================================
+
+  private getTicketId(ticket: unknown): number | null {
+    if (typeof ticket === 'number') {
+      return Number.isInteger(ticket) && ticket > 0
+        ? ticket
+        : null;
+    }
+
+    if (typeof ticket !== 'string') {
+      return null;
+    }
+
+    const normalizedTicket = ticket.trim();
+
+    if (!normalizedTicket) {
+      return null;
+    }
+
+    // Supports identifiers such as "8", "TKT-008" and "TICKET-123".
+    const match = normalizedTicket.match(/(\d+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const ticketId = Number(match[1]);
+
+    return Number.isSafeInteger(ticketId) && ticketId > 0
+      ? ticketId
+      : null;
+  }
+
+  // =========================================================
+  // OPEN NOTIFICATION
+  // Clicking the notification card can open its ticket.
+  // =========================================================
+
+  openNotification(notification: NotificationItem): void {
+    this.markAsRead(notification);
+
+    if (!notification.ticket) {
+      return;
+    }
+
+    const ticketId = this.getTicketId(notification.ticket);
+
+    if (ticketId === null) {
+      console.error(
+        'Invalid ticket identifier:',
+        notification.ticket
+      );
+
+      void Swal.fire({
+        icon: 'warning',
+        title: 'Ticket unavailable',
+        text: 'This notification does not contain a valid ticket ID.',
+        confirmButtonText: 'OK'
+      });
+
+      return;
+    }
+
+    void this.router.navigate(['/ticket', ticketId]);
+  }
+
+  // =========================================================
+  // MARK ONE NOTIFICATION AS READ
+  // Does not navigate to the ticket.
+  // =========================================================
+
+  markAsRead(notification: NotificationItem): void {
+    if (notification.read) {
+      return;
+    }
+
+    this.notificationService.markAsRead(notification.id);
+    notification.read = true;
 
     this.cdr.detectChanges();
   }
 
-
   // =========================================================
-  // MARK ALL READ
+  // MARK ALL NOTIFICATIONS AS READ
   // =========================================================
 
-  markAllRead(): void {
+  async markAllRead(): Promise<void> {
+    if (this.unreadCount === 0) {
+      return;
+    }
 
-    this.notificationService.markAllAsRead(
-      this.notifications
-    );
+    const result = await Swal.fire({
+      title: 'Mark all as read?',
+      text: 'All notifications will be marked as read.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, mark all read',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      focusCancel: true
+    });
 
-    this.notifications =
-      this.notifications.map(
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      // Keep the existing service method and API contract.
+      this.notificationService.markAllAsRead(this.notifications);
+
+      this.notifications = this.notifications.map(
         notification => ({
           ...notification,
           read: true
         })
       );
 
-    this.cdr.detectChanges();
-  }
+      this.cdr.detectChanges();
 
+      // This confirms the local UI update. The service's existing
+      // method determines how the server request is handled.
+      await Swal.fire({
+        icon: 'success',
+        title: 'Notifications updated',
+        text: 'All notifications are now marked as read in this view.',
+        timer: 1800,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Unable to mark all notifications as read:', error);
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Update failed',
+        text: 'Unable to mark all notifications as read. Please try again.',
+        confirmButtonText: 'OK'
+      });
+
+      this.loadNotifications();
+    }
+  }
 
   // =========================================================
-  // FILTER
+  // FILTER CONTROLS
   // =========================================================
 
-  setFilter(
-    filter: string
-  ): void {
-
-    this.selectedFilter =
-      filter;
+  setFilter(filter: string): void {
+    this.selectedFilter = filter;
   }
 
-
-  setType(
-    type: string
-  ): void {
-
-    this.selectedType =
-      type;
+  setType(type: string): void {
+    this.selectedType = type;
   }
-
 
   // =========================================================
   // REFRESH
   // =========================================================
 
   refresh(): void {
-
     this.loadNotifications();
   }
-
 }

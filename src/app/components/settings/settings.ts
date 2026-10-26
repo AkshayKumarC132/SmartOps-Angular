@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
 
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
@@ -76,6 +77,27 @@ export class Settings implements OnInit {
   changingPassword = false;
   passwordSuccessMessage = '';
   passwordErrorMessage = '';
+
+  // Password visibility controls
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
+  togglePasswordVisibility(
+    field: 'current' | 'new' | 'confirm'
+  ): void {
+    switch (field) {
+      case 'current':
+        this.showCurrentPassword = !this.showCurrentPassword;
+        break;
+      case 'new':
+        this.showNewPassword = !this.showNewPassword;
+        break;
+      case 'confirm':
+        this.showConfirmPassword = !this.showConfirmPassword;
+        break;
+    }
+  }
 
   // =========================================================
   // USER ID
@@ -262,623 +284,716 @@ export class Settings implements OnInit {
     });
   }
 
-  // =========================================================
-  // DEFAULT NOTIFICATION PREFERENCES
-  // =========================================================
+// =========================================================
+// DEFAULT NOTIFICATION PREFERENCES
+// =========================================================
 
-  private getDefaultNotificationPreferences():
-    NotificationPreferences {
-    return {
-      in_app: {
-        ticket_assigned: true,
-        ticket_status_changed: true,
-        ticket_comments: true,
-        sla_warnings: true,
-        ai_suggestions: true
-      },
-      email: {
-        ticket_updates: true,
-        weekly_digest: false,
-        mentions: true
-      },
-      slack: {
-        critical_alerts: true,
-        sla_alerts: true,
-        team_mentions: false
-      }
-    };
-  }
-
-  // =========================================================
-  // NOTIFICATION STORAGE KEY
-  // =========================================================
-
-  private getNotificationStorageKey(): string {
-    return `smartops_notification_preferences_${this.currentUserId}`;
-  }
-
-  // =========================================================
-  // LOAD NOTIFICATION PREFERENCES
-  // =========================================================
-
-  loadNotificationPreferences(): void {
-    if (!this.currentUserId) {
-      return;
+private getDefaultNotificationPreferences():
+  NotificationPreferences {
+  return {
+    in_app: {
+      ticket_assigned: true,
+      ticket_status_changed: true,
+      ticket_comments: true,
+      sla_warnings: true,
+      ai_suggestions: true
+    },
+    email: {
+      ticket_updates: true,
+      weekly_digest: false,
+      mentions: true
+    },
+    slack: {
+      critical_alerts: true,
+      sla_alerts: true,
+      team_mentions: false
     }
+  };
+}
 
-    const storageKey = this.getNotificationStorageKey();
+// =========================================================
+// NOTIFICATION STORAGE KEY
+// =========================================================
 
-    try {
-      const saved = localStorage.getItem(storageKey);
+private getNotificationStorageKey(): string {
+  return `smartops_notification_preferences_${this.currentUserId}`;
+}
 
-      if (!saved) {
-        this.notificationPreferences =
-          this.getDefaultNotificationPreferences();
-        return;
-      }
+// =========================================================
+// LOAD NOTIFICATION PREFERENCES
+// =========================================================
 
-      const parsed = JSON.parse(saved);
-      const defaults =
-        this.getDefaultNotificationPreferences();
+loadNotificationPreferences(): void {
+  if (!this.currentUserId) {
+    return;
+  }
 
-      this.notificationPreferences = {
-        ...defaults,
-        ...parsed,
+  const storageKey = this.getNotificationStorageKey();
 
-        in_app: {
-          ...defaults.in_app,
-          ...(parsed?.in_app || {})
-        },
+  try {
+    const saved = localStorage.getItem(storageKey);
 
-        email: {
-          ...defaults.email,
-          ...(parsed?.email || {})
-        },
-
-        slack: {
-          ...defaults.slack,
-          ...(parsed?.slack || {})
-        }
-      };
-
-      console.log(
-        'Notification preferences loaded:',
-        this.notificationPreferences
-      );
-    } catch (error) {
-      console.error(
-        'Unable to load notification preferences:',
-        error
-      );
-
+    if (!saved) {
       this.notificationPreferences =
         this.getDefaultNotificationPreferences();
-    }
-  }
-
-  // =========================================================
-  // SAVE NOTIFICATION PREFERENCES
-  // FRONTEND ONLY
-  // =========================================================
-
-  saveNotificationPreferences(): void {
-    this.notificationSuccessMessage = '';
-    this.notificationErrorMessage = '';
-
-    if (!this.currentUserId) {
-      this.notificationErrorMessage =
-        'Unable to identify the current user.';
       return;
     }
 
-    try {
-      const storageKey = this.getNotificationStorageKey();
+    const parsed = JSON.parse(saved);
+    const defaults =
+      this.getDefaultNotificationPreferences();
 
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify(this.notificationPreferences)
-      );
-
-      this.notificationSuccessMessage =
-        'Notification preferences saved successfully.';
-
-      console.log(
-        'Notification preferences saved:',
-        this.notificationPreferences
-      );
-
-      this.cdr.detectChanges();
-
-      setTimeout(() => {
-        this.notificationSuccessMessage = '';
-        this.cdr.detectChanges();
-      }, 3000);
-    } catch (error) {
-      console.error(
-        'Unable to save notification preferences:',
-        error
-      );
-
-      this.notificationErrorMessage =
-        'Unable to save notification preferences.';
-
-      this.cdr.detectChanges();
-    }
-  }
-
-  // =========================================================
-  // SET ORGANIZATION FROM USER RESPONSE
-  // =========================================================
-
-  setOrganizationFromUser(
-    response: any,
-    allowOverwrite: boolean = true
-  ): void {
-    console.log(
-      'Checking organization data:',
-      response
-    );
-
-    if (
-      response?.organization &&
-      typeof response.organization === 'object' &&
-      !Array.isArray(response.organization)
-    ) {
-      const organization = response.organization;
-
-      const name =
-        organization.name ||
-        organization.organization_name ||
-        organization['Organization Name'] ||
-        organization.title;
-
-      if (
-        name &&
-        (
-          allowOverwrite ||
-          this.organizationName === '—'
-        )
-      ) {
-        this.organizationName = name;
+    this.notificationPreferences = {
+      ...defaults,
+      ...parsed,
+      in_app: {
+        ...defaults.in_app,
+        ...(parsed?.in_app || {})
+      },
+      email: {
+        ...defaults.email,
+        ...(parsed?.email || {})
+      },
+      slack: {
+        ...defaults.slack,
+        ...(parsed?.slack || {})
       }
-
-      return;
-    }
-
-    if (typeof response?.organization === 'string') {
-      if (
-        allowOverwrite ||
-        this.organizationName === '—'
-      ) {
-        this.organizationName = response.organization;
-      }
-
-      return;
-    }
-
-    if (response?.organization_name) {
-      if (
-        allowOverwrite ||
-        this.organizationName === '—'
-      ) {
-        this.organizationName = response.organization_name;
-      }
-
-      return;
-    }
-
-    if (response?.['Organization Name']) {
-      if (
-        allowOverwrite ||
-        this.organizationName === '—'
-      ) {
-        this.organizationName =
-          response['Organization Name'];
-      }
-
-      return;
-    }
-
-    if (
-      response?.Organization &&
-      typeof response.Organization === 'object' &&
-      !Array.isArray(response.Organization)
-    ) {
-      const organization = response.Organization;
-
-      const name =
-        organization.name ||
-        organization.organization_name ||
-        organization['Organization Name'] ||
-        organization.Name ||
-        organization.title;
-
-      if (
-        name &&
-        (
-          allowOverwrite ||
-          this.organizationName === '—'
-        )
-      ) {
-        this.organizationName = name;
-      }
-
-      return;
-    }
-
-    const organizationId =
-      response?.organization_id ??
-      response?.organizationId ??
-      response?.Organization?.id ??
-      response?.Organization?.['Organization Id'] ??
-      (
-        typeof response?.organization === 'number'
-          ? response.organization
-          : null
-      );
-
-    if (organizationId) {
-      this.loadOrganization(Number(organizationId));
-      return;
-    }
-
-    if (this.organizationName === '—') {
-      console.warn(
-        'No organization information found in user response.'
-      );
-    }
-  }
-
-  // =========================================================
-  // LOAD ORGANIZATION
-  // =========================================================
-
-  loadOrganization(organizationId: number): void {
-    console.log(
-      'Loading organization:',
-      organizationId
-    );
-
-    this.http
-      .get<any>(
-        `${environment.apiUrl}/organization/${organizationId}/`
-      )
-      .subscribe({
-        next: (organization) => {
-          console.log(
-            'Organization API Response:',
-            organization
-          );
-
-          const name =
-            organization?.name ||
-            organization?.organization_name ||
-            organization?.['Organization Name'] ||
-            organization?.Name ||
-            organization?.title;
-
-          if (name) {
-            this.organizationName = name;
-          }
-
-          this.cdr.detectChanges();
-        },
-
-        error: (error) => {
-          console.error(
-            'Unable to load organization:',
-            error
-          );
-
-          if (
-            !this.organizationName ||
-            this.organizationName === '—'
-          ) {
-            this.organizationName = '—';
-          }
-
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  // =========================================================
-  // USER ID
-  // =========================================================
-
-  get userId(): number | null {
-    return this.currentUserId;
-  }
-
-  // =========================================================
-  // USERNAME
-  // =========================================================
-
-  get username(): string {
-    return this.user?.username || '';
-  }
-
-  // =========================================================
-  // EMAIL
-  // =========================================================
-
-  get email(): string {
-    return this.user?.email || '';
-  }
-
-  // =========================================================
-  // ROLE
-  // =========================================================
-
-  get role(): string {
-    return this.user?.role || '';
-  }
-
-  // =========================================================
-  // DISPLAY NAME
-  // =========================================================
-
-  get displayName(): string {
-    const firstName = this.user?.first_name || '';
-    const lastName = this.user?.last_name || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    return fullName || this.username;
-  }
-
-  // =========================================================
-  // AVATAR
-  // =========================================================
-
-  get avatarLetter(): string {
-    const name =
-      this.username ||
-      this.form.first_name ||
-      'U';
-
-    return name.charAt(0).toUpperCase();
-  }
-
-  // =========================================================
-  // SELECT SECTION
-  // =========================================================
-
-  selectSection(section: string): void {
-    this.activeSection = section;
-
-    this.successMessage = '';
-    this.errorMessage = '';
-    this.passwordSuccessMessage = '';
-    this.passwordErrorMessage = '';
-    this.notificationSuccessMessage = '';
-    this.notificationErrorMessage = '';
-  }
-
-  // =========================================================
-  // SAVE PROFILE
-  // =========================================================
-
-  saveProfile(): void {
-    this.successMessage = '';
-    this.errorMessage = '';
-
-    if (!this.userId) {
-      this.errorMessage =
-        'Unable to identify the current user.';
-      return;
-    }
-
-    if (!this.form.email.trim()) {
-      this.errorMessage = 'Email address is required.';
-      return;
-    }
-
-    this.saving = true;
-
-    const payload = {
-      first_name: this.form.first_name.trim(),
-      last_name: this.form.last_name.trim(),
-      email: this.form.email.trim()
     };
 
-    this.userService
-      .updateUser(this.userId, payload)
-      .subscribe({
-        next: (response: any) => {
-          console.log(
-            'Profile updated:',
-            response
-          );
+    console.log(
+      'Notification preferences loaded:',
+      this.notificationPreferences
+    );
+  } catch (error) {
+    console.error(
+      'Unable to load notification preferences:',
+      error
+    );
 
-          this.user = {
-            ...this.user,
-            first_name: payload.first_name,
-            last_name: payload.last_name,
-            email: payload.email
-          };
+    this.notificationPreferences =
+      this.getDefaultNotificationPreferences();
+  }
+}
 
-          const storedUser = this.authService.getUser();
+// =========================================================
+// SAVE NOTIFICATION PREFERENCES — FRONTEND ONLY
+// =========================================================
 
-          if (storedUser) {
-            const updatedStoredUser = {
-              ...storedUser,
-              first_name: payload.first_name,
-              last_name: payload.last_name,
-              email: payload.email
-            };
+saveNotificationPreferences(): void {
+  this.notificationSuccessMessage = '';
+  this.notificationErrorMessage = '';
 
-            localStorage.setItem(
-              'user',
-              JSON.stringify(updatedStoredUser)
-            );
-          }
-
-          this.saving = false;
-          this.successMessage =
-            'Profile updated successfully.';
-
-          this.cdr.detectChanges();
-        },
-
-        error: (error) => {
-          console.error(
-            'Profile update failed:',
-            error
-          );
-
-          this.saving = false;
-
-          if (error.status === 400) {
-            this.errorMessage =
-              error.error?.Errors ||
-              error.error?.Message ||
-              error.error?.message ||
-              'Invalid profile information.';
-          } else if (error.status === 401) {
-            this.errorMessage =
-              'Your session has expired. Please login again.';
-          } else if (error.status === 403) {
-            this.errorMessage =
-              'You do not have permission to update this profile.';
-          } else if (error.status === 0) {
-            this.errorMessage =
-              'Unable to connect to the backend server.';
-          } else {
-            this.errorMessage =
-              this.apiErrorService.getErrorMessage(error) ||
-              'Unable to update profile.';
-          }
-
-          this.cdr.detectChanges();
-        }
-      });
+  if (!this.currentUserId) {
+    this.notificationErrorMessage =
+      'Unable to identify the current user.';
+    return;
   }
 
-  // =========================================================
-  // CHANGE PASSWORD
-  // =========================================================
+  try {
+    const storageKey = this.getNotificationStorageKey();
 
-  changePassword(): void {
-    this.passwordSuccessMessage = '';
-    this.passwordErrorMessage = '';
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(this.notificationPreferences)
+    );
 
-    if (!this.passwordForm.current_password.trim()) {
-      this.passwordErrorMessage =
-        'Current password is required.';
-      return;
-    }
+    this.notificationSuccessMessage =
+      'Notification preferences saved successfully.';
 
-    if (!this.passwordForm.new_password.trim()) {
-      this.passwordErrorMessage =
-        'New password is required.';
-      return;
-    }
+    console.log(
+      'Notification preferences saved:',
+      this.notificationPreferences
+    );
 
-    if (!this.passwordForm.confirm_password.trim()) {
-      this.passwordErrorMessage =
-        'Please confirm your new password.';
-      return;
-    }
+    this.cdr.detectChanges();
 
-    if (this.passwordForm.new_password.length < 7) {
-      this.passwordErrorMessage =
-        'Password must be at least 7 characters long.';
-      return;
-    }
+    setTimeout(() => {
+      this.notificationSuccessMessage = '';
+      this.cdr.detectChanges();
+    }, 3000);
+  } catch (error) {
+    console.error(
+      'Unable to save notification preferences:',
+      error
+    );
+
+    this.notificationErrorMessage =
+      'Unable to save notification preferences.';
+
+    this.cdr.detectChanges();
+  }
+}
+
+// =========================================================
+// SET ORGANIZATION FROM USER RESPONSE
+// =========================================================
+
+setOrganizationFromUser(
+  response: any,
+  allowOverwrite: boolean = true
+): void {
+  console.log(
+    'Checking organization data:',
+    response
+  );
+
+  if (
+    response?.organization &&
+    typeof response.organization === 'object' &&
+    !Array.isArray(response.organization)
+  ) {
+    const organization = response.organization;
+
+    const name =
+      organization.name ||
+      organization.organization_name ||
+      organization['Organization Name'] ||
+      organization.title;
 
     if (
-      this.passwordForm.new_password !==
-      this.passwordForm.confirm_password
+      name &&
+      (
+        allowOverwrite ||
+        this.organizationName === '—'
+      )
     ) {
-      this.passwordErrorMessage =
-        'New password and confirm password do not match.';
-      return;
+      this.organizationName = name;
     }
+
+    return;
+  }
+
+  if (typeof response?.organization === 'string') {
+    if (
+      allowOverwrite ||
+      this.organizationName === '—'
+    ) {
+      this.organizationName = response.organization;
+    }
+
+    return;
+  }
+
+  if (response?.organization_name) {
+    if (
+      allowOverwrite ||
+      this.organizationName === '—'
+    ) {
+      this.organizationName = response.organization_name;
+    }
+
+    return;
+  }
+
+  if (response?.['Organization Name']) {
+    if (
+      allowOverwrite ||
+      this.organizationName === '—'
+    ) {
+      this.organizationName =
+        response['Organization Name'];
+    }
+
+    return;
+  }
+
+  if (
+    response?.Organization &&
+    typeof response.Organization === 'object' &&
+    !Array.isArray(response.Organization)
+  ) {
+    const organization = response.Organization;
+
+    const name =
+      organization.name ||
+      organization.organization_name ||
+      organization['Organization Name'] ||
+      organization.Name ||
+      organization.title;
 
     if (
-      this.passwordForm.current_password ===
-      this.passwordForm.new_password
+      name &&
+      (
+        allowOverwrite ||
+        this.organizationName === '—'
+      )
     ) {
-      this.passwordErrorMessage =
-        'New password must be different from the current password.';
-      return;
+      this.organizationName = name;
     }
 
-    this.changingPassword = true;
+    return;
+  }
 
-    /*
-     * FIX:
-     * The form uses current_password, but UserService expects
-     * old_password. Map the fields explicitly.
-     *
-     * confirm_password is only for frontend validation.
-     */
+  const organizationId =
+    response?.organization_id ??
+    response?.organizationId ??
+    response?.Organization?.id ??
+    response?.Organization?.['Organization Id'] ??
+    (
+      typeof response?.organization === 'number'
+        ? response.organization
+        : null
+    );
 
-    this.userService.changePassword({
-      old_password: this.passwordForm.current_password,
-      new_password: this.passwordForm.new_password
-    }).subscribe({
-      next: (response: any) => {
+  if (organizationId) {
+    this.loadOrganization(Number(organizationId));
+    return;
+  }
+
+  if (this.organizationName === '—') {
+    console.warn(
+      'No organization information found in user response.'
+    );
+  }
+}
+
+// =========================================================
+// LOAD ORGANIZATION
+// =========================================================
+
+loadOrganization(organizationId: number): void {
+  console.log(
+    'Loading organization:',
+    organizationId
+  );
+
+  this.http
+    .get<any>(
+      `${environment.apiUrl}/organization/${organizationId}/`
+    )
+    .subscribe({
+      next: (organization) => {
         console.log(
-          'Password change response:',
-          response
+          'Organization API Response:',
+          organization
         );
 
-        this.changingPassword = false;
+        const name =
+          organization?.name ||
+          organization?.organization_name ||
+          organization?.['Organization Name'] ||
+          organization?.Name ||
+          organization?.title;
 
-        this.passwordSuccessMessage =
-          response?.Message ||
-          response?.message ||
-          'Password changed successfully.';
-
-        this.passwordForm = {
-          current_password: '',
-          new_password: '',
-          confirm_password: ''
-        };
+        if (name) {
+          this.organizationName = name;
+        }
 
         this.cdr.detectChanges();
       },
 
       error: (error) => {
         console.error(
-          'Password change failed:',
+          'Unable to load organization:',
           error
         );
 
-        this.changingPassword = false;
-
-        if (error.status === 400) {
-          this.passwordErrorMessage =
-            error.error?.Message ||
-            error.error?.message ||
-            'Unable to change password. Please check your current password.';
-        } else if (error.status === 401) {
-          this.passwordErrorMessage =
-            'Your session has expired. Please login again.';
-        } else if (error.status === 403) {
-          this.passwordErrorMessage =
-            'You do not have permission to change this password.';
-        } else if (error.status === 0) {
-          this.passwordErrorMessage =
-            'Unable to connect to the backend server.';
-        } else {
-          this.passwordErrorMessage =
-            this.apiErrorService.getErrorMessage(error) ||
-            'Unable to change password.';
+        if (
+          !this.organizationName ||
+          this.organizationName === '—'
+        ) {
+          this.organizationName = '—';
         }
 
         this.cdr.detectChanges();
       }
     });
+}
+
+// =========================================================
+// USER ID
+// =========================================================
+
+get userId(): number | null {
+  return this.currentUserId;
+}
+
+// =========================================================
+// USERNAME
+// =========================================================
+
+get username(): string {
+  return this.user?.username || '';
+}
+
+// =========================================================
+// EMAIL
+// =========================================================
+
+get email(): string {
+  return this.user?.email || '';
+}
+
+// =========================================================
+// ROLE
+// =========================================================
+
+get role(): string {
+  return this.user?.role || '';
+}
+
+// =========================================================
+// DISPLAY NAME
+// =========================================================
+
+get displayName(): string {
+  const firstName = this.user?.first_name || '';
+  const lastName = this.user?.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return fullName || this.username;
+}
+
+// =========================================================
+// AVATAR
+// =========================================================
+
+get avatarLetter(): string {
+  const name =
+    this.username ||
+    this.form.first_name ||
+    'U';
+
+  return name.charAt(0).toUpperCase();
+}
+
+// =========================================================
+// SHOW COMPLETE USER INFORMATION
+// =========================================================
+
+async showUserInfo(): Promise<void> {
+  if (!this.user) {
+    await Swal.fire({
+      title: 'User information unavailable',
+      text: 'User profile information has not been loaded yet.',
+      icon: 'warning',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#239f99'
+    });
+    return;
   }
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
+  const organization = this.user.organization;
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+  const organizationObject =
+    organization && typeof organization === 'object'
+      ? organization
+      : this.user.Organization &&
+        typeof this.user.Organization === 'object'
+        ? this.user.Organization
+        : null;
+
+  const organizationId =
+    this.user.organization_id ??
+    this.user.organizationId ??
+    organizationObject?.id ??
+    (typeof organization === 'number' ? organization : null) ??
+    this.user.Organization?.['Organization Id'];
+
+  const details: Array<[string, unknown]> = [
+    ['User ID', this.user.id ?? this.userId],
+    ['First name', this.user.first_name],
+    ['Last name', this.user.last_name],
+    ['Full name', this.displayName],
+    ['Username', this.username],
+    ['Email', this.email],
+    ['Role', this.role],
+    [
+      'Organization',
+      this.organizationName !== '—'
+        ? this.organizationName
+        : this.user.organization_name ??
+          organizationObject?.name ??
+          organizationObject?.organization_name ??
+          this.user['Organization Name'] ??
+          (typeof organization === 'string' ? organization : '—')
+    ],
+    ['Organization ID', organizationId],
+    ['Account active', this.user.is_active],
+    ['Staff account', this.user.is_staff],
+    ['Superuser', this.user.is_superuser],
+    ['Date joined', this.user.date_joined],
+    ['Last login', this.user.last_login]
+  ];
+
+  const escapeHtml = (value: unknown): string => {
+    const text =
+      value === null || value === undefined || value === ''
+        ? '—'
+        : String(value);
+
+    return text.replace(/[&<>"']/g, (character: string) => {
+      const entities: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+
+      return entities[character];
+    });
+  };
+
+  const rows = details
+    .filter(([, value]) => value !== undefined)
+    .map(([label, value]) => `
+      <div class="user-info-row">
+        <span class="user-info-label">${escapeHtml(label)}</span>
+        <strong class="user-info-value">${escapeHtml(value)}</strong>
+      </div>
+    `)
+    .join('');
+
+  await Swal.fire({
+    title: 'User Information',
+    html: `
+      <div class="user-info-modal">
+        <div class="user-info-heading">
+          <div class="user-info-avatar">
+            ${escapeHtml(this.avatarLetter)}
+          </div>
+          <div class="user-info-identity">
+            <strong>${escapeHtml(this.displayName)}</strong>
+            <span>${escapeHtml(this.email)}</span>
+          </div>
+        </div>
+        <div class="user-info-details">${rows}</div>
+      </div>
+    `,
+    confirmButtonText: 'Close',
+    confirmButtonColor: '#239f99',
+    width: 620,
+    customClass: {
+      popup: 'smartops-user-info-popup'
+    }
+  });
+}
+
+// =========================================================
+// SELECT SECTION
+// =========================================================
+
+selectSection(section: string): void {
+  this.activeSection = section;
+
+  this.successMessage = '';
+  this.errorMessage = '';
+  this.passwordSuccessMessage = '';
+  this.passwordErrorMessage = '';
+  this.notificationSuccessMessage = '';
+  this.notificationErrorMessage = '';
+}
+
+// =========================================================
+// SAVE PROFILE
+// =========================================================
+
+saveProfile(): void {
+  this.successMessage = '';
+  this.errorMessage = '';
+
+  if (!this.userId) {
+    this.errorMessage =
+      'Unable to identify the current user.';
+    return;
   }
+
+  if (!this.form.email.trim()) {
+    this.errorMessage = 'Email address is required.';
+    return;
+  }
+
+  this.saving = true;
+
+  const payload = {
+    first_name: this.form.first_name.trim(),
+    last_name: this.form.last_name.trim(),
+    email: this.form.email.trim()
+  };
+
+  this.userService
+    .updateUser(this.userId, payload)
+    .subscribe({
+      next: (response: any) => {
+        console.log('Profile updated:', response);
+
+        this.user = {
+          ...this.user,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          email: payload.email
+        };
+
+        const storedUser = this.authService.getUser();
+
+        if (storedUser) {
+          const updatedStoredUser = {
+            ...storedUser,
+            first_name: payload.first_name,
+            last_name: payload.last_name,
+            email: payload.email
+          };
+
+          localStorage.setItem(
+            'user',
+            JSON.stringify(updatedStoredUser)
+          );
+        }
+
+        this.saving = false;
+        this.successMessage =
+          'Profile updated successfully.';
+
+        this.cdr.detectChanges();
+      },
+
+      error: (error) => {
+        console.error('Profile update failed:', error);
+
+        this.saving = false;
+
+        if (error.status === 400) {
+          this.errorMessage =
+            error.error?.Errors ||
+            error.error?.Message ||
+            error.error?.message ||
+            'Invalid profile information.';
+        } else if (error.status === 401) {
+          this.errorMessage =
+            'Your session has expired. Please login again.';
+        } else if (error.status === 403) {
+          this.errorMessage =
+            'You do not have permission to update this profile.';
+        } else if (error.status === 0) {
+          this.errorMessage =
+            'Unable to connect to the backend server.';
+        } else {
+          this.errorMessage =
+            this.apiErrorService.getErrorMessage(error) ||
+            'Unable to update profile.';
+        }
+
+        this.cdr.detectChanges();
+      }
+    });
+}
+
+// =========================================================
+// CHANGE PASSWORD
+// =========================================================
+
+changePassword(): void {
+  this.passwordSuccessMessage = '';
+  this.passwordErrorMessage = '';
+
+  if (!this.passwordForm.current_password.trim()) {
+    this.passwordErrorMessage =
+      'Current password is required.';
+    return;
+  }
+
+  if (!this.passwordForm.new_password.trim()) {
+    this.passwordErrorMessage =
+      'New password is required.';
+    return;
+  }
+
+  if (!this.passwordForm.confirm_password.trim()) {
+    this.passwordErrorMessage =
+      'Please confirm your new password.';
+    return;
+  }
+
+  if (this.passwordForm.new_password.length < 7) {
+    this.passwordErrorMessage =
+      'Password must be at least 7 characters long.';
+    return;
+  }
+
+  if (
+    this.passwordForm.new_password !==
+    this.passwordForm.confirm_password
+  ) {
+    this.passwordErrorMessage =
+      'New password and confirm password do not match.';
+    return;
+  }
+
+  if (
+    this.passwordForm.current_password ===
+    this.passwordForm.new_password
+  ) {
+    this.passwordErrorMessage =
+      'New password must be different from the current password.';
+    return;
+  }
+
+  this.changingPassword = true;
+
+  this.userService.changePassword({
+    old_password: this.passwordForm.current_password,
+    new_password: this.passwordForm.new_password
+  }).subscribe({
+    next: (response: any) => {
+      console.log('Password change response:', response);
+
+      this.changingPassword = false;
+
+      this.passwordSuccessMessage =
+        response?.Message ||
+        response?.message ||
+        'Password changed successfully.';
+
+      this.passwordForm = {
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      };
+
+      this.showCurrentPassword = false;
+      this.showNewPassword = false;
+      this.showConfirmPassword = false;
+
+      this.cdr.detectChanges();
+    },
+
+    error: (error) => {
+      console.error('Password change failed:', error);
+
+      this.changingPassword = false;
+
+      if (error.status === 400) {
+        this.passwordErrorMessage =
+          error.error?.Message ||
+          error.error?.message ||
+          'Unable to change password. Please check your current password.';
+      } else if (error.status === 401) {
+        this.passwordErrorMessage =
+          'Your session has expired. Please login again.';
+      } else if (error.status === 403) {
+        this.passwordErrorMessage =
+          'You do not have permission to change this password.';
+      } else if (error.status === 0) {
+        this.passwordErrorMessage =
+          'Unable to connect to the backend server.';
+      } else {
+        this.passwordErrorMessage =
+          this.apiErrorService.getErrorMessage(error) ||
+          'Unable to change password.';
+      }
+
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+// =========================================================
+// LOGOUT
+// =========================================================
+
+logout(): void {
+  this.authService.logout();
+  this.router.navigate(['/login']);
+}
 }

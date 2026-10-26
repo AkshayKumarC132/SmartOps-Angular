@@ -554,3 +554,161 @@ td:nth-child(5) {
   }
 
 }
+
+/* =========================================================
+   ACCESSIBILITY AND INTERACTION ENHANCEMENTS
+   ========================================================= */
+
+.refresh-btn {
+  justify-content: center;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #98a2b3;
+}
+
+.refresh-btn:focus-visible,
+.error-card button:focus-visible,
+.ticket-link:focus-visible,
+.empty-refresh-btn:focus-visible {
+  outline: 2px solid #159a91;
+  outline-offset: 3px;
+}
+
+/* Use a button styled like the existing ticket link. */
+.ticket-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ticket-link:hover {
+  color: #007f87;
+  text-decoration: underline;
+}
+
+.ticket-link:active {
+  opacity: 0.8;
+}
+
+/* Prevent long actor names from breaking the table. */
+.actor-cell {
+  min-width: 0;
+}
+
+.actor-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Improve details-cell tooltip fallback and truncation. */
+.details-cell {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state enhancements. */
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #159a91;
+  background: #e7f6f5;
+  border-radius: 50%;
+}
+
+.empty-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.empty-refresh-btn {
+  margin-top: 18px;
+  padding: 9px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.empty-refresh-btn:hover {
+  background: #f9fafb;
+}
+
+/* Table hover and focus states. */
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background: #fcfcfd;
+}
+
+/* Responsive page layout. */
+@media (max-width: 600px) {
+  .page-header {
+    gap: 14px;
+    align-items: flex-start;
+    padding: 18px 15px;
+  }
+
+  .page-header h1 {
+    font-size: 21px;
+    line-height: 28px;
+  }
+
+  .page-header p {
+    max-width: 240px;
+    line-height: 1.5;
+  }
+
+  .refresh-btn {
+    flex-shrink: 0;
+    padding: 0 10px;
+  }
+
+  .audit-table-card {
+    margin: 0 10px 20px;
+  }
+
+  .error-card {
+    margin: 16px 10px;
+    gap: 12px;
+  }
+
+  .empty-state {
+    margin: 0 10px;
+    padding: 42px 16px;
+  }
+
+  table {
+    min-width: 950px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.8s;
+  }
+
+  .refresh-btn,
+  tbody tr {
+    transition: none;
+  }
+}

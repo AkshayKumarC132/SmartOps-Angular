@@ -1018,3 +1018,151 @@
   }
 
 }
+
+
+/* =========================================================
+   PROFILE INFORMATION BUTTON
+   ========================================================= */
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.user-info-button {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cfe8e5;
+  border-radius: 50%;
+  background: #eefaf8;
+  color: #239f99;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.user-info-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+.user-info-button:hover {
+  background: #239f99;
+  border-color: #239f99;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.user-info-button:focus-visible {
+  outline: 3px solid rgba(35, 159, 153, 0.25);
+  outline-offset: 3px;
+}
+
+@media (max-width: 420px) {
+  .profile-card-header {
+    gap: 10px;
+  }
+
+  .user-info-button {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* =========================================================
+   SWEETALERT2 USER INFORMATION MODAL
+   ========================================================= */
+
+.smartops-user-info-popup .user-info-modal {
+  text-align: left;
+}
+
+.smartops-user-info-popup .user-info-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid #e4efee;
+  border-radius: 10px;
+  background: #f7fbfb;
+}
+
+.smartops-user-info-popup .user-info-avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e1f5f2;
+  color: #208d87;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.smartops-user-info-popup .user-info-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.smartops-user-info-popup .user-info-identity strong {
+  color: #172033;
+  font-size: 15px;
+}
+
+.smartops-user-info-popup .user-info-identity span {
+  color: #778293;
+  font-size: 12px;
+}
+
+.smartops-user-info-popup .user-info-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.smartops-user-info-popup .user-info-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.2fr);
+  gap: 14px;
+  padding: 11px 4px;
+  border-bottom: 1px solid #edf0f3;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.smartops-user-info-popup .user-info-row:last-child {
+  border-bottom: none;
+}
+
+.smartops-user-info-popup .user-info-label {
+  color: #778293;
+  font-size: 12px;
+}
+
+.smartops-user-info-popup .user-info-value {
+  color: #253247;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .smartops-user-info-popup .user-info-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

@@ -1,3 +1,4 @@
+
 /* =========================================================
    SLA CONFIGURATION PAGE
    ========================================================= */
@@ -8,19 +9,11 @@
   margin: 0 auto;
   padding: 28px 24px 50px;
   box-sizing: border-box;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
+  font-family: Arial, Helvetica, sans-serif;
   color: #101828;
 }
 
-
-/* =========================================================
-   PAGE HEADER
-   ========================================================= */
+/* PAGE HEADER */
 
 .page-header {
   display: flex;
@@ -77,16 +70,13 @@
   padding: 0 10px;
   border: 1px solid #d0d5dd;
   border-radius: 999px;
-  background: #ffffff;
+  background: #fff;
   color: #344054;
   font-size: 12px;
   font-weight: 600;
 }
 
-
-/* =========================================================
-   ADD RULE BUTTON
-   ========================================================= */
+/* ADD RULE BUTTON */
 
 .add-rule-button {
   display: inline-flex;
@@ -99,21 +89,24 @@
   border: none;
   border-radius: 6px;
   background: #28aaa3;
-  color: #ffffff;
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.add-rule-button:hover {
+.add-rule-button:hover:not(:disabled) {
   background: #239891;
 }
 
-.add-rule-button:active {
+.add-rule-button:active:not(:disabled) {
   transform: translateY(1px);
+}
+
+.add-rule-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .add-rule-button svg {
@@ -121,10 +114,7 @@
   height: 17px;
 }
 
-
-/* =========================================================
-   INFORMATION BANNER
-   ========================================================= */
+/* INFORMATION BANNER */
 
 .info-banner {
   display: flex;
@@ -163,10 +153,7 @@
   font-weight: 700;
 }
 
-
-/* =========================================================
-   MESSAGES
-   ========================================================= */
+/* SUCCESS AND ERROR MESSAGES */
 
 .message {
   display: flex;
@@ -177,9 +164,12 @@
   margin-bottom: 16px;
   border-radius: 6px;
   font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .message button {
+  flex: 0 0 auto;
   border: none;
   background: transparent;
   font-size: 20px;
@@ -200,10 +190,90 @@
   color: #b42318;
 }
 
+/* LOADING AND ERROR STATES */
 
-/* =========================================================
-   TEAM CONTAINER
-   ========================================================= */
+.team-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 140px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  width: 23px;
+  height: 23px;
+  border: 3px solid #d9eeee;
+  border-top-color: #28aaa3;
+  border-radius: 50%;
+  animation: sla-spin 0.8s linear infinite;
+}
+
+@keyframes sla-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.team-error,
+.no-teams {
+  padding: 36px 20px;
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  background: #fff;
+  text-align: center;
+}
+
+.team-error {
+  border-color: #f0b9b9;
+  color: #b42318;
+}
+
+.team-error-text {
+  margin-bottom: 14px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.team-error button {
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid #f0b9b9;
+  border-radius: 6px;
+  background: #fff;
+  color: #b42318;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.no-teams-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  color: #98a2b3;
+}
+
+.no-teams-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.no-teams h3 {
+  margin: 0 0 8px;
+  color: #101828;
+  font-size: 17px;
+}
+
+.no-teams p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* TEAM CONTAINER */
 
 .teams-container {
   display: flex;
@@ -211,10 +281,7 @@
   gap: 24px;
 }
 
-
-/* =========================================================
-   SLA CARD
-   ========================================================= */
+/* SLA CARD */
 
 .sla-card {
   width: 100%;
@@ -222,15 +289,11 @@
   overflow: hidden;
   border: 1px solid #d9dee7;
   border-radius: 9px;
-  background: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.03);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
 }
 
-
-/* =========================================================
-   TEAM HEADER
-   ========================================================= */
+/* TEAM HEADER */
 
 .team-header {
   display: flex;
@@ -248,9 +311,6 @@
   gap: 9px;
   min-width: 0;
 }
-
-
-/* Small clock beside team name */
 
 .clock-icon {
   width: 18px;
@@ -273,13 +333,14 @@
   font-weight: 700;
   color: #101828;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .rules-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 23px;
+  min-height: 23px;
   padding: 0 9px;
   border-radius: 999px;
   background: #eaecf0;
@@ -289,10 +350,7 @@
   white-space: nowrap;
 }
 
-
-/* =========================================================
-   MISSING WARNING
-   ========================================================= */
+/* MISSING PRIORITIES */
 
 .missing-warning {
   display: flex;
@@ -306,20 +364,14 @@
 .missing-warning svg {
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
 }
 
-
-/* =========================================================
-   TABLE HEADER
-   ========================================================= */
+/* TABLE HEADER */
 
 .sla-table-header {
   display: grid;
-  grid-template-columns:
-    1fr
-    1.45fr
-    1.45fr
-    110px;
+  grid-template-columns: 1fr 1.45fr 1.45fr 110px;
   align-items: center;
   min-height: 42px;
   margin: 0 24px;
@@ -332,18 +384,11 @@
   text-align: right;
 }
 
-
-/* =========================================================
-   RULE ROW
-   ========================================================= */
+/* SLA RULE ROW */
 
 .sla-rule-row {
   display: grid;
-  grid-template-columns:
-    1fr
-    1.45fr
-    1.45fr
-    110px;
+  grid-template-columns: 1fr 1.45fr 1.45fr 110px;
   align-items: center;
   min-height: 45px;
   margin: 0 24px;
@@ -355,34 +400,28 @@
   border-bottom: none;
 }
 
-
-/* =========================================================
-   TIME
-   ========================================================= */
-
 .time-value {
   color: #101828;
   font-size: 14px;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
-
-/* =========================================================
-   PRIORITY BADGES
-   ========================================================= */
+/* PRIORITY BADGES */
 
 .priority-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 49px;
-  height: 26px;
+  min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
   box-sizing: border-box;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .priority-Critical {
@@ -415,10 +454,7 @@
   color: #667085;
 }
 
-
-/* =========================================================
-   ACTIONS
-   ========================================================= */
+/* RULE ACTIONS */
 
 .rule-actions {
   display: flex;
@@ -428,22 +464,28 @@
 }
 
 .action-button {
-  width: 22px;
-  height: 30px;
+  width: 30px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: none;
+  border-radius: 5px;
   background: transparent;
   cursor: pointer;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .action-button:hover {
   transform: scale(1.08);
+}
+
+.action-button:focus-visible,
+.team-add-button:focus-visible,
+.add-rule-button:focus-visible {
+  outline: 2px solid #1677e8;
+  outline-offset: 3px;
 }
 
 .action-button svg {
@@ -455,14 +497,19 @@
   color: #101828;
 }
 
+.edit-button:hover {
+  background: #f2f4f7;
+}
+
 .delete-button {
   color: #f04438;
 }
 
+.delete-button:hover {
+  background: #fff0f0;
+}
 
-/* =========================================================
-   TEAM FOOTER
-   ========================================================= */
+/* TEAM FOOTER */
 
 .team-footer {
   display: flex;
@@ -492,10 +539,7 @@
   height: 14px;
 }
 
-
-/* =========================================================
-   EMPTY TEAM
-   ========================================================= */
+/* EMPTY TEAM */
 
 .empty-team {
   padding: 24px;
@@ -503,10 +547,8 @@
   text-align: center;
   color: #667085;
   font-size: 14px;
+  line-height: 1.6;
 }
-
-
-/* SMALLER EMPTY-STATE CLOCK */
 
 .empty-team-icon {
   width: 80px;
@@ -532,10 +574,12 @@
   cursor: pointer;
 }
 
+.empty-team button:hover {
+  color: #168f88;
+  text-decoration: underline;
+}
 
-/* =========================================================
-   MODAL BACKDROP
-   ========================================================= */
+/* MODAL BACKDROP */
 
 .modal-backdrop {
   position: fixed;
@@ -546,29 +590,24 @@
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
-  background: rgba(16, 24, 40, 0.48);
+  background: rgb(16 24 40 / 48%);
+  backdrop-filter: blur(3px);
 }
 
-
-/* =========================================================
-   MODAL
-   ========================================================= */
+/* MODAL */
 
 .rule-modal {
   width: 100%;
   max-width: 480px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
+  border: 1px solid #eaecf0;
   border-radius: 10px;
-  background: #ffffff;
-  box-shadow:
-    0 20px 40px rgba(16, 24, 40, 0.18);
+  background: #fff;
+  box-shadow: 0 20px 40px rgb(16 24 40 / 18%);
 }
 
-
-/* =========================================================
-   MODAL HEADER
-   ========================================================= */
+/* MODAL HEADER */
 
 .modal-header {
   display: flex;
@@ -590,11 +629,13 @@
   margin: 0;
   color: #667085;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .modal-close {
   width: 30px;
   height: 30px;
+  flex: 0 0 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -608,15 +649,17 @@
   cursor: pointer;
 }
 
-.modal-close:hover {
+.modal-close:hover:not(:disabled) {
   background: #f2f4f7;
   color: #101828;
 }
 
+.modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-/* =========================================================
-   FORM
-   ========================================================= */
+/* FORM */
 
 .rule-form {
   padding: 22px 24px 24px;
@@ -637,26 +680,23 @@
 .form-group input,
 .form-group select {
   width: 100%;
-  height: 40px;
+  min-height: 40px;
   box-sizing: border-box;
   padding: 0 12px;
   border: 1px solid #d0d5dd;
   border-radius: 6px;
   outline: none;
-  background: #ffffff;
+  background: #fff;
   color: #101828;
   font-family: inherit;
   font-size: 14px;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   border-color: #28aaa3;
-  box-shadow:
-    0 0 0 3px rgba(40, 170, 163, 0.12);
+  box-shadow: 0 0 0 3px rgb(40 170 163 / 12%);
 }
 
 .form-group input::placeholder {
@@ -673,12 +713,10 @@
   margin-top: 5px;
   color: #98a2b3;
   font-size: 11px;
+  line-height: 1.5;
 }
 
-
-/* =========================================================
-   MODAL ACTIONS
-   ========================================================= */
+/* MODAL ACTIONS */
 
 .modal-actions {
   display: flex;
@@ -690,32 +728,34 @@
 
 .cancel-button,
 .save-button {
-  height: 38px;
+  min-height: 38px;
   padding: 0 16px;
   border-radius: 6px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .cancel-button {
   border: 1px solid #d0d5dd;
-  background: #ffffff;
+  background: #fff;
   color: #344054;
 }
 
-.cancel-button:hover {
+.cancel-button:hover:not(:disabled) {
   background: #f9fafb;
 }
 
 .save-button {
   border: 1px solid #28aaa3;
   background: #28aaa3;
-  color: #ffffff;
+  color: #fff;
 }
 
-.save-button:hover {
+.save-button:hover:not(:disabled) {
+  border-color: #239891;
   background: #239891;
 }
 
@@ -725,10 +765,7 @@
   cursor: not-allowed;
 }
 
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* RESPONSIVE TABLET */
 
 @media (max-width: 900px) {
   .sla-page {
@@ -737,12 +774,7 @@
 
   .sla-table-header,
   .sla-rule-row {
-    grid-template-columns:
-      1fr
-      1fr
-      1fr
-      90px;
-
+    grid-template-columns: 1fr 1fr 1fr 90px;
     margin-left: 18px;
     margin-right: 18px;
   }
@@ -758,11 +790,13 @@
   }
 }
 
+/* RESPONSIVE MOBILE */
 
 @media (max-width: 700px) {
   .page-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
 
   .add-rule-button {
@@ -781,6 +815,10 @@
     padding-bottom: 15px;
   }
 
+  .team-title-wrapper {
+    flex-wrap: wrap;
+  }
+
   .missing-warning {
     white-space: normal;
   }
@@ -791,15 +829,15 @@
 
   .sla-rule-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
     min-height: auto;
     padding-top: 14px;
     padding-bottom: 14px;
   }
 
   .sla-rule-row > div:nth-child(1)::before {
-    content: 'Priority';
+    content: "Priority";
     display: block;
     margin-bottom: 5px;
     color: #98a2b3;
@@ -807,7 +845,7 @@
   }
 
   .sla-rule-row > div:nth-child(2)::before {
-    content: 'Response Time';
+    content: "Response Time";
     display: block;
     margin-bottom: 5px;
     color: #98a2b3;
@@ -815,7 +853,7 @@
   }
 
   .sla-rule-row > div:nth-child(3)::before {
-    content: 'Resolution Time';
+    content: "Resolution Time";
     display: block;
     margin-bottom: 5px;
     color: #98a2b3;
@@ -838,7 +876,6 @@
   }
 }
 
-
 @media (max-width: 480px) {
   .sla-page {
     padding: 18px 12px 30px;
@@ -854,6 +891,12 @@
 
   .team-title-wrapper h2 {
     font-size: 15px;
+  }
+
+  .sla-table-header,
+  .sla-rule-row {
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .rule-modal {
@@ -874,5 +917,24 @@
   .empty-team-icon svg {
     width: 55px;
     height: 55px;
+  }
+
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .cancel-button,
+  .save-button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sla-page *,
+  .rule-modal * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

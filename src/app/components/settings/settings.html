@@ -175,7 +175,7 @@
 
         <!-- CARD HEADER -->
 
-        <div class="card-header">
+        <div class="card-header profile-card-header">
 
           <div>
 
@@ -188,6 +188,33 @@
             </p>
 
           </div>
+
+          <button
+            type="button"
+            class="user-info-button"
+            aria-label="View complete user information"
+            title="View complete user information"
+            (click)="showUserInfo()"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="M12 11v5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <circle cx="12" cy="8" r="1" fill="currentColor" />
+            </svg>
+          </button>
 
         </div>
 

@@ -1,38 +1,27 @@
 <div class="notifications-page">
 
-  <!-- =====================================================
-       HEADER
-       ===================================================== -->
-
+  <!-- HEADER -->
   <div class="notifications-header">
-
     <div class="header-left">
-
-      <h1>
-        Notifications
-      </h1>
+      <h1>Notifications</h1>
 
       <span
         class="unread-count"
         *ngIf="unreadCount > 0"
+        aria-live="polite"
       >
         {{ unreadCount }} unread
       </span>
-
     </div>
-
 
     <button
       type="button"
       class="mark-all-button"
       *ngIf="unreadCount > 0"
       (click)="markAllRead()"
+      aria-label="Mark all notifications as read"
     >
-
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M5 12l4 4L19 6"
           fill="none"
@@ -41,7 +30,6 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-
         <path
           d="M9 12l3 3 7-7"
           fill="none"
@@ -52,28 +40,15 @@
         />
       </svg>
 
-      <span>
-        Mark All Read
-      </span>
-
+      <span>Mark All Read</span>
     </button>
-
   </div>
 
-
-  <!-- =====================================================
-       FILTERS
-       ===================================================== -->
-
+  <!-- FILTERS -->
   <div class="filters-row">
 
-    <!-- Filter -->
     <div class="filter-select">
-
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M4 6h16M7 12h10M10 18h4"
           fill="none"
@@ -84,107 +59,83 @@
       </svg>
 
       <select
+        aria-label="Filter notifications by read status"
         [value]="selectedFilter"
         (change)="setFilter($any($event.target).value)"
       >
-
-        <option value="All">
-          All
-        </option>
-
-        <option value="Unread">
-          Unread
-        </option>
-
+        <option value="All">All</option>
+        <option value="Unread">Unread</option>
       </select>
 
-      <span class="select-arrow">
-        ▾
-      </span>
-
+      <span class="select-arrow">▾</span>
     </div>
 
-
-    <!-- Type -->
     <div class="filter-select type-filter">
-
       <select
+        aria-label="Filter notifications by event type"
         [value]="selectedType"
         (change)="setType($any($event.target).value)"
       >
-
-        <option value="All">
-          All
-        </option>
-
-        <option value="Status Change">
-          Status Change
-        </option>
-
-        <option value="Assignment">
-          Assignment
-        </option>
-
-        <option value="Attachment Added">
-          Attachment Added
-        </option>
-
-        <option value="Created">
-          Created
-        </option>
-
-        <option value="Comment Added">
-          Comment Added
-        </option>
-
-        <option value="Kb Generated">
-          Kb Generated
-        </option>
-
+        <option value="All">All types</option>
+        <option value="Status Change">Status Change</option>
+        <option value="Assignment">Assignment</option>
+        <option value="Attachment Added">Attachment Added</option>
+        <option value="Created">Created</option>
+        <option value="Comment Added">Comment Added</option>
+        <option value="Kb Generated">Kb Generated</option>
       </select>
 
-      <span class="select-arrow">
-        ▾
-      </span>
-
+      <span class="select-arrow">▾</span>
     </div>
 
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="refresh()"
+      [disabled]="loading"
+      aria-label="Refresh notifications"
+      title="Refresh notifications"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M20 7v5h-5M4 17v-5h5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M5.6 9A7 7 0 0 1 17.4 6L20 12M4 12l2.6 6A7 7 0 0 0 18.4 15"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
   </div>
 
-
-  <!-- =====================================================
-       LOADING
-       ===================================================== -->
-
+  <!-- LOADING -->
   <div
     class="loading-state"
     *ngIf="loading"
+    role="status"
+    aria-live="polite"
   >
-
     <div class="loading-spinner"></div>
-
-    <span>
-      Loading notifications...
-    </span>
-
+    <span>Loading notifications...</span>
   </div>
 
-
-  <!-- =====================================================
-       ERROR
-       ===================================================== -->
-
+  <!-- ERROR -->
   <div
     class="error-state"
     *ngIf="!loading && errorMessage"
+    role="alert"
   >
-
     <div class="error-icon">
-
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle
           cx="12"
           cy="12"
@@ -193,7 +144,6 @@
           stroke="currentColor"
           stroke-width="1.8"
         />
-
         <path
           d="M12 7v6"
           fill="none"
@@ -201,35 +151,22 @@
           stroke-width="1.8"
           stroke-linecap="round"
         />
-
-        <circle
-          cx="12"
-          cy="16.5"
-          r="1"
-          fill="currentColor"
-        />
+        <circle cx="12" cy="16.5" r="1" fill="currentColor" />
       </svg>
-
     </div>
 
-    <div>
-      {{ errorMessage }}
-    </div>
+    <div>{{ errorMessage }}</div>
 
     <button
       type="button"
       (click)="refresh()"
+      [disabled]="loading"
     >
       Retry
     </button>
-
   </div>
 
-
-  <!-- =====================================================
-       EMPTY
-       ===================================================== -->
-
+  <!-- EMPTY STATE -->
   <div
     class="empty-state"
     *ngIf="
@@ -238,13 +175,8 @@
       filteredNotifications.length === 0
     "
   >
-
     <div class="empty-icon">
-
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
           fill="none"
@@ -253,7 +185,6 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-
         <path
           d="M10 21h4"
           fill="none"
@@ -262,24 +193,27 @@
           stroke-linecap="round"
         />
       </svg>
-
     </div>
 
-    <h3>
-      No notifications
-    </h3>
-
+    <h3>No notifications</h3>
     <p>
-      You're all caught up.
+      {{
+        selectedFilter === 'Unread' || selectedType !== 'All'
+          ? 'No notifications match your selected filters.'
+          : "You're all caught up."
+      }}
     </p>
 
+    <button
+      type="button"
+      *ngIf="selectedFilter !== 'All' || selectedType !== 'All'"
+      (click)="setFilter('All'); setType('All')"
+    >
+      Clear filters
+    </button>
   </div>
 
-
-  <!-- =====================================================
-       NOTIFICATION LIST
-       ===================================================== -->
-
+  <!-- NOTIFICATION LIST -->
   <div
     class="notification-list"
     *ngIf="
@@ -288,16 +222,15 @@
       filteredNotifications.length > 0
     "
   >
-
     <div
       class="notification-card"
       *ngFor="let notification of filteredNotifications"
       [class.unread]="!notification.read"
       (click)="openNotification(notification)"
+      [attr.aria-label]="notification.title"
     >
 
-      <!-- ICON -->
-
+      <!-- NOTIFICATION ICON -->
       <div
         class="notification-icon"
         [ngClass]="getNotificationIcon(notification)"
@@ -318,7 +251,6 @@
           />
         </svg>
 
-
         <!-- ASSIGNMENT -->
         <svg
           *ngIf="getNotificationIcon(notification) === 'assignment'"
@@ -333,7 +265,6 @@
             stroke="currentColor"
             stroke-width="1.7"
           />
-
           <path
             d="M3.5 20a5.5 5.5 0 0 1 11 0"
             fill="none"
@@ -341,7 +272,6 @@
             stroke-width="1.7"
             stroke-linecap="round"
           />
-
           <path
             d="M16 11l2 2 3-4"
             fill="none"
@@ -351,7 +281,6 @@
             stroke-linejoin="round"
           />
         </svg>
-
 
         <!-- ATTACHMENT -->
         <svg
@@ -369,7 +298,6 @@
           />
         </svg>
 
-
         <!-- CREATED -->
         <svg
           *ngIf="getNotificationIcon(notification) === 'created'"
@@ -385,7 +313,6 @@
           />
         </svg>
 
-
         <!-- DEFAULT -->
         <svg
           *ngIf="getNotificationIcon(notification) === 'default'"
@@ -400,7 +327,6 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           />
-
           <path
             d="M10 21h4"
             fill="none"
@@ -409,23 +335,15 @@
             stroke-linecap="round"
           />
         </svg>
-
       </div>
 
-
-      <!-- CONTENT -->
-
+      <!-- NOTIFICATION CONTENT -->
       <div class="notification-content">
-
         <div class="notification-title">
-
           {{ notification.title }}
-
         </div>
 
-
         <div class="notification-meta">
-
           <span
             class="ticket-link"
             *ngIf="notification.ticket"
@@ -433,43 +351,35 @@
             {{ notification.ticket }}
           </span>
 
-          <span
-            class="notification-date"
-          >
+          <span class="notification-date">
             {{ formatDate(notification.created_at) }}
           </span>
 
-
-          <span
-            class="status-pill sent"
-          >
+          <span class="status-pill sent">
             Sent
           </span>
-
 
           <span class="channel-pill">
             {{ notification.channel }}
           </span>
-
         </div>
-
       </div>
 
-
-      <!-- READ INDICATOR -->
-
+      <!-- MARK ONE AS READ: DOES NOT OPEN THE TICKET -->
       <button
         type="button"
         class="read-button"
         [class.unread-button]="!notification.read"
-        (click)="$event.stopPropagation(); notification.read ? null : openNotification(notification)"
+        (click)="$event.stopPropagation(); markAsRead(notification)"
         [title]="notification.read ? 'Read' : 'Mark as read'"
+        [attr.aria-label]="
+          notification.read
+            ? 'Notification already read'
+            : 'Mark notification as read'
+        "
+        [disabled]="notification.read"
       >
-
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M5 12l4 4L19 6"
             fill="none"
@@ -479,11 +389,9 @@
             stroke-linejoin="round"
           />
         </svg>
-
       </button>
 
     </div>
-
   </div>
 
 </div>

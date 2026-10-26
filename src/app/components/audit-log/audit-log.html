@@ -1,17 +1,10 @@
+
 <div class="audit-page">
 
-  <!-- =========================
-       PAGE HEADER
-       ========================= -->
-
-  <div class="page-header">
-
+  <header class="page-header">
     <div>
       <h1>Audit Log</h1>
-
-      <p>
-        Track all ticket activities and changes.
-      </p>
+      <p>Track all ticket activities and changes.</p>
     </div>
 
     <button
@@ -19,21 +12,19 @@
       class="refresh-btn"
       (click)="refresh()"
       [disabled]="loading"
+      aria-label="Refresh audit log"
     >
-
       <svg
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
       >
-
         <path
           d="M20 11a8 8 0 0 0-15-3"
           stroke="currentColor"
           stroke-width="1.8"
           stroke-linecap="round"
         />
-
         <path
           d="M5 4v4h4"
           stroke="currentColor"
@@ -41,14 +32,12 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-
         <path
           d="M4 13a8 8 0 0 0 15 3"
           stroke="currentColor"
           stroke-width="1.8"
           stroke-linecap="round"
         />
-
         <path
           d="M19 20v-4h-4"
           stroke="currentColor"
@@ -56,67 +45,44 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-
       </svg>
 
-      Refresh
-
+      <span>{{ loading ? 'Loading...' : 'Refresh' }}</span>
     </button>
+  </header>
 
-  </div>
-
-
-  <!-- =========================
-       ERROR
-       ========================= -->
-
+  <!-- ERROR -->
   <div
     class="error-card"
     *ngIf="!loading && errorMessage"
+    role="alert"
   >
-
     <div>
-      <strong>
-        Unable to load audit log
-      </strong>
-
-      <p>
-        {{ errorMessage }}
-      </p>
+      <strong>Unable to load audit log</strong>
+      <p>{{ errorMessage }}</p>
     </div>
 
     <button
       type="button"
       (click)="refresh()"
+      [disabled]="loading"
     >
       Retry
     </button>
-
   </div>
 
-
-  <!-- =========================
-       LOADING
-       ========================= -->
-
+  <!-- LOADING -->
   <div
     class="loading-state"
     *ngIf="loading"
+    role="status"
+    aria-live="polite"
   >
-
     <div class="spinner"></div>
-
-    <span>
-      Loading audit logs...
-    </span>
-
+    <span>Loading audit logs...</span>
   </div>
 
-
-  <!-- =========================
-       EMPTY
-       ========================= -->
-
+  <!-- EMPTY STATE -->
   <div
     class="empty-state"
     *ngIf="
@@ -125,22 +91,38 @@
       activities.length === 0
     "
   >
+    <div class="empty-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M12 7v5l3 2"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
 
-    <h3>
-      No audit activities found
-    </h3>
+    <h3>No audit activities found</h3>
+    <p>Ticket activities will appear here.</p>
 
-    <p>
-      Ticket activities will appear here.
-    </p>
-
+    <button
+      type="button"
+      class="empty-refresh-btn"
+      (click)="refresh()"
+    >
+      Refresh audit log
+    </button>
   </div>
 
-
-  <!-- =========================
-       AUDIT TABLE
-       ========================= -->
-
+  <!-- AUDIT TABLE -->
   <div
     class="audit-table-card"
     *ngIf="
@@ -149,124 +131,84 @@
       activities.length > 0
     "
   >
-
     <div class="table-wrapper">
-
       <table>
-
         <thead>
-
           <tr>
-
-            <th>Timestamp</th>
-
-            <th>Ticket</th>
-
-            <th>Actor</th>
-
-            <th>Event</th>
-
-            <th>Details</th>
-
+            <th scope="col">Timestamp</th>
+            <th scope="col">Ticket</th>
+            <th scope="col">Actor</th>
+            <th scope="col">Event</th>
+            <th scope="col">Details</th>
           </tr>
-
         </thead>
 
-
         <tbody>
-
-          <tr
-            *ngFor="let activity of activities"
-          >
+          <tr *ngFor="let activity of activities">
 
             <!-- TIMESTAMP -->
-
             <td class="timestamp-cell">
-
               {{ formatDate(activity.created_at) }}
-
             </td>
 
-
             <!-- TICKET -->
-
             <td>
-
-              <a
+              <button
+                *ngIf="getTicketId(activity) !== null"
+                type="button"
                 class="ticket-link"
-                [href]="'/ticket/' + activity.ticket"
-                *ngIf="activity.ticket"
+                (click)="openTicket(activity)"
+                [attr.aria-label]="'Open ticket ' + getTicket(activity)"
               >
                 {{ getTicket(activity) }}
-              </a>
+              </button>
 
               <span
                 class="ticket-text"
-                *ngIf="!activity.ticket"
+                *ngIf="getTicketId(activity) === null"
               >
                 {{ getTicket(activity) }}
               </span>
-
             </td>
-
 
             <!-- ACTOR -->
-
             <td>
-
               <div class="actor-cell">
-
-                <div class="actor-avatar">
-
+                <div class="actor-avatar" aria-hidden="true">
                   {{ getActorInitial(activity) }}
-
                 </div>
 
-                <span class="actor-name">
-
+                <span
+                  class="actor-name"
+                  [title]="getActor(activity)"
+                >
                   {{ getActor(activity) }}
-
                 </span>
-
               </div>
-
             </td>
-
 
             <!-- EVENT -->
-
             <td>
-
               <span
                 class="event-badge"
-                [ngClass]="
-                  getEventClass(activity.action)
-                "
+                [ngClass]="getEventClass(activity.action)"
               >
-
                 {{ formatEvent(activity.action) }}
-
               </span>
-
             </td>
 
-
             <!-- DETAILS -->
-
-            <td class="details-cell">
-
+            <td
+              class="details-cell"
+              [title]="getDetails(activity)"
+            >
               {{ getDetails(activity) }}
-
             </td>
 
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
-
   </div>
 
 </div>

@@ -7,31 +7,22 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { ApiErrorService } from '../../services/api-error.service';
 
 interface AuditActivity {
   id: number;
-
-  ticket: string | null;
-
+  ticket: string | number | null;
   ticket_identifier?: string | null;
-
   performed_by: string | null;
-
   action: string;
-
   field: string | null;
-
   old_value: string | null;
-
   new_value: string | null;
-
   description: string;
-
   result: string;
-
   created_at: string;
 }
 
@@ -43,15 +34,13 @@ interface AuditActivity {
   styleUrl: './audit-log.css'
 })
 export class AuditLog implements OnInit {
-
   activities: AuditActivity[] = [];
-
   loading = true;
-
   errorMessage = '';
 
   constructor(
     private http: HttpClient,
+    private router: Router,
     private cdr: ChangeDetectorRef,
     private apiErrorService: ApiErrorService
   ) {}
@@ -60,62 +49,39 @@ export class AuditLog implements OnInit {
     this.loadAuditLogs();
   }
 
-
-  // =========================================================
   // LOAD AUDIT LOGS
-  // =========================================================
-
   loadAuditLogs(): void {
-
     this.loading = true;
-
     this.errorMessage = '';
 
     this.http.get<AuditActivity[]>(
       `${environment.apiUrl}/tickets-activity/`
     ).subscribe({
-
       next: (response) => {
-
-        console.log('Audit Log API Response:', response);
-
         this.activities = Array.isArray(response)
           ? response
           : [];
 
         this.loading = false;
-
         this.cdr.detectChanges();
       },
 
       error: (error) => {
-
-        console.error(
-          'Unable to load audit logs:',
-          error
-        );
+        console.error('Unable to load audit logs:', error);
 
         this.activities = [];
-
         this.loading = false;
 
         if (error.status === 401) {
-
           this.errorMessage =
             'Authentication failed. Please login again.';
-
         } else if (error.status === 403) {
-
           this.errorMessage =
             'You do not have permission to view the audit log.';
-
         } else if (error.status === 0) {
-
           this.errorMessage =
             'Unable to connect to the backend server.';
-
         } else {
-
           this.errorMessage =
             this.apiErrorService.getErrorMessage(error) ||
             'Unable to load audit log.';
@@ -126,24 +92,23 @@ export class AuditLog implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // EVENT NAME
-  // =========================================================
-
-  formatEvent(action: string): string {
-
-    if (!action) {
-      return 'Activity';
-    }
-
-    const cleanAction = String(action)
+  // NORMALIZE EVENT ACTION
+  private normalizeAction(action: string | null | undefined): string {
+    return String(action || '')
       .replace(/[()'",]/g, '')
       .trim()
       .toUpperCase();
+  }
+
+  // EVENT NAME
+  formatEvent(action: string): string {
+    const cleanAction = this.normalizeAction(action);
+
+    if (!cleanAction) {
+      return 'Activity';
+    }
 
     switch (cleanAction) {
-
       case 'CREATED':
         return 'Created';
 
@@ -184,34 +149,18 @@ export class AuditLog implements OnInit {
         return cleanAction
           .replace(/_/g, ' ')
           .toLowerCase()
-          .replace(/\b\w/g, char =>
-            char.toUpperCase()
-          );
+          .replace(/\b\w/g, char => char.toUpperCase());
     }
   }
 
-
-  // =========================================================
   // EVENT CSS CLASS
-  // =========================================================
-
   getEventClass(action: string): string {
-
-    if (!action) {
-      return 'event-default';
-    }
-
-    const cleanAction = String(action)
-      .replace(/[()'",]/g, '')
-      .trim()
-      .toUpperCase();
-
-    switch (cleanAction) {
-
+    switch (this.normalizeAction(action)) {
       case 'STATUS_CHANGED':
         return 'event-status';
 
       case 'ATTACHMENT_ADDED':
+      case 'ATTACHMENT_DELETED':
         return 'event-attachment';
 
       case 'ASSIGNED':
@@ -237,148 +186,132 @@ export class AuditLog implements OnInit {
     }
   }
 
-
-  // =========================================================
-  // TICKET NUMBER
-  // =========================================================
-
+  // DISPLAY TICKET IDENTIFIER
   getTicket(activity: AuditActivity): string {
+    const ticket = activity.ticket_identifier || activity.ticket;
 
-    return (
-      activity.ticket ||
-      activity.ticket_identifier ||
-      '-'
-    );
+    return ticket !== null &&
+      ticket !== undefined &&
+      String(ticket).trim() !== ''
+      ? String(ticket)
+      : '-';
   }
 
+  // EXTRACT NUMERIC TICKET ID FOR ROUTING
+  getTicketId(activity: AuditActivity): number | null {
+    const ticket = activity.ticket;
 
-  // =========================================================
-  // ACTOR
-  // =========================================================
-
-  getActor(activity: AuditActivity): string {
-
-    return activity.performed_by || 'System';
-  }
-
-
-  // =========================================================
-  // ACTOR INITIAL
-  // =========================================================
-
-  getActorInitial(activity: AuditActivity): string {
-
-    const actor = this.getActor(activity);
-
-    if (!actor) {
-      return '?';
+    if (typeof ticket === 'number') {
+      return Number.isSafeInteger(ticket) && ticket > 0
+        ? ticket
+        : null;
     }
 
-    return actor
-      .trim()
-      .charAt(0)
-      .toUpperCase();
+    if (typeof ticket !== 'string' || !ticket.trim()) {
+      return null;
+    }
+
+    const match = ticket.trim().match(/(\d+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const ticketId = Number(match[1]);
+
+    return Number.isSafeInteger(ticketId) && ticketId > 0
+      ? ticketId
+      : null;
   }
 
+  // OPEN TICKET USING ANGULAR ROUTER
+  openTicket(activity: AuditActivity): void {
+    const ticketId = this.getTicketId(activity);
 
-  // =========================================================
+    if (ticketId === null) {
+      console.warn(
+        'Cannot navigate: invalid ticket identifier.',
+        activity.ticket
+      );
+      return;
+    }
+
+    void this.router.navigate(['/ticket', ticketId]);
+  }
+
+  // ACTOR
+  getActor(activity: AuditActivity): string {
+    return activity.performed_by?.trim() || 'System';
+  }
+
+  // ACTOR INITIAL
+  getActorInitial(activity: AuditActivity): string {
+    const actor = this.getActor(activity).trim();
+
+    return actor ? actor.charAt(0).toUpperCase() : '?';
+  }
+
   // DETAILS
-  // =========================================================
-
   getDetails(activity: AuditActivity): string {
-
-    /*
-     * For status changes, show:
-     *
-     * RESOLVED → REOPENED
-     */
-
-    const cleanAction = String(activity.action || '')
-      .replace(/[()'",]/g, '')
-      .trim()
-      .toUpperCase();
+    const action = this.normalizeAction(activity.action);
 
     if (
-      cleanAction === 'STATUS_CHANGED' &&
+      action === 'STATUS_CHANGED' &&
       activity.old_value &&
       activity.new_value
     ) {
-
       return `${activity.old_value} → ${activity.new_value}`;
     }
 
-
-    /*
-     * Assignment
-     */
-
-    if (
-      cleanAction === 'ASSIGNED' &&
-      activity.new_value
-    ) {
-
+    if (action === 'ASSIGNED' && activity.new_value) {
       return activity.new_value;
     }
 
-
-    /*
-     * Attachment
-     */
-
     if (
-      cleanAction === 'ATTACHMENT_ADDED' &&
+      (action === 'ATTACHMENT_ADDED' ||
+        action === 'ATTACHMENT_DELETED') &&
       activity.new_value
     ) {
-
       return activity.new_value;
     }
 
-
-    /*
-     * Generic activity
-     */
-
-    if (activity.description) {
-
-      return activity.description;
+    if (activity.description?.trim()) {
+      return activity.description.trim();
     }
 
+    if (activity.field?.trim()) {
+      return activity.field.trim();
+    }
 
     return '—';
   }
 
-
-  // =========================================================
-  // DATE
-  // =========================================================
-
+  // DATE FORMATTING
   formatDate(date: string): string {
-
     if (!date) {
       return '-';
     }
 
-    return new Date(date).toLocaleString(
-      'en-US',
-      {
-        month: 'numeric',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit'
-      }
-    );
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '-';
+    }
+
+    return parsedDate.toLocaleString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   }
 
-
-  // =========================================================
   // REFRESH
-  // =========================================================
-
   refresh(): void {
-
-    this.loadAuditLogs();
+    if (!this.loading) {
+      this.loadAuditLogs();
+    }
   }
-
 }
