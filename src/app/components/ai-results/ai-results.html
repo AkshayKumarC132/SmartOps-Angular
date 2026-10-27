@@ -1,137 +1,269 @@
+
 <div class="ai-results-page">
 
-  <div class="page-header">
+  <header class="page-header">
     <div>
       <h1>AI Results</h1>
-      <p>Review AI-generated analysis and insights from SmartOps tickets.</p>
+      <p class="page-subtitle">
+        Review AI-generated analysis and recommendations from SmartOps.
+      </p>
     </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      [disabled]="loading"
+      (click)="loadResults()">
+      {{ loading ? 'Loading...' : '↻ Refresh' }}
+    </button>
+  </header>
+
+  <div
+    *ngIf="errorMessage"
+    class="message error-message"
+    role="alert">
+    <span>{{ errorMessage }}</span>
+    <button type="button" (click)="loadResults()">Retry</button>
   </div>
 
-  <div class="summary-grid">
-
-    <div class="summary-card">
-      <div>
-        <span>Total Results</span>
-        <strong>{{ totalResults }}</strong>
-      </div>
-
-      <div class="summary-icon">
-        ✦
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div>
-        <span>Avg Confidence</span>
-        <strong>{{ averageConfidence }}%</strong>
-      </div>
-
-      <div class="summary-icon">
-        ◉
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div>
-        <span>Pending Reviews</span>
-        <strong>{{ pendingReviews }}</strong>
-      </div>
-
-      <div class="summary-icon">
-        !
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div>
-        <span>Completed</span>
-        <strong>{{ completedResults }}</strong>
-      </div>
-
-      <div class="summary-icon">
-        ✓
-      </div>
-    </div>
-
+  <div
+    *ngIf="successMessage"
+    class="message success-message"
+    role="status">
+    {{ successMessage }}
   </div>
 
-  <div class="results-list">
+  <!-- Dashboard metrics -->
+  <section class="summary-grid">
 
-    <div
+    <article class="summary-card">
+      <span class="summary-label">Total Results</span>
+      <strong>{{ totalResults }}</strong>
+      <small>AI result records returned by the API</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Avg Confidence</span>
+
+      <strong>
+        {{ averageConfidence === null ? '—' : averageConfidence + '%' }}
+      </strong>
+
+      <div
+        class="metric-bar"
+        *ngIf="averageConfidence !== null">
+        <span [style.width.%]="averageConfidence"></span>
+      </div>
+
+      <small *ngIf="averageConfidence === null">
+        No confidence data available
+      </small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Completed Rate</span>
+
+      <strong>
+        {{ totalResults
+          ? Math.round(completedResults / totalResults * 100) + '%'
+          : '—' }}
+      </strong>
+
+      <div
+        class="metric-bar"
+        *ngIf="totalResults > 0">
+        <span
+          [style.width.%]="completedResults / totalResults * 100">
+        </span>
+      </div>
+
+      <small>
+        {{ completedResults }} of {{ totalResults }} analyses completed
+      </small>
+    </article>
+
+    <article class="summary-card result-types-card">
+      <span class="summary-label">Result Types</span>
+
+      <div class="type-list" *ngIf="resultTypes.length > 0">
+        <span *ngFor="let type of resultTypes">
+          {{ type }}
+        </span>
+      </div>
+
+      <small *ngIf="resultTypes.length === 0">
+        No result type metadata
+      </small>
+    </article>
+
+  </section>
+
+  <!-- Initial loading -->
+  <section
+    *ngIf="loading && results.length === 0"
+    class="state-card">
+    <div class="loader"></div>
+    <h2>Loading AI results</h2>
+    <p>Retrieving AI result records from SmartOps...</p>
+  </section>
+
+  <!-- Empty state -->
+  <section
+    *ngIf="!loading && !errorMessage && results.length === 0"
+    class="state-card">
+    <div class="empty-icon">✦</div>
+    <h2>No AI results found</h2>
+    <p>
+      Results will appear here when the API returns AI analyses
+      for your organization.
+    </p>
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="loadResults()">
+      Refresh
+    </button>
+  </section>
+
+  <!-- AI result cards -->
+  <section class="results-list">
+
+    <article
       class="result-card"
-      *ngFor="let result of results"
-    >
+      *ngFor="let item of results; trackBy: trackByResultId">
 
-      <div class="result-header">
+      <header class="result-header">
 
         <div class="result-info">
+          <span class="ai-icon" aria-hidden="true">✥</span>
 
-          <div class="result-icon">
-            ✦
+          <div class="result-title">
+            <span
+              class="type-badge"
+              [ngClass]="getStatusClass(getResultType(item))">
+              {{ getResultType(item) }}
+            </span>
+
+            <span class="for-label">for</span>
+
+            <a
+              class="ticket-link"
+              [routerLink]="['/ticket', getTicketRouteId(item)]">
+              <span aria-hidden="true">↗</span>
+              {{ getTicketLabel(item) }}
+            </a>
           </div>
-
-          <div>
-            <div class="result-title">
-              AI Analysis
-            </div>
-
-            <div class="ticket-reference">
-              for
-              <span>{{ result.ticketId }}</span>
-            </div>
-          </div>
-
         </div>
 
         <div class="result-meta">
-
-          <span class="model">
-            {{ result.modelName }}
+          <span class="model-badge">
+            {{ formatProvider(item.provider) }}
+            <ng-container *ngIf="item.model_name">
+              · {{ item.model_name }}
+            </ng-container>
           </span>
 
-          <span
-            class="status-badge"
-            [ngClass]="getStatusClass(result.processingStatus)"
-          >
-            {{ result.processingStatus }}
-          </span>
+          <ng-container *ngIf="getConfidence(item) !== null">
+            <span class="confidence-value">
+              {{ getConfidence(item) }}%
+            </span>
 
+            <span class="confidence-bar">
+              <span [style.width.%]="getConfidence(item)"></span>
+            </span>
+          </ng-container>
         </div>
 
-      </div>
+      </header>
 
       <div class="result-body">
 
-        <p>
-          {{ result.result }}
+        <p class="result-content">
+          {{ getResultSummary(item) }}
         </p>
+
+        <section
+          class="result-details"
+          *ngIf="getStructuredResult(item).suggested_team">
+          <span class="detail-label">Suggested Team</span>
+          <span class="team-chip">
+            {{ getStructuredResult(item).suggested_team }}
+          </span>
+        </section>
+
+        <section
+          class="result-details"
+          *ngIf="getStructuredResult(item).suggested_tags.length">
+          <span class="detail-label">Suggested Tags</span>
+
+          <div class="tag-list">
+            <span
+              class="tag-chip"
+              *ngFor="let tag of getStructuredResult(item).suggested_tags">
+              {{ tag }}
+            </span>
+          </div>
+        </section>
+
+        <section
+          class="result-details"
+          *ngIf="getStructuredResult(item).knowledge_base_suggestions.length">
+          <span class="detail-label">Knowledge Base Suggestions</span>
+
+          <ul class="suggestion-list">
+            <li
+              *ngFor="let suggestion of getStructuredResult(item).knowledge_base_suggestions">
+              {{ suggestion }}
+            </li>
+          </ul>
+        </section>
+
+        <div
+          *ngIf="item.error_message"
+          class="processing-error">
+          {{ item.error_message }}
+        </div>
 
       </div>
 
-      <div class="result-footer">
+      <footer class="result-footer">
 
-        <div class="provider">
-          Provider:
-          <strong>{{ result.provider }}</strong>
-        </div>
-
-        <div>
+        <div class="result-statuses">
           <span
-            class="review-status"
-            [ngClass]="getStatusClass(result.reviewStatus)"
-          >
-            {{ result.reviewStatus }}
+            class="status-badge"
+            [ngClass]="getStatusClass(item.processing_status)">
+            {{ formatStatus(item.processing_status) }}
+          </span>
+
+          <span
+            class="review-badge"
+            [ngClass]="getStatusClass(item.review_status)">
+            {{ formatStatus(item.review_status) }}
           </span>
         </div>
 
-        <div class="created-date">
-          {{ result.createdAt }}
-        </div>
+        <span class="created-date">
+          {{ item.created_at | date:'M/d/yyyy, h:mm a' }}
+        </span>
 
-      </div>
+        <button
+          type="button"
+          class="retest-button"
+          *ngIf="
+            !item.is_retested &&
+            item.original_ai_result_id == null &&
+            (
+              item.processing_status === 'COMPLETED' ||
+              item.processing_status === 'FAILED'
+            )
+          "
+          (click)="retestResult(item)">
+          Request Retest
+        </button>
 
-    </div>
+      </footer>
 
-  </div>
+    </article>
 
+  </section>
 </div>
