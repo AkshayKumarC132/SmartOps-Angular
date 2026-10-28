@@ -1,20 +1,17 @@
-<div class="login-page">
 
+<div class="login-page">
   <div class="login-card">
 
-    <h1>SmartOps</h1>
+    <div class="login-header">
+      <h1>SmartOps</h1>
+      <p class="subtitle">Sign in to your account</p>
+    </div>
 
-    <p class="subtitle">
-      Sign in to your account
-    </p>
+    <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
 
-    <form (ngSubmit)="login()">
-
+      <!-- Username -->
       <div class="form-group">
-
-        <label for="username">
-          Username
-        </label>
+        <label for="username">Username</label>
 
         <input
           id="username"
@@ -22,16 +19,15 @@
           name="username"
           [(ngModel)]="username"
           placeholder="Enter username"
+          autocomplete="username"
           required
-        >
-
+          [disabled]="loading"
+        />
       </div>
 
+      <!-- Password -->
       <div class="form-group">
-
-        <label for="password">
-          Password
-        </label>
+        <label for="password">Password</label>
 
         <input
           id="password"
@@ -39,27 +35,40 @@
           name="password"
           [(ngModel)]="password"
           placeholder="Enter password"
+          autocomplete="current-password"
           required
-        >
-
+          [disabled]="loading"
+        />
       </div>
 
-      <p
+      <!-- Error message -->
+      <div
         class="error"
         *ngIf="errorMessage"
+        role="alert"
+        aria-live="assertive"
       >
-        {{ errorMessage }}
-      </p>
+        <span class="error-icon" aria-hidden="true">!</span>
+        <span>{{ errorMessage }}</span>
+      </div>
 
+      <!-- Sign in button -->
       <button
+        class="login-button"
         type="submit"
         [disabled]="loading"
       >
-        {{ loading ? 'Signing in...' : 'Sign In' }}
+        <span *ngIf="loading" class="loading-spinner"></span>
+        <span>
+          {{ loading ? 'Signing in...' : 'Sign In' }}
+        </span>
       </button>
 
     </form>
 
-  </div>
+    <p class="login-footer">
+      Secure access to SmartOps
+    </p>
 
+  </div>
 </div>

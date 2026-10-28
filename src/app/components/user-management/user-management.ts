@@ -1,4 +1,3 @@
-
 import {
   ChangeDetectorRef,
   Component,
@@ -15,6 +14,7 @@ import {
 } from '../../services/user.service';
 
 import { ApiErrorService } from '../../services/api-error.service';
+import { OrganizationContextService } from '../../services/organization-context.service';
 
 @Component({
   selector: 'app-user-management',
@@ -27,7 +27,6 @@ import { ApiErrorService } from '../../services/api-error.service';
   styleUrl: './user-management.css'
 })
 export class UserManagement implements OnInit {
-
   users: User[] = [];
 
   loading = true;
@@ -58,7 +57,8 @@ export class UserManagement implements OnInit {
   constructor(
     private userService: UserService,
     private apiErrorService: ApiErrorService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private organizationContextService: OrganizationContextService
   ) {}
 
   ngOnInit(): void {
@@ -124,9 +124,14 @@ export class UserManagement implements OnInit {
     ) {
       if (
         value.username ||
+        value.Username ||
         value.email ||
+        value.Email ||
         value.user_id ||
-        value.userId
+        value.userId ||
+        value.Id ||
+        value.ID ||
+        value['User Id']
       ) {
         return value;
       }
@@ -187,12 +192,21 @@ export class UserManagement implements OnInit {
 
     if (typeof value === 'object') {
       if (
-        (value.username || value.email) &&
+        (
+          value.username ||
+          value.Username ||
+          value.email ||
+          value.Email
+        ) &&
         (
           value.role ||
+          value.Role ||
           value.id ||
+          value.Id ||
+          value.ID ||
           value.user_id ||
-          value.userId
+          value.userId ||
+          value['User Id']
         )
       ) {
         return value;
@@ -268,9 +282,14 @@ export class UserManagement implements OnInit {
 
       if (
         payload.username ||
+        payload.Username ||
         payload.email ||
+        payload.Email ||
         payload.user_id ||
-        payload.userId
+        payload.userId ||
+        payload.Id ||
+        payload.ID ||
+        payload['User Id']
       ) {
         return payload;
       }
@@ -351,23 +370,31 @@ export class UserManagement implements OnInit {
 
     const id =
       currentUser.id ??
+      currentUser.ID ??
+      currentUser.Id ??
       currentUser.user_id ??
       currentUser.userId ??
+      currentUser['User Id'] ??
       null;
 
     const username =
       currentUser.username ??
+      currentUser.Username ??
       currentUser.user_name ??
       currentUser.userName ??
       null;
 
     const email =
       currentUser.email ??
+      currentUser.Email ??
       currentUser.email_address ??
       null;
 
     return {
-      id: id !== null ? String(id) : null,
+      id:
+        id !== null && id !== undefined
+          ? String(id).trim()
+          : null,
       username: username
         ? String(username).trim().toLowerCase()
         : null,
@@ -384,74 +411,61 @@ export class UserManagement implements OnInit {
   private filterUsersForAdminPortal(
     users: User[]
   ): User[] {
+    const organizationFilteredUsers =
+      this.organizationContextService.filterRecords(
+        users as unknown as (User & Record<string, unknown>)[]
+      );
+
     const currentAdmin = this.getCurrentAdminIdentity();
 
-    const nonAdminUsers = users.filter(user =>
-      String(user.role || '').trim().toLowerCase() !== 'admin'
+    const nonAdminUsers = organizationFilteredUsers.filter(
+      user =>
+        String(user.role || '').trim().toLowerCase() !== 'admin'
     );
 
-    const adminUsers = users.filter(user =>
-      String(user.role || '').trim().toLowerCase() === 'admin'
+    const adminUsers = organizationFilteredUsers.filter(
+      user =>
+        String(user.role || '').trim().toLowerCase() === 'admin'
     );
 
-    if (
-      currentAdmin.id ||
-      currentAdmin.username ||
-      currentAdmin.email
-    ) {
-      const currentAdminUser = adminUsers.find(user => {
-        const userId =
-          user.id !== undefined && user.id !== null
-            ? String(user.id)
-            : null;
+    const matchingAdmin = adminUsers.find(user => {
+      const rawUser = user as User & Record<string, unknown>;
 
-        const username = user.username
-          ? user.username.trim().toLowerCase()
+      const userIdValue =
+        rawUser.id ??
+        rawUser['ID'] ??
+        rawUser['Id'] ??
+        rawUser['user_id'] ??
+        rawUser['userId'] ??
+        rawUser['User Id'];
+
+      const userId =
+        userIdValue !== null && userIdValue !== undefined
+          ? String(userIdValue).trim()
           : null;
 
-        const email = user.email
-          ? user.email.trim().toLowerCase()
-          : null;
+      const username = String(
+        rawUser.username ?? rawUser['Username'] ?? ''
+      ).trim().toLowerCase();
 
-        return (
-          (!!currentAdmin.id &&
-            !!userId &&
-            currentAdmin.id === userId) ||
-          (!!currentAdmin.username &&
-            !!username &&
-            currentAdmin.username === username) ||
-          (!!currentAdmin.email &&
-            !!email &&
-            currentAdmin.email === email)
-        );
-      });
-
-      if (currentAdminUser) {
-        return [
-          currentAdminUser,
-          ...nonAdminUsers
-        ];
-      }
-    }
-
-    // Preserve the existing fallback administrator behaviour.
-    const fallbackAdmin = adminUsers.find(user => {
-      const username = String(user.username || '')
-        .trim()
-        .toLowerCase();
-
-      const email = String(user.email || '')
-        .trim()
-        .toLowerCase();
+      const email = String(
+        rawUser.email ?? rawUser['Email'] ?? ''
+      ).trim().toLowerCase();
 
       return (
-        username === 's' ||
-        email === 's@gmail.com'
+        (!!currentAdmin.id &&
+          !!userId &&
+          currentAdmin.id === userId) ||
+        (!!currentAdmin.username &&
+          currentAdmin.username === username) ||
+        (!!currentAdmin.email &&
+          currentAdmin.email === email)
       );
     });
 
-    return fallbackAdmin
-      ? [fallbackAdmin, ...nonAdminUsers]
+    // Never substitute a hardcoded administrator.
+    return matchingAdmin
+      ? [matchingAdmin, ...nonAdminUsers]
       : nonAdminUsers;
   }
 
@@ -469,7 +483,7 @@ export class UserManagement implements OnInit {
           ? response
           : [];
 
-        // Preserve existing frontend-only active-user filtering.
+        // Preserve the existing active-user filtering.
         const activeUsers = allUsers.filter(
           user => user.is_active === true
         );
@@ -478,7 +492,7 @@ export class UserManagement implements OnInit {
           activeUsers
         );
 
-        // Preserve existing AI-access behaviour.
+        // Preserve existing AI-access behavior.
         this.users.forEach(user => {
           this.normalizeAIAccess(user);
         });
@@ -891,8 +905,7 @@ export class UserManagement implements OnInit {
         }
 
         this.saving = false;
-        this.successMessage =
-          'User deleted successfully.';
+        this.successMessage = 'User deleted successfully.';
 
         this.cdr.detectChanges();
       },

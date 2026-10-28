@@ -1,4 +1,3 @@
-
 import {
   ChangeDetectorRef,
   Component,
@@ -7,14 +6,14 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Subject, interval } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 import { ApiErrorService } from '../../services/api-error.service';
+import { OrganizationContextService } from '../../services/organization-context.service';
 import { Ticket } from '../../models/tickets.model';
 import { environment } from '../../../environments/environment';
 
@@ -29,6 +28,15 @@ interface TicketActivity {
   description: string;
   result: string;
   created_at: string;
+}
+
+interface DashboardOverviewResponse {
+  tickets?: Ticket[] | { results?: Ticket[] };
+  teams?: any[] | { results?: any[] };
+  kb_articles?: any[] | { results?: any[] };
+  users?: any[] | { results?: any[] };
+  activities?: TicketActivity[] | { results?: TicketActivity[] };
+  api_monitoring?: any;
 }
 
 @Component({
@@ -62,42 +70,33 @@ export class Dashboard implements OnInit, OnDestroy {
   usersError = '';
   activitiesError = '';
 
+  // API monitoring properties are retained for template compatibility.
+  apiMonitoring: any = null;
+  apiMonitoringLoading = true;
+  apiMonitoringError = '';
+
   dashboardLastUpdated: Date | null = null;
 
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
+  private requestInProgress = false;
+
+  private readonly overviewUrl =
+    `${environment.apiUrl}/dashboard/overview/`;
 
   constructor(
-    private ticketService: TicketService,
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
-    private apiErrorService: ApiErrorService
+    private apiErrorService: ApiErrorService,
+    private organizationContextService: OrganizationContextService
   ) {}
 
   ngOnInit(): void {
     this.user = this.authService.getUser();
+
+    // The aggregated endpoint is called when the Dashboard component opens.
     this.loadDashboardData();
-
-    // Preserve the existing automatic user-count refresh.
-    interval(30000)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.loadUsers());
-
-    // Refresh dashboard data when returning to Dashboard.
-    this.router.events
-      .pipe(
-        filter(
-          (event): event is NavigationEnd =>
-            event instanceof NavigationEnd
-        ),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(event => {
-        if (event.urlAfterRedirects === '/dashboard') {
-          this.loadDashboardData();
-        }
-      });
   }
 
   ngOnDestroy(): void {
@@ -105,15 +104,149 @@ export class Dashboard implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /**
+   * Loads all Dashboard data through one HTTP request.
+   * No separate tickets, teams, users, KB, activity, or monitoring
+   * requests are made by this component.
+   */
   loadDashboardData(): void {
-    this.loadTickets();
-    this.loadTeams();
-    this.loadKbArticles();
-    this.loadUsers();
-    this.loadAuditActivities();
+    if (this.requestInProgress) {
+      return;
+    }
+
+    this.requestInProgress = true;
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.ticketsLoading = true;
+    this.teamsLoading = true;
+    this.kbArticlesLoading = true;
+    this.usersLoading = true;
+    this.activitiesLoading = true;
+    this.apiMonitoringLoading = true;
+
+    this.ticketsError = '';
+    this.teamsError = '';
+    this.kbArticlesError = '';
+    this.usersError = '';
+    this.activitiesError = '';
+    this.apiMonitoringError = '';
+
+    this.http
+      .get<DashboardOverviewResponse>(this.overviewUrl)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: DashboardOverviewResponse) => {
+          const tickets = this.toArray<Ticket>(response?.tickets);
+          const teams = this.toArray<any>(response?.teams);
+          const articles = this.toArray<any>(response?.kb_articles);
+          const users = this.toArray<any>(response?.users);
+          const activities = this.toArray<TicketActivity>(
+            response?.activities
+          );
+
+          this.tickets = tickets;
+          this.teams = teams;
+          this.kbArticles = articles;
+
+          this.totalUsers =
+            this.filterDashboardUsers(users).length;
+
+          this.auditActivities = this.getRecentActivities(activities);
+
+          this.apiMonitoring = response?.api_monitoring ?? null;
+
+          this.ticketsLoading = false;
+          this.teamsLoading = false;
+          this.kbArticlesLoading = false;
+          this.usersLoading = false;
+          this.activitiesLoading = false;
+          this.apiMonitoringLoading = false;
+
+          this.dashboardLastUpdated = new Date();
+          this.loading = false;
+          this.requestInProgress = false;
+
+          this.cdr.detectChanges();
+        },
+
+        error: (error: any) => {
+          const message = this.getSharedErrorMessage(
+            error,
+            'Unable to load dashboard data. Please try again.'
+          );
+
+          this.errorMessage = message;
+
+          this.ticketsError = message;
+          this.teamsError = message;
+          this.kbArticlesError = message;
+          this.usersError = message;
+          this.activitiesError = message;
+          this.apiMonitoringError = message;
+
+          this.ticketsLoading = false;
+          this.teamsLoading = false;
+          this.kbArticlesLoading = false;
+          this.usersLoading = false;
+          this.activitiesLoading = false;
+          this.apiMonitoringLoading = false;
+
+          this.loading = false;
+          this.requestInProgress = false;
+
+          // Keep previously displayed data if a refresh fails.
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  /**
+   * Handles both regular arrays and Django REST Framework paginated results.
+   */
+  private toArray<T>(
+    value: T[] | { results?: T[] } | null | undefined
+  ): T[] {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (value && Array.isArray(value.results)) {
+      return value.results;
+    }
+
+    return [];
   }
 
   refreshDashboard(): void {
+    this.loadDashboardData();
+  }
+
+  /**
+   * Existing retry methods are retained for HTML template compatibility.
+   * Each retry uses the same aggregated endpoint.
+   */
+  loadTickets(): void {
+    this.loadDashboardData();
+  }
+
+  loadTeams(): void {
+    this.loadDashboardData();
+  }
+
+  loadKbArticles(): void {
+    this.loadDashboardData();
+  }
+
+  loadUsers(): void {
+    this.loadDashboardData();
+  }
+
+  loadAuditActivities(): void {
+    this.loadDashboardData();
+  }
+
+  loadApiMonitoring(): void {
     this.loadDashboardData();
   }
 
@@ -147,14 +280,15 @@ export class Dashboard implements OnInit, OnDestroy {
 
   get resolvedTickets(): number {
     return this.tickets.filter(
-      ticket => this.normalizeStatus(ticket.status) === 'resolved'
+      ticket =>
+        this.normalizeStatus(ticket.status) === 'resolved'
     ).length;
   }
 
   get CriticalTickets(): number {
     return this.tickets.filter(
       ticket =>
-        String(ticket.priority || '').trim().toLowerCase() === 'critical'
+        String(ticket.priority ?? '').trim().toLowerCase() === 'critical'
     ).length;
   }
 
@@ -184,6 +318,7 @@ export class Dashboard implements OnInit, OnDestroy {
       }
 
       const timestamp = new Date(date).getTime();
+
       return Number.isFinite(timestamp) ? timestamp : 0;
     };
 
@@ -194,146 +329,65 @@ export class Dashboard implements OnInit, OnDestroy {
       .slice(0, 5);
   }
 
-  loadTickets(): void {
-    this.ticketsLoading = true;
-    this.loading = true;
-    this.ticketsError = '';
-    this.errorMessage = '';
+  private getRecentActivities(
+    activities: TicketActivity[]
+  ): TicketActivity[] {
+    return [...activities]
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at || '').getTime();
+        const dateB = new Date(b.created_at || '').getTime();
 
-    this.ticketService.getTickets()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: Ticket[]) => {
-          this.tickets = Array.isArray(response)
-            ? response
-            : [];
-
-          this.ticketsLoading = false;
-          this.loading = false;
-          this.dashboardLastUpdated = new Date();
-          this.cdr.detectChanges();
-        },
-        error: (error: any) => {
-          this.ticketsLoading = false;
-          this.loading = false;
-          this.tickets = [];
-
-          if (error?.status === 401) {
-            this.ticketsError =
-              'Your session has expired. Please log in again.';
-          } else if (error?.status === 403) {
-            this.ticketsError =
-              'You do not have permission to view tickets.';
-          } else if (error?.status === 0) {
-            this.ticketsError =
-              'Unable to connect to the server. Check your connection.';
-          } else {
-            this.ticketsError = this.getSharedErrorMessage(
-              error,
-              'Unable to load tickets. Please try again.'
-            );
-          }
-
-          this.errorMessage = this.ticketsError;
-          this.cdr.detectChanges();
-        }
-      });
+        return (
+          (Number.isFinite(dateB) ? dateB : 0) -
+          (Number.isFinite(dateA) ? dateA : 0)
+        );
+      })
+      .slice(0, 5);
   }
 
-  loadTeams(): void {
-    this.teamsLoading = true;
-    this.teamsError = '';
-
-    this.ticketService.getTeams()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: any[]) => {
-          this.teams = Array.isArray(response)
-            ? response
-            : [];
-
-          this.teamsLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: (error: any) => {
-          this.teamsLoading = false;
-          this.teamsError = error?.status === 403
-            ? 'You do not have permission to view teams.'
-            : this.getSharedErrorMessage(
-                error,
-                'Unable to load teams. Please try again.'
-              );
-
-          this.teams = [];
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  loadKbArticles(): void {
-    this.kbArticlesLoading = true;
-    this.kbArticlesError = '';
-
-    this.http
-      .get<any>(`${environment.apiUrl}/kb/articles/`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: any) => {
-          if (Array.isArray(response)) {
-            this.kbArticles = response;
-          } else if (
-            response &&
-            Array.isArray(response.results)
-          ) {
-            this.kbArticles = response.results;
-          } else {
-            this.kbArticles = [];
-          }
-
-          this.kbArticlesLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: (error: any) => {
-          this.kbArticlesLoading = false;
-          this.kbArticlesError = error?.status === 403
-            ? 'You do not have permission to view Knowledge Base articles.'
-            : this.getSharedErrorMessage(
-                error,
-                'Unable to load Knowledge Base articles. Please try again.'
-              );
-
-          this.kbArticles = [];
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  // Preserve the existing dashboard user-visibility rules.
+  /**
+   * Applies organization filtering before counting users.
+   * Displays active non-admin users and the currently logged-in admin,
+   * if that admin is included in the response.
+   */
   private filterDashboardUsers(users: any[]): any[] {
-    const activeUsers = users.filter(
-      user => user.is_active === true
+    const organizationFilteredUsers =
+      this.organizationContextService.filterRecords(users);
+
+    const activeUsers = organizationFilteredUsers.filter(
+      item =>
+        item?.is_active === true ||
+        item?.Is_Active === true
     );
 
     const nonAdminUsers = activeUsers.filter(
-      user =>
-        String(user.role || '').trim().toLowerCase() !== 'admin'
+      item =>
+        String(item?.role ?? item?.Role ?? '')
+          .trim()
+          .toLowerCase() !== 'admin'
     );
 
     const adminUsers = activeUsers.filter(
-      user =>
-        String(user.role || '').trim().toLowerCase() === 'admin'
+      item =>
+        String(item?.role ?? item?.Role ?? '')
+          .trim()
+          .toLowerCase() === 'admin'
     );
 
     const currentUser = this.authService.getUser() || this.user;
 
     const currentId =
       currentUser?.id ??
+      currentUser?.ID ??
+      currentUser?.Id ??
       currentUser?.user_id ??
       currentUser?.userId ??
+      currentUser?.['User Id'] ??
       null;
 
     const currentUsername = String(
       currentUser?.username ??
+      currentUser?.Username ??
       currentUser?.user_name ??
       currentUser?.userName ??
       ''
@@ -341,144 +395,65 @@ export class Dashboard implements OnInit, OnDestroy {
 
     const currentEmail = String(
       currentUser?.email ??
+      currentUser?.Email ??
       currentUser?.email_address ??
       ''
     ).trim().toLowerCase();
 
     const matchingAdmin = adminUsers.find(admin => {
+      const adminId =
+        admin?.id ??
+        admin?.ID ??
+        admin?.Id ??
+        admin?.user_id ??
+        admin?.userId ??
+        admin?.['User Id'] ??
+        null;
+
+      const adminUsername = String(
+        admin?.username ?? admin?.Username ?? ''
+      ).trim().toLowerCase();
+
+      const adminEmail = String(
+        admin?.email ?? admin?.Email ?? ''
+      ).trim().toLowerCase();
+
       const idMatches =
         currentId !== null &&
-        admin.id !== null &&
-        admin.id !== undefined &&
-        String(currentId) === String(admin.id);
+        currentId !== undefined &&
+        adminId !== null &&
+        adminId !== undefined &&
+        String(currentId) === String(adminId);
 
-      const usernameMatches =
-        !!currentUsername &&
-        String(admin.username || '').trim().toLowerCase() ===
-          currentUsername;
-
-      const emailMatches =
-        !!currentEmail &&
-        String(admin.email || '').trim().toLowerCase() ===
-          currentEmail;
-
-      return idMatches || usernameMatches || emailMatches;
+      return (
+        idMatches ||
+        (!!currentUsername && adminUsername === currentUsername) ||
+        (!!currentEmail && adminEmail === currentEmail)
+      );
     });
 
-    // Preserved from your existing implementation.
-    const fallbackAdmin = adminUsers.find(admin => {
-      const username = String(admin.username || '')
-        .trim()
-        .toLowerCase();
-
-      const email = String(admin.email || '')
-        .trim()
-        .toLowerCase();
-
-      return username === 's' || email === 's@gmail.com';
-    });
-
-    const visibleAdmin = matchingAdmin || fallbackAdmin;
-
-    return visibleAdmin
-      ? [visibleAdmin, ...nonAdminUsers]
+    return matchingAdmin
+      ? [matchingAdmin, ...nonAdminUsers]
       : nonAdminUsers;
   }
-
-  loadUsers(): void {
-    this.usersLoading = true;
-    this.usersError = '';
-
-    this.http
-      .get<any>(`${environment.apiUrl}/auth/users/`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: any) => {
-          let users: any[] = [];
-
-          if (Array.isArray(response)) {
-            users = response;
-          } else if (
-            response &&
-            Array.isArray(response.results)
-          ) {
-            users = response.results;
-          }
-
-          const visibleUsers =
-            this.filterDashboardUsers(users);
-
-          this.totalUsers = visibleUsers.length;
-          this.usersLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: (error: any) => {
-          this.usersLoading = false;
-          this.usersError = error?.status === 403
-            ? 'You do not have permission to view users.'
-            : this.getSharedErrorMessage(
-                error,
-                'Unable to load users. Please try again.'
-              );
-
-          // Retain the last successful count on refresh failure.
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  loadAuditActivities(): void {
-    this.activitiesLoading = true;
-    this.activitiesError = '';
-
-    this.ticketService.getAuditActivities()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: any[]) => {
-          if (Array.isArray(response)) {
-            this.auditActivities = [...response]
-              .sort((a, b) => {
-                const dateA =
-                  new Date(a.created_at || '').getTime();
-                const dateB =
-                  new Date(b.created_at || '').getTime();
-
-                return (
-                  (Number.isFinite(dateB) ? dateB : 0) -
-                  (Number.isFinite(dateA) ? dateA : 0)
-                );
-              })
-              .slice(0, 5);
-          } else {
-            this.auditActivities = [];
-          }
-
-          this.activitiesLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: (error: any) => {
-          this.activitiesLoading = false;
-          this.activitiesError = this.getSharedErrorMessage(
-            error,
-            'Unable to load recent activity. Please try again.'
-          );
-
-          this.auditActivities = [];
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  // ============================================
-  // SHARED API ERROR HANDLING
-  // ============================================
 
   private getSharedErrorMessage(
     error: any,
     fallback: string
   ): string {
-    const message =
-      this.apiErrorService.getErrorMessage(error);
+    if (error?.status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+
+    if (error?.status === 403) {
+      return 'You do not have permission to view this dashboard data.';
+    }
+
+    if (error?.status === 0) {
+      return 'Unable to connect to the server. Check your connection.';
+    }
+
+    const message = this.apiErrorService.getErrorMessage(error);
 
     return message &&
       message !== 'An unexpected error occurred. Please try again.'

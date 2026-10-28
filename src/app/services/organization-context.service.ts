@@ -1,189 +1,187 @@
-
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 
-// ============================================================
-// ORGANIZATION RECORD TYPE
-// ============================================================
-
 type OrganizationRecord = {
-  organization_id?: number | string | null;
-  organizationId?: number | string | null;
+  id?: unknown;
+  ID?: unknown;
+  Id?: unknown;
+  pk?: unknown;
 
-  organization?:
-    | number
-    | string
-    | {
-        id?: number | string;
-        ID?: number | string;
-        pk?: number | string;
-      }
-    | null;
+  organization_id?: unknown;
+  organizationId?: unknown;
+  'Organization Id'?: unknown;
+  'Organization ID'?: unknown;
+  Organization_Id?: unknown;
+  OrganizationId?: unknown;
+  organization?: unknown;
+  Organization?: unknown;
 
-  tenant_id?: number | string | null;
-  tenantId?: number | string | null;
+  tenant_id?: unknown;
+  tenantId?: unknown;
+  tenant?: unknown;
+  Tenant?: unknown;
+
+  slug?: unknown;
+  name?: unknown;
 
   [key: string]: unknown;
 };
-
-// ============================================================
-// ORGANIZATION CONTEXT SERVICE
-// ============================================================
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrganizationContextService {
-
   constructor(
     private readonly authService: AuthService
   ) {}
 
-  // ==========================================================
-  // NORMALIZE ORGANIZATION ID
-  // ==========================================================
-
-  private normalizeId(
-    value: unknown
-  ): string | null {
-
-    if (
-      value === null ||
-      value === undefined ||
-      value === ''
-    ) {
+  private normalizeId(value: unknown): string | null {
+    if (value === null || value === undefined || value === '') {
       return null;
     }
 
     if (typeof value === 'object') {
-
-      const obj = value as {
-        id?: unknown;
-        ID?: unknown;
-        pk?: unknown;
-      };
+      const organization = value as OrganizationRecord;
 
       return this.normalizeId(
-        obj.id ?? obj.ID ?? obj.pk
+        organization.id ??
+        organization.ID ??
+        organization.Id ??
+        organization.pk ??
+        organization.organization_id ??
+        organization.organizationId ??
+        organization['Organization Id'] ??
+        organization['Organization ID'] ??
+        organization.Organization_Id ??
+        organization.OrganizationId ??
+        organization.slug
       );
     }
 
     const normalized = String(value).trim();
-
-    return normalized || null;
+    return normalized ? normalized.toLowerCase() : null;
   }
 
-  // ==========================================================
-  // READ ORGANIZATION ID
-  // ==========================================================
-
-  private readOrganizationId(
-    user: OrganizationRecord | null | undefined
+  private readExplicitOrganizationId(
+    record: OrganizationRecord | null | undefined
   ): string | null {
-
-    if (!user) {
+    if (!record) {
       return null;
     }
 
     return this.normalizeId(
-      user.organization_id ??
-      user.organizationId ??
-      user.organization ??
-      user.tenant_id ??
-      user.tenantId
+      record.organization_id ??
+      record.organizationId ??
+      record['Organization Id'] ??
+      record['Organization ID'] ??
+      record.Organization_Id ??
+      record.OrganizationId ??
+      record.tenant_id ??
+      record.tenantId
     );
   }
 
-  // ==========================================================
-  // GET CURRENT ORGANIZATION ID
-  // ==========================================================
+  private readOrganizationId(
+    record: OrganizationRecord | null | undefined
+  ): string | null {
+    if (!record) {
+      return null;
+    }
+
+    const explicitId = this.readExplicitOrganizationId(record);
+
+    if (explicitId !== null) {
+      return explicitId;
+    }
+
+    return this.normalizeId(
+      record.organization ??
+      record.Organization ??
+      record.tenant ??
+      record.Tenant
+    );
+  }
 
   getCurrentOrganizationId(): string | null {
+    const user = this.authService.getUser() as
+      | OrganizationRecord
+      | null;
 
-    const user = (
-      this.authService.getUser()
-    ) as OrganizationRecord | null;
+    const userOrganizationId =
+      this.readExplicitOrganizationId(user);
 
-    const organizationId =
-      this.readOrganizationId(user);
-
-    if (organizationId !== null) {
-      return organizationId;
+    if (userOrganizationId !== null) {
+      return userOrganizationId;
     }
 
-    // Fallback: inspect organization claims in the JWT.
-    // Decoding a JWT does not verify its signature.
+    const token = this.authService.getAccessToken();
 
-    const token =
-      this.authService.getAccessToken();
+    if (token) {
+      try {
+        const parts = token.split('.');
 
-    if (!token) {
-      return null;
-    }
+        if (parts.length === 3) {
+          let payload = parts[1]
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
 
-    try {
+          while (payload.length % 4 !== 0) {
+            payload += '=';
+          }
 
-      const parts = token.split('.');
+          const claims = JSON.parse(
+            atob(payload)
+          ) as OrganizationRecord;
 
-      if (parts.length !== 3) {
-        return null;
+          const tokenOrganizationId =
+            this.readExplicitOrganizationId(claims);
+
+          if (tokenOrganizationId !== null) {
+            return tokenOrganizationId;
+          }
+
+          const tokenOrganization = this.readOrganizationId(claims);
+
+          if (tokenOrganization !== null) {
+            return tokenOrganization;
+          }
+        }
+      } catch {
+        // Continue to the user object when the token cannot be decoded.
       }
-
-      let payload = parts[1]
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
-
-      while (payload.length % 4 !== 0) {
-        payload += '=';
-      }
-
-      const decodedPayload = atob(payload);
-
-      const claims = JSON.parse(
-        decodedPayload
-      ) as OrganizationRecord;
-
-      return this.readOrganizationId(claims);
-
-    } catch {
-      return null;
     }
+
+    return this.readOrganizationId(user);
   }
 
-  // ==========================================================
-  // FILTER RECORDS BY ORGANIZATION
-  // ==========================================================
-
-  filterRecords<T extends OrganizationRecord>(
-    records: T[]
-  ): T[] {
-
-    const currentOrganizationId =
-      this.getCurrentOrganizationId();
-
-    if (
-      currentOrganizationId === null ||
-      !records.length
-    ) {
-      return records;
+  filterRecords<T extends OrganizationRecord>(records: T[]): T[] {
+    if (!Array.isArray(records) || records.length === 0) {
+      return [];
     }
 
-    // Check whether records contain organization metadata.
-    const hasOrganizationMetadata = records.some(
-      record =>
-        this.readOrganizationId(record) !== null
+    const currentOrganizationId = this.getCurrentOrganizationId();
+
+    const recordsHaveOrganizationMetadata = records.some(
+      record => this.readOrganizationId(record) !== null
     );
 
-    // Do not guess the organization when metadata is absent.
-    // The backend must already scope these records correctly.
-    if (!hasOrganizationMetadata) {
+    // Fail closed if records expose organization metadata but the current
+    // user's organization cannot be determined.
+    if (
+      recordsHaveOrganizationMetadata &&
+      currentOrganizationId === null
+    ) {
+      return [];
+    }
+
+    // Some endpoints may already be scoped by the backend and omit metadata.
+    // This preserves existing behavior but does not replace API authorization.
+    if (!recordsHaveOrganizationMetadata) {
       return records;
     }
 
     return records.filter(
-      record =>
-        this.readOrganizationId(record) ===
-        currentOrganizationId
+      record => this.readOrganizationId(record) === currentOrganizationId
     );
   }
 }

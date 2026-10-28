@@ -15,20 +15,19 @@
       type="button"
       class="dashboard-refresh"
       (click)="refreshDashboard()"
-      [disabled]="ticketsLoading || teamsLoading || kbArticlesLoading || usersLoading || activitiesLoading"
+      [disabled]="ticketsLoading || teamsLoading || kbArticlesLoading || usersLoading || activitiesLoading || apiMonitoringLoading"
       aria-label="Refresh dashboard data"
     >
-      {{ ticketsLoading || teamsLoading || kbArticlesLoading || usersLoading || activitiesLoading
+      {{
+        ticketsLoading || teamsLoading || kbArticlesLoading ||
+        usersLoading || activitiesLoading || apiMonitoringLoading
           ? 'Refreshing...'
-          : 'Refresh Dashboard' }}
+          : 'Refresh Dashboard'
+      }}
     </button>
   </div>
 
-  <div
-    *ngIf="errorMessage"
-    class="error-message"
-    role="alert"
-  >
+  <div *ngIf="errorMessage" class="error-message" role="alert">
     {{ errorMessage }}
   </div>
 
@@ -178,8 +177,199 @@
       </div>
     </div>
 
+    <!-- API Monitoring -->
+    <section class="api-monitoring" aria-labelledby="api-monitoring-title">
+      <div class="monitoring-header">
+        <div>
+          <h2 id="api-monitoring-title">API Monitoring</h2>
+          <p>Backend API performance and HTTP response health</p>
+        </div>
+
+        <button
+          type="button"
+          class="monitoring-refresh"
+          (click)="loadApiMonitoring()"
+          [disabled]="apiMonitoringLoading"
+        >
+          {{ apiMonitoringLoading ? 'Updating...' : 'Refresh Metrics' }}
+        </button>
+      </div>
+
+      <div
+        *ngIf="apiMonitoringError"
+        class="error-message monitoring-error"
+        role="alert"
+      >
+        <p>{{ apiMonitoringError }}</p>
+        <button
+          type="button"
+          class="monitoring-retry"
+          (click)="loadApiMonitoring()"
+        >
+          Retry
+        </button>
+      </div>
+
+      <div
+        *ngIf="apiMonitoringLoading && !apiMonitoring"
+        class="monitoring-empty"
+        role="status"
+      >
+        Loading API monitoring metrics...
+      </div>
+
+      <ng-container *ngIf="apiMonitoring as metrics">
+        <div class="monitoring-scope">
+          <span class="scope-dot"></span>
+          <span>
+            {{
+              metrics.scope === 'current_server_process'
+                ? 'Current Django server process'
+                : metrics.scope
+            }}
+          </span>
+          <span class="monitoring-updated">
+            Updated {{ metrics.generated_at | date:'hh:mm:ss a' }}
+          </span>
+        </div>
+
+        <div class="monitoring-stats">
+          <article class="monitoring-card">
+            <span>Total Requests</span>
+            <strong>{{ metrics.total_requests | number }}</strong>
+            <small>Recorded by Django</small>
+          </article>
+
+          <article class="monitoring-card">
+            <span>Average Latency</span>
+            <strong>
+              {{ metrics.average_duration_ms | number:'1.1-2' }} ms
+            </strong>
+            <small>Average request duration</small>
+          </article>
+
+          <article class="monitoring-card">
+            <span>p95 Latency</span>
+            <strong>
+              {{ metrics.p95_duration_ms | number:'1.1-2' }} ms
+            </strong>
+            <small>
+              Based on {{ metrics.latency_sample_size }} recent latency samples
+            </small>
+          </article>
+
+          <article class="monitoring-card">
+            <span>Slow Requests</span>
+            <strong>{{ metrics.slow_requests | number }}</strong>
+            <small>Requests taking at least 1 second</small>
+          </article>
+
+          <article class="monitoring-card">
+            <span>4xx Client Errors</span>
+            <strong>{{ metrics.client_errors | number }}</strong>
+            <small>Client or permission errors</small>
+          </article>
+
+          <article class="monitoring-card">
+            <span>5xx Server Errors</span>
+            <strong>{{ metrics.server_errors | number }}</strong>
+            <small>Server-side errors recorded</small>
+          </article>
+        </div>
+
+        <div class="monitoring-subsection">
+          <h3>Endpoint Performance</h3>
+
+          <div
+            *ngIf="metrics.endpoints.length === 0"
+            class="monitoring-empty"
+          >
+            No API requests have been recorded yet.
+          </div>
+
+          <div
+            *ngIf="metrics.endpoints.length > 0"
+            class="monitoring-table-wrap"
+          >
+            <table class="monitoring-table">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Requests</th>
+                  <th>4xx Errors</th>
+                  <th>5xx Errors</th>
+                  <th>Slow</th>
+                  <th>Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let endpoint of metrics.endpoints">
+                  <td class="endpoint-name">
+                    {{ endpoint.endpoint }}
+                  </td>
+                  <td>{{ endpoint.requests | number }}</td>
+                  <td>{{ endpoint.errors_4xx | number }}</td>
+                  <td>{{ endpoint.errors_5xx | number }}</td>
+                  <td>{{ endpoint.slow_requests | number }}</td>
+                  <td>
+                    {{ endpoint.average_duration_ms | number:'1.1-2' }} ms
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="monitoring-subsection">
+          <h3>Recent Slow Requests</h3>
+
+          <div
+            *ngIf="metrics.recent_slow_requests.length === 0"
+            class="monitoring-empty"
+          >
+            No slow requests recorded. The threshold is 1,000 ms.
+          </div>
+
+          <div
+            *ngIf="metrics.recent_slow_requests.length > 0"
+            class="slow-request-list"
+          >
+            <div
+              class="slow-request-row"
+              *ngFor="let request of metrics.recent_slow_requests"
+            >
+              <div class="slow-request-main">
+                <span class="request-method">{{ request.method }}</span>
+                <span class="endpoint-name">{{ request.endpoint }}</span>
+              </div>
+
+              <span
+                class="request-status"
+                [class.request-status-error]="request.status >= 400"
+              >
+                HTTP {{ request.status }}
+              </span>
+
+              <strong class="request-duration">
+                {{ request.duration_ms | number:'1.1-2' }} ms
+              </strong>
+
+              <span class="request-time">
+                {{ request.recorded_at | date:'dd MMM, hh:mm:ss a' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="monitoring-footnote">
+          Metrics are process-local and reset when Django restarts.
+          The monitoring endpoint is excluded from its own request counters.
+        </p>
+      </ng-container>
+    </section>
+
+    <!-- Existing bottom sections -->
     <div class="dashboard-bottom">
-      <!-- Recent tickets -->
       <section class="recent-tickets">
         <div class="section-header">
           <h2>Recent Tickets</h2>
@@ -249,16 +439,12 @@
               </span>
             </div>
 
-            <h3>
-              {{ ticket.ticket_name || 'Untitled ticket' }}
-            </h3>
-
+            <h3>{{ ticket.ticket_name || 'Untitled ticket' }}</h3>
             <p>{{ ticket.category || 'No category' }}</p>
           </div>
         </ng-container>
       </section>
 
-      <!-- Recent activity -->
       <section class="recent-activity">
         <div class="activity-title">
           <svg viewBox="0 0 24 24">
@@ -307,7 +493,6 @@
                 <span>
                   By {{ activity.performed_by || 'System' }}
                 </span>
-
                 <span *ngIf="activity.ticket">
                   • {{ activity.ticket }}
                 </span>
