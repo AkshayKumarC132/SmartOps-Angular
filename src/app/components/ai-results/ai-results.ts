@@ -1,7 +1,11 @@
 
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize, take } from 'rxjs';
 
@@ -33,7 +37,8 @@ export class AiResults implements OnInit {
   successMessage = '';
 
   constructor(
-    private readonly aiResultService: AIResultService
+    private readonly aiResultService: AIResultService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -52,29 +57,43 @@ export class AiResults implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
+    this.cdr.markForCheck();
+
     this.aiResultService.getResults()
       .pipe(
         take(1),
         finalize(() => {
           this.loading = false;
+
+          console.log('[AI Results] Loading finished:', {
+            loading: this.loading,
+            totalResults: this.results.length,
+            completedResults: this.completedResults
+          });
+
+          this.cdr.markForCheck();
         })
       )
       .subscribe({
         next: (response: AIResult[]) => {
-          console.log('AI Results API response:', response);
-
           this.results = Array.isArray(response)
-            ? response
+            ? [...response]
             : [];
 
-          console.log(
-            'AI results displayed:',
-            this.results.length
-          );
+          console.log('[AI Results] Component state updated:', {
+            totalResults: this.results.length,
+            results: this.results,
+            completedResults: this.completedResults
+          });
+
+          this.cdr.markForCheck();
         },
 
         error: (error: HttpErrorResponse | Error) => {
-          console.error('Failed to load AI results:', error);
+          console.error(
+            '[AI Results] Failed to load results:',
+            error
+          );
 
           this.results = [];
 
@@ -99,6 +118,8 @@ export class AiResults implements OnInit {
               error.message ||
               'Unable to load AI results. Please try again.';
           }
+
+          this.cdr.markForCheck();
         }
       });
   }
@@ -133,7 +154,7 @@ export class AiResults implements OnInit {
   }
 
   /**
-   * Only calculates confidence if the API actually supplies it.
+   * Only calculates confidence when the API supplies it.
    * Does not manufacture a confidence score.
    */
   get averageConfidence(): number | null {
@@ -152,7 +173,7 @@ export class AiResults implements OnInit {
   }
 
   /**
-   * Derive result type from actual metadata or result content.
+   * Derive result types from actual metadata or result content.
    */
   get resultTypes(): string[] {
     return Array.from(
@@ -293,7 +314,7 @@ export class AiResults implements OnInit {
   }
 
   /**
-   * Returns a readable summary without rendering JSON as the
+   * Return a readable summary without rendering JSON as the
    * primary content when a structured summary is available.
    */
   getResultSummary(item: AIResult): string {
@@ -499,17 +520,20 @@ export class AiResults implements OnInit {
           this.successMessage =
             `Retest request submitted for ${this.getTicketLabel(item)}.`;
 
+          this.cdr.markForCheck();
           this.loadResults();
         },
 
         error: (error: HttpErrorResponse) => {
-          console.error('AI retest error:', error);
+          console.error('[AI Results] Retest error:', error);
 
           this.errorMessage =
             error.error?.detail ||
             error.error?.message ||
             error.message ||
             'Unable to submit the retest request.';
+
+          this.cdr.markForCheck();
         }
       });
   }
