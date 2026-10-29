@@ -1,30 +1,20 @@
+
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 
+/**
+ * Supported organization metadata in API responses and JWT claims.
+ * Records do not need an index signature to be filtered.
+ */
 type OrganizationRecord = {
-  id?: unknown;
-  ID?: unknown;
-  Id?: unknown;
-  pk?: unknown;
-
-  organization_id?: unknown;
-  organizationId?: unknown;
+  organization_id?: number | string | null;
+  organizationId?: number | string | null;
+  organization?: number | string | Record<string, unknown> | null;
+  tenant_id?: number | string | null;
+  tenantId?: number | string | null;
+  Organization?: unknown;
   'Organization Id'?: unknown;
   'Organization ID'?: unknown;
-  Organization_Id?: unknown;
-  OrganizationId?: unknown;
-  organization?: unknown;
-  Organization?: unknown;
-
-  tenant_id?: unknown;
-  tenantId?: unknown;
-  tenant?: unknown;
-  Tenant?: unknown;
-
-  slug?: unknown;
-  name?: unknown;
-
-  [key: string]: unknown;
 };
 
 @Injectable({
@@ -36,49 +26,29 @@ export class OrganizationContextService {
   ) {}
 
   private normalizeId(value: unknown): string | null {
-    if (value === null || value === undefined || value === '') {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
       return null;
     }
 
     if (typeof value === 'object') {
-      const organization = value as OrganizationRecord;
+      const obj = value as Record<string, unknown>;
 
       return this.normalizeId(
-        organization.id ??
-        organization.ID ??
-        organization.Id ??
-        organization.pk ??
-        organization.organization_id ??
-        organization.organizationId ??
-        organization['Organization Id'] ??
-        organization['Organization ID'] ??
-        organization.Organization_Id ??
-        organization.OrganizationId ??
-        organization.slug
+        obj['id'] ??
+        obj['ID'] ??
+        obj['pk'] ??
+        obj['organization_id'] ??
+        obj['organizationId'] ??
+        obj['Organization Id'] ??
+        obj['Organization ID']
       );
     }
 
-    const normalized = String(value).trim();
-    return normalized ? normalized.toLowerCase() : null;
-  }
-
-  private readExplicitOrganizationId(
-    record: OrganizationRecord | null | undefined
-  ): string | null {
-    if (!record) {
-      return null;
-    }
-
-    return this.normalizeId(
-      record.organization_id ??
-      record.organizationId ??
-      record['Organization Id'] ??
-      record['Organization ID'] ??
-      record.Organization_Id ??
-      record.OrganizationId ??
-      record.tenant_id ??
-      record.tenantId
-    );
+    return String(value).trim() || null;
   }
 
   private readOrganizationId(
@@ -88,100 +58,98 @@ export class OrganizationContextService {
       return null;
     }
 
-    const explicitId = this.readExplicitOrganizationId(record);
-
-    if (explicitId !== null) {
-      return explicitId;
-    }
-
     return this.normalizeId(
+      record.organization_id ??
+      record.organizationId ??
       record.organization ??
-      record.Organization ??
-      record.tenant ??
-      record.Tenant
+      record['Organization'] ??
+      record['Organization Id'] ??
+      record['Organization ID'] ??
+      record.tenant_id ??
+      record.tenantId
     );
   }
 
   getCurrentOrganizationId(): string | null {
-    const user = this.authService.getUser() as
-      | OrganizationRecord
-      | null;
+    const currentUser = this.authService.getUser();
 
-    const userOrganizationId =
-      this.readExplicitOrganizationId(user);
+    const userOrganizationId = this.readOrganizationId(
+      currentUser as OrganizationRecord | null
+    );
 
     if (userOrganizationId !== null) {
       return userOrganizationId;
     }
 
+    // Fall back to organization claims in the access token.
     const token = this.authService.getAccessToken();
 
-    if (token) {
-      try {
-        const parts = token.split('.');
-
-        if (parts.length === 3) {
-          let payload = parts[1]
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-
-          while (payload.length % 4 !== 0) {
-            payload += '=';
-          }
-
-          const claims = JSON.parse(
-            atob(payload)
-          ) as OrganizationRecord;
-
-          const tokenOrganizationId =
-            this.readExplicitOrganizationId(claims);
-
-          if (tokenOrganizationId !== null) {
-            return tokenOrganizationId;
-          }
-
-          const tokenOrganization = this.readOrganizationId(claims);
-
-          if (tokenOrganization !== null) {
-            return tokenOrganization;
-          }
-        }
-      } catch {
-        // Continue to the user object when the token cannot be decoded.
-      }
+    if (!token) {
+      return null;
     }
 
-    return this.readOrganizationId(user);
+    try {
+      const parts = token.split('.');
+
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      let payload = parts[1]
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+      while (payload.length % 4 !== 0) {
+        payload += '=';
+      }
+
+      const claims = JSON.parse(
+        atob(payload)
+      ) as OrganizationRecord;
+
+      return this.readOrganizationId(claims);
+    } catch {
+      return null;
+    }
   }
 
-  filterRecords<T extends OrganizationRecord>(records: T[]): T[] {
-    if (!Array.isArray(records) || records.length === 0) {
-      return [];
-    }
+  /**
+   * Filters records by organization when organization metadata
+   * is available in the response.
+   *
+   * Generic T intentionally has no OrganizationRecord constraint.
+   * This allows interfaces such as User to be passed directly.
+   *
+   * If API records omit organization metadata, this method preserves
+   * the response. The backend must enforce tenant authorization.
+   */
+  filterRecords<T>(records: T[]): T[] {
+    const currentOrganizationId =
+      this.getCurrentOrganizationId();
 
-    const currentOrganizationId = this.getCurrentOrganizationId();
-
-    const recordsHaveOrganizationMetadata = records.some(
-      record => this.readOrganizationId(record) !== null
-    );
-
-    // Fail closed if records expose organization metadata but the current
-    // user's organization cannot be determined.
     if (
-      recordsHaveOrganizationMetadata &&
-      currentOrganizationId === null
+      currentOrganizationId === null ||
+      records.length === 0
     ) {
-      return [];
-    }
-
-    // Some endpoints may already be scoped by the backend and omit metadata.
-    // This preserves existing behavior but does not replace API authorization.
-    if (!recordsHaveOrganizationMetadata) {
       return records;
     }
 
-    return records.filter(
-      record => this.readOrganizationId(record) === currentOrganizationId
+    const organizationRecords = records as (
+      T & OrganizationRecord
+    )[];
+
+    const containsOrganizationMetadata =
+      organizationRecords.some(
+        record => this.readOrganizationId(record) !== null
+      );
+
+    if (!containsOrganizationMetadata) {
+      return records;
+    }
+
+    return organizationRecords.filter(
+      record =>
+        this.readOrganizationId(record) === currentOrganizationId
     );
   }
 }

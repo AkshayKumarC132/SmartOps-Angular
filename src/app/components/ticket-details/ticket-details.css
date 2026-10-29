@@ -1,3 +1,4 @@
+
 /* =========================================================
    PAGE
    ========================================================= */
@@ -7,13 +8,9 @@
   padding: 22px 28px 40px;
   background: #f6f7f9;
   color: #101828;
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
 }
-
 
 /* =========================================================
    TOP BAR
@@ -21,12 +18,9 @@
 
 .ticket-topbar {
   min-height: 44px;
-
   display: flex;
   align-items: center;
-
   gap: 14px;
-
   margin-bottom: 18px;
 }
 
@@ -34,17 +28,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   border: none;
   background: transparent;
-
   padding: 6px 4px;
-
   color: #344054;
-
   font-size: 14px;
   font-weight: 500;
-
   cursor: pointer;
 }
 
@@ -67,16 +56,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-
   padding-left: 5px;
 }
 
 .top-status-dot {
   width: 8px;
   height: 8px;
-
   border-radius: 50%;
-
   background: #98a2b3;
 }
 
@@ -106,11 +92,9 @@
 
 .top-status-text {
   color: #667085;
-
   font-size: 13px;
   font-weight: 500;
 }
-
 
 /* =========================================================
    MAIN LAYOUT
@@ -118,36 +102,25 @@
 
 .ticket-layout {
   width: 100%;
-
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    330px;
-
+  grid-template-columns: minmax(0, 1fr) 330px;
   gap: 24px;
-
   align-items: start;
 }
 
 .ticket-main {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
-
   gap: 18px;
 }
 
 .ticket-sidebar {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
-
   gap: 18px;
 }
-
 
 /* =========================================================
    COMMON CARD
@@ -156,15 +129,10 @@
 .ticket-card,
 .sidebar-card {
   background: #ffffff;
-
   border: 1px solid #e4e7ec;
-
   border-radius: 8px;
-
-  box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
-
 
 /* =========================================================
    TICKET HEADER
@@ -176,10 +144,8 @@
 
 .ticket-heading {
   display: flex;
-
   justify-content: space-between;
   align-items: flex-start;
-
   gap: 25px;
 }
 
@@ -189,38 +155,27 @@
 
 .ticket-reference {
   margin-bottom: 7px;
-
   color: #667085;
-
   font-size: 13px;
   font-weight: 500;
 }
 
 .ticket-heading h1 {
   margin: 0;
-
   color: #101828;
-
   font-size: 25px;
   line-height: 1.3;
-
   font-weight: 650;
-
   word-break: break-word;
 }
 
 .ticket-badges {
   display: flex;
-
   flex-wrap: wrap;
-
   align-items: center;
-
   gap: 8px;
-
   margin-top: 15px;
 }
-
 
 /* =========================================================
    STATUS BADGE
@@ -228,21 +183,14 @@
 
 .status-badge {
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   min-height: 25px;
-
   padding: 4px 11px;
-
   border-radius: 14px;
-
   font-size: 11px;
   font-weight: 600;
-
   white-space: nowrap;
-
   background: #e8f3ff;
   border: 1px solid #b7d8ff;
   color: #0877e8;
@@ -284,30 +232,21 @@
   color: #d92d20;
 }
 
-
 /* =========================================================
    PRIORITY BADGE
    ========================================================= */
 
 .priority-badge {
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   min-height: 25px;
-
   padding: 4px 11px;
-
   border-radius: 14px;
-
   font-size: 11px;
   font-weight: 600;
-
   background: #f2f4f7;
-
   border: 1px solid #d0d5dd;
-
   color: #667085;
 }
 
@@ -335,42 +274,31 @@
   color: #d92d20;
 }
 
-
 /* =========================================================
    LOCK
    ========================================================= */
 
 .lock-badge {
   display: inline-flex;
-
   align-items: center;
-
   min-height: 25px;
-
   padding: 4px 10px;
-
   border-radius: 14px;
-
   font-size: 11px;
   font-weight: 600;
 }
 
 .lock-badge.locked {
   background: #ffe8e8;
-
   border: 1px solid #fdb6b6;
-
   color: #dc2626;
 }
 
 .lock-badge.unlocked {
   background: #e7f8ef;
-
   border: 1px solid #a7e1c3;
-
   color: #168b57;
 }
-
 
 /* =========================================================
    EDIT BUTTON
@@ -378,32 +306,19 @@
 
 .edit-button {
   min-height: 40px;
-
   padding: 0 16px;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   gap: 7px;
-
   border: none;
-
   border-radius: 6px;
-
   background: #20a99e;
-
   color: #ffffff;
-
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    transform 0.1s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .edit-button:hover {
@@ -413,7 +328,6 @@
 .edit-button:active {
   transform: translateY(1px);
 }
-
 
 /* =========================================================
    EDIT PANEL
@@ -429,105 +343,80 @@
 
 .section-title-row h2 {
   margin: 0;
-
   font-size: 17px;
   font-weight: 650;
-
   color: #101828;
 }
 
 .section-title-row p {
   margin: 5px 0 0;
-
   color: #667085;
-
   font-size: 13px;
 }
 
 .edit-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
 .edit-field {
   display: flex;
-
   flex-direction: column;
-
   gap: 7px;
 }
 
 .edit-field label {
   color: #344054;
-
   font-size: 12px;
   font-weight: 600;
 }
 
 .edit-select {
   width: 100%;
-
   height: 42px;
-
   padding: 0 12px;
-
   border: 1px solid #d0d5dd;
-
   border-radius: 6px;
-
   background: #ffffff;
-
   color: #101828;
-
   font-size: 13px;
-
   outline: none;
 }
 
 .edit-select:focus {
   border-color: #20a99e;
+  box-shadow: 0 0 0 3px rgba(32, 169, 158, 0.1);
+}
 
-  box-shadow:
-    0 0 0 3px rgba(32, 169, 158, 0.1);
+.edit-select:disabled {
+  background: #f9fafb;
+  color: #98a2b3;
+  cursor: not-allowed;
 }
 
 .edit-actions {
   display: flex;
-
   justify-content: flex-end;
-
   gap: 10px;
-
   margin-top: 22px;
-
   padding-top: 18px;
-
   border-top: 1px solid #eaecf0;
 }
 
 .cancel-button,
 .save-button {
   min-height: 38px;
-
   padding: 0 16px;
-
   border-radius: 6px;
-
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
 }
 
 .cancel-button {
   background: #ffffff;
-
   border: 1px solid #d0d5dd;
-
   color: #344054;
 }
 
@@ -537,9 +426,7 @@
 
 .save-button {
   background: #20a99e;
-
   border: 1px solid #20a99e;
-
   color: #ffffff;
 }
 
@@ -550,10 +437,8 @@
 .cancel-button:disabled,
 .save-button:disabled {
   opacity: 0.6;
-
   cursor: not-allowed;
 }
-
 
 /* =========================================================
    CONTENT CARDS
@@ -565,50 +450,36 @@
 
 .section-heading {
   display: flex;
-
   align-items: center;
-
   gap: 11px;
-
   margin-bottom: 17px;
 }
 
 .section-icon {
   width: 30px;
   height: 30px;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   border-radius: 6px;
-
   background: #eaf8f6;
-
   color: #159b8d;
-
   font-size: 14px;
   font-weight: 700;
 }
 
 .section-heading h2 {
   margin: 0;
-
   color: #101828;
-
   font-size: 15px;
   font-weight: 650;
 }
 
 .section-heading p {
   margin: 3px 0 0;
-
   color: #98a2b3;
-
   font-size: 11px;
 }
-
 
 /* =========================================================
    DESCRIPTION / SUMMARY
@@ -617,13 +488,9 @@
 .description-content,
 .summary-content {
   color: #344054;
-
   font-size: 14px;
-
   line-height: 1.7;
-
   white-space: pre-wrap;
-
   word-break: break-word;
 }
 
@@ -631,46 +498,33 @@
   color: #475467;
 }
 
-
 /* =========================================================
    TAGS
    ========================================================= */
 
 .tags-container {
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 7px;
 }
 
 .tag {
   display: inline-flex;
-
   align-items: center;
-
   min-height: 25px;
-
   padding: 3px 9px;
-
   background: #f2f4f7;
-
   border: 1px solid #e4e7ec;
-
   border-radius: 13px;
-
   color: #475467;
-
   font-size: 11px;
   font-weight: 500;
 }
 
 .empty-value {
   color: #98a2b3;
-
   font-size: 13px;
 }
-
 
 /* =========================================================
    ATTACHMENTS
@@ -678,58 +532,39 @@
 
 .attachments-container {
   display: flex;
-
   flex-direction: column;
-
   gap: 8px;
 }
 
 .attachment {
   min-height: 48px;
-
   display: flex;
-
   align-items: center;
-
   gap: 11px;
-
   padding: 8px 11px;
-
   background: #f9fafb;
-
   border: 1px solid #eaecf0;
-
   border-radius: 6px;
 }
 
 .attachment-icon {
   width: 32px;
   height: 32px;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   border-radius: 6px;
-
   background: #ffffff;
-
   border: 1px solid #e4e7ec;
-
   font-size: 14px;
 }
 
 .attachment-name {
   min-width: 0;
-
   color: #344054;
-
   font-size: 12px;
-
   word-break: break-word;
 }
-
 
 /* =========================================================
    SIDEBAR
@@ -741,31 +576,23 @@
 
 .sidebar-title {
   margin-bottom: 14px;
-
   color: #101828;
-
   font-size: 15px;
   font-weight: 650;
 }
 
 .sidebar-row {
   min-height: 48px;
-
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 15px;
-
   padding: 10px 0;
-
   border-bottom: 1px solid #eaecf0;
 }
 
 .sidebar-row:last-child {
   border-bottom: none;
-
   padding-bottom: 0;
 }
 
@@ -775,25 +602,18 @@
 
 .sidebar-label {
   flex: 0 0 auto;
-
   color: #667085;
-
   font-size: 12px;
 }
 
 .sidebar-value {
   max-width: 58%;
-
   color: #101828;
-
   font-size: 12px;
   font-weight: 600;
-
   text-align: right;
-
   word-break: break-word;
 }
-
 
 /* =========================================================
    SMALL PRIORITY
@@ -801,17 +621,11 @@
 
 .small-priority {
   display: inline-flex;
-
   align-items: center;
-
   padding: 3px 8px;
-
   border-radius: 10px;
-
   background: #f2f4f7;
-
   color: #667085;
-
   font-size: 10px;
   font-weight: 600;
 }
@@ -836,20 +650,15 @@
   color: #475467;
 }
 
-
 /* =========================================================
    SMALL LOCK
    ========================================================= */
 
 .small-lock {
   display: inline-flex;
-
   align-items: center;
-
   padding: 3px 8px;
-
   border-radius: 10px;
-
   font-size: 10px;
   font-weight: 600;
 }
@@ -864,84 +673,72 @@
   color: #168b57;
 }
 
-
 /* =========================================================
    ASSIGNMENT
    ========================================================= */
 
 .current-assignment {
   display: flex;
-
   align-items: center;
-
   gap: 11px;
-
   padding: 10px 0 15px;
 }
 
 .assignment-avatar {
   width: 38px;
   height: 38px;
-
   flex-shrink: 0;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
   background: #eaf8f6;
-
   color: #159b8d;
-
   font-size: 14px;
   font-weight: 700;
 }
 
 .assignment-name {
   color: #101828;
-
   font-size: 13px;
   font-weight: 600;
 }
 
 .assignment-team {
   margin-top: 3px;
-
   color: #98a2b3;
-
   font-size: 11px;
 }
 
 .assign-button {
   width: 100%;
-
-  height: 38px;
-
+  min-height: 38px;
+  padding: 0 12px;
   border: none;
-
   border-radius: 6px;
-
   background: #20a99e;
-
   color: #ffffff;
-
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.assign-button:hover:not(:disabled) {
+  background: #168f85;
+}
+
+.assign-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .unassigned-message {
   padding-top: 12px;
-
   border-top: 1px solid #eaecf0;
-
   color: #98a2b3;
-
   font-size: 12px;
 }
-
 
 /* =========================================================
    CURRENT STATUS
@@ -949,22 +746,16 @@
 
 .sidebar-status {
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
   padding-top: 4px;
 }
 
 .large-status-dot {
   width: 12px;
   height: 12px;
-
   flex-shrink: 0;
-
   border-radius: 50%;
-
   background: #98a2b3;
 }
 
@@ -994,24 +785,19 @@
 
 .sidebar-status div {
   display: flex;
-
   flex-direction: column;
-
   gap: 3px;
 }
 
 .sidebar-status strong {
   color: #101828;
-
   font-size: 13px;
 }
 
 .sidebar-status span {
   color: #98a2b3;
-
   font-size: 11px;
 }
-
 
 /* =========================================================
    INFORMATION
@@ -1019,39 +805,29 @@
 
 .info-item {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 12px;
-
   padding: 10px 0;
-
   border-bottom: 1px solid #eaecf0;
 }
 
 .info-item:last-child {
   border-bottom: none;
-
   padding-bottom: 0;
 }
 
 .info-item span {
   color: #667085;
-
   font-size: 12px;
 }
 
 .info-item strong {
   color: #101828;
-
   font-size: 12px;
-
   text-align: right;
-
   word-break: break-word;
 }
-
 
 /* =========================================================
    LOADING
@@ -1059,49 +835,34 @@
 
 .state-card {
   min-height: 130px;
-
   display: flex;
-
   align-items: center;
   justify-content: center;
-
   gap: 14px;
-
   background: #ffffff;
-
   border: 1px solid #e4e7ec;
-
   border-radius: 8px;
-
   color: #667085;
 }
 
 .state-card strong {
   display: block;
-
   color: #344054;
-
   font-size: 14px;
 }
 
 .state-card p {
   margin: 4px 0 0;
-
   color: #98a2b3;
-
   font-size: 12px;
 }
 
 .loading-spinner {
   width: 22px;
   height: 22px;
-
   border: 2px solid #d0d5dd;
-
   border-top-color: #20a99e;
-
   border-radius: 50%;
-
   animation: ticket-spin 0.8s linear infinite;
 }
 
@@ -1111,66 +872,46 @@
   }
 }
 
-
 /* =========================================================
    ERROR
    ========================================================= */
 
 .error-card {
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
   padding: 18px;
-
   margin-bottom: 18px;
-
   background: #fff6f5;
-
   border: 1px solid #fecdca;
-
   border-radius: 8px;
 }
 
 .error-icon {
   width: 28px;
   height: 28px;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   flex-shrink: 0;
-
   border-radius: 50%;
-
   background: #fee4e2;
-
   color: #d92d20;
-
   font-size: 14px;
   font-weight: 700;
 }
 
 .error-card strong {
   display: block;
-
   color: #b42318;
-
   font-size: 13px;
 }
 
 .error-card p {
   margin: 4px 0 0;
-
   color: #b42318;
-
   font-size: 12px;
 }
-
 
 /* =========================================================
    SUCCESS
@@ -1178,37 +919,25 @@
 
 .success-message {
   display: flex;
-
   align-items: center;
-
   gap: 8px;
-
   padding: 12px 15px;
-
   margin-bottom: 18px;
-
   background: #ecfdf3;
-
   border: 1px solid #abefc6;
-
   border-radius: 7px;
-
   color: #067647;
-
   font-size: 13px;
   font-weight: 500;
 }
-
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
 @media (max-width: 1050px) {
-
   .ticket-layout {
     grid-template-columns: minmax(0, 1fr) 290px;
-
     gap: 18px;
   }
 
@@ -1216,37 +945,27 @@
     padding-left: 20px;
     padding-right: 20px;
   }
-
 }
 
-
 @media (max-width: 850px) {
-
   .ticket-layout {
     grid-template-columns: 1fr;
   }
 
   .ticket-sidebar {
     display: grid;
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
-
 }
 
-
 @media (max-width: 650px) {
-
   .ticket-details-page {
     padding: 15px 12px 30px;
   }
 
   .ticket-topbar {
     gap: 8px;
-
     flex-wrap: wrap;
   }
 
@@ -1280,12 +999,9 @@
   .edit-panel {
     padding: 17px;
   }
-
 }
 
-
 @media (max-width: 430px) {
-
   .ticket-topbar {
     margin-bottom: 13px;
   }
@@ -1319,5 +1035,104 @@
   .save-button {
     width: 100%;
   }
+}
 
+/* =========================================================
+   CURRENT STATUS MANAGEMENT
+   ========================================================= */
+
+.status-management-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.status-update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #e8edf3;
+}
+
+.status-update-form label {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-update-form .edit-select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.status-save-button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 2px;
+}
+
+.status-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-feedback {
+  margin: 2px 0 0;
+  color: #14804a;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.status-feedback.status-error {
+  color: #c62828;
+}
+
+/* =========================================================
+   ADMIN PRIORITY UPDATE
+   ========================================================= */
+
+.priority-update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0 16px;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.priority-update-form label {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priority-update-form .edit-select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.priority-save-button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 2px;
+}
+
+.priority-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.priority-feedback {
+  margin: 2px 0 0;
+  color: #067647;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.priority-feedback.priority-error {
+  color: #b42318;
 }

@@ -1,34 +1,17 @@
 <div class="tickets-page">
 
-  <!-- ============================================
-       PAGE HEADER
-       ============================================ -->
-
+  <!-- PAGE HEADER -->
   <div class="page-header">
-
     <div>
-
-      <h1>
-        Tickets
-      </h1>
-
-      <p>
-        Manage and support tickets
-      </p>
-
+      <h1>Tickets</h1>
+      <p>Manage and support tickets</p>
     </div>
-
   </div>
 
-
-  <!-- ============================================
-       FILTERS
-       ============================================ -->
-
+  <!-- FILTERS -->
   <div class="filter-card">
 
     <div class="search-box">
-
       <svg viewBox="0 0 24 24">
         <circle
           cx="11"
@@ -36,9 +19,7 @@
           r="7"
         ></circle>
 
-        <path
-          d="M20 20l-4-4"
-        ></path>
+        <path d="M20 20l-4-4"></path>
       </svg>
 
       <input
@@ -46,76 +27,30 @@
         [(ngModel)]="searchText"
         placeholder="Search tickets..."
       >
-
     </div>
-
 
     <div class="filter-group">
 
-      <!-- STATUS -->
-
-      <select
-        [(ngModel)]="selectedStatus"
-      >
-
-        <option value="All">
-          All Statuses
-        </option>
-
-        <option value="Open">
-          Open
-        </option>
-
-        <option value="Assigned">
-          Assigned
-        </option>
-
-        <option value="In_Progress">
-          In Progress
-        </option>
-
-        <option value="Resolved">
-          Resolved
-        </option>
-
-        <option value="Closed">
-          Closed
-        </option>
-
+      <!-- STATUS FILTER -->
+      <select [(ngModel)]="selectedStatus">
+        <option value="All">All Statuses</option>
+        <option value="Open">Open</option>
+        <option value="Assigned">Assigned</option>
+        <option value="In_Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+        <option value="Closed">Closed</option>
       </select>
 
-
-      <!-- PRIORITY -->
-
-      <select
-        [(ngModel)]="selectedPriority"
-      >
-
-        <option value="All">
-          All Priorities
-        </option>
-
-        <option value="Low">
-          Low
-        </option>
-
-        <option value="Medium">
-          Medium
-        </option>
-
-        <option value="High">
-          High
-        </option>
-
-        <option value="Criticalal">
-          Critical
-        </option>
-
+      <!-- PRIORITY FILTER -->
+      <select [(ngModel)]="selectedPriority">
+        <option value="All">All Priorities</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+        <option value="Critical">Critical</option>
       </select>
 
-
-      <!-- CLEAR -->
-
+      <!-- CLEAR FILTERS -->
       <button
         type="button"
         class="clear-button"
@@ -125,14 +60,9 @@
       </button>
 
     </div>
-
   </div>
 
-
-  <!-- ============================================
-       LOADING
-       ============================================ -->
-
+  <!-- LOADING -->
   <div
     *ngIf="loading"
     class="state-message"
@@ -140,11 +70,7 @@
     Loading tickets...
   </div>
 
-
-  <!-- ============================================
-       ERROR
-       ============================================ -->
-
+  <!-- ERROR -->
   <div
     *ngIf="errorMessage"
     class="error-message"
@@ -152,101 +78,50 @@
     {{ errorMessage }}
   </div>
 
-
-  <!-- ============================================
-       TICKET TABLE
-       ============================================ -->
-
+  <!-- TICKET TABLE -->
   <div
     *ngIf="!loading && !errorMessage"
     class="table-card"
   >
 
     <!-- TABLE HEADER -->
-
     <div class="table-header">
-
       <div>
-
-        <h2>
-          All Tickets
-        </h2>
+        <h2>All Tickets</h2>
 
         <p>
           {{ filteredTickets.length }}
-          ticket{{
-            filteredTickets.length === 1
-              ? ''
-              : 's'
-          }}
+          ticket{{ filteredTickets.length === 1 ? '' : 's' }}
         </p>
-
       </div>
-
     </div>
 
-
     <!-- TABLE -->
-
     <div class="table-wrapper">
-
       <table>
 
         <thead>
-
           <tr>
-
-            <th>
-              Ticket ID
-            </th>
-
-            <th>
-              Ticket Name
-            </th>
-
-            <th>
-              Status
-            </th>
-
-            <th>
-              Priority
-            </th>
-
-            <th>
-              Category
-            </th>
-
-            <th>
-              Team
-            </th>
-
-            <th>
-              Assigned To
-            </th>
-
-            <th>
-              Action
-            </th>
-
+            <th>Ticket ID</th>
+            <th>Ticket Name</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Category</th>
+            <th>Team</th>
+            <th>Assigned To</th>
+            <th>SLA Due</th>
+            <th>Action</th>
           </tr>
-
         </thead>
-
 
         <tbody>
 
           <tr
-            *ngFor="
-              let ticket of filteredTickets
-            "
+            *ngFor="let ticket of filteredTickets"
           >
 
-            <!-- ====================================
-                 TICKET ID
-                 ==================================== -->
-
+            <!-- TICKET ID -->
             <td>
-
               <button
                 type="button"
                 class="ticket-link"
@@ -254,16 +129,10 @@
               >
                 {{ ticket.ticket_id }}
               </button>
-
             </td>
 
-
-            <!-- ====================================
-                 TICKET NAME
-                 ==================================== -->
-
+            <!-- TICKET NAME -->
             <td>
-
               <div class="ticket-name">
                 {{ ticket.ticket_name }}
               </div>
@@ -274,108 +143,78 @@
               >
                 {{ ticket.summary }}
               </div>
-
             </td>
 
-
-            <!-- ====================================
-                 STATUS
-                 ==================================== -->
-
+            <!-- STATUS -->
             <td>
-
               <span
                 class="status-badge"
                 [ngClass]="ticket.status"
               >
-
-                {{
-                  formatStatus(
-                    ticket.status
-                  )
-                }}
-
+                {{ formatStatus(ticket.status) }}
               </span>
-
             </td>
 
-
-            <!-- ====================================
-                 PRIORITY
-                 ==================================== -->
-
+            <!-- PRIORITY -->
             <td>
-
               <span
                 class="priority-badge"
-                [ngClass]="
-                  ticket.priority?.toLowerCase()
-                "
+                [ngClass]="ticket.priority?.toLowerCase()"
               >
                 {{ ticket.priority }}
               </span>
-
             </td>
 
-
-            <!-- ====================================
-                 CATEGORY
-                 ==================================== -->
-
+            <!-- CATEGORY -->
             <td>
-
-              {{
-                ticket.category ||
-                'Not specified'
-              }}
-
+              {{ ticket.category || 'Not specified' }}
             </td>
 
-
-            <!-- ====================================
-                 TEAM
-                 ==================================== -->
-
+            <!-- TEAM -->
             <td>
-
-              {{
-                getDisplayValue(
-                  ticket.team
-                )
-              }}
-
+              {{ getDisplayValue(ticket.team) }}
             </td>
 
-
-            <!-- ====================================
-                 ASSIGNED TO
-                 ==================================== -->
-
+            <!-- ASSIGNED TO -->
             <td>
-
-              {{
-                getDisplayValue(
-                  ticket.assigned_to
-                )
-              }}
-
+              {{ getAssignedToDisplay(ticket) }}
             </td>
 
-
-            <!-- ====================================
-                 VIEW
-                 ==================================== -->
-
+            <!-- SLA DUE -->
             <td>
+              <ng-container
+                *ngIf="getSlaDueDate(ticket) as dueDate; else noSla"
+              >
+                <div class="sla-date">
+                  {{ dueDate | date:'medium' }}
+                </div>
 
+                <span
+                  class="sla-badge"
+                  [ngClass]="{
+                    'sla-overdue': isSlaOverdue(ticket),
+                    'sla-within': !isSlaOverdue(ticket)
+                  }"
+                >
+                  {{ getSlaLabel(ticket) }}
+                </span>
+              </ng-container>
+
+              <ng-template #noSla>
+                <span class="sla-not-set">
+                  Not set
+                </span>
+              </ng-template>
+            </td>
+
+            <!-- ACTION -->
+            <td>
               <button
                 type="button"
                 class="view-button"
                 (click)="openTicket(ticket.id)"
               >
-
                 <svg viewBox="0 0 24 24">
-
                   <path
                     d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
                   ></path>
@@ -385,43 +224,26 @@
                     cy="12"
                     r="3"
                   ></circle>
-
                 </svg>
 
                 View
-
               </button>
-
             </td>
 
           </tr>
 
-
-          <!-- ====================================
-               NO RESULTS
-               ==================================== -->
-
-          <tr
-            *ngIf="
-              filteredTickets.length === 0
-            "
-          >
-
+          <!-- NO RESULTS -->
+          <tr *ngIf="filteredTickets.length === 0">
             <td
-              colspan="8"
+              colspan="9"
               class="empty-table"
             >
               No tickets found.
             </td>
-
           </tr>
 
         </tbody>
-
       </table>
-
     </div>
-
   </div>
-
 </div>

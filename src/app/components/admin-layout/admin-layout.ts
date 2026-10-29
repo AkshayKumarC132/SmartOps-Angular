@@ -1,5 +1,6 @@
 
 import {
+  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit
@@ -21,223 +22,84 @@ import {
 } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
-
-import {
-  NotificationService
-} from '../../services/notifications.service';
-
-import { ApiErrorService } from '../../services/api-error.service';
-
+import { NotificationService } from '../../services/notifications.service';
 
 @Component({
   selector: 'app-admin-layout',
-
   standalone: true,
-
   imports: [
     CommonModule,
     RouterOutlet,
     RouterLink,
     RouterLinkActive
   ],
-
   templateUrl: './admin-layout.html',
-
   styleUrl: './admin-layout.css'
 })
-export class AdminLayout
-  implements OnInit, OnDestroy {
-
-
+export class AdminLayout implements OnInit, OnDestroy {
   user: any = null;
-
-
-  /*
-   * REAL unread notification count
-   */
 
   notificationCount = 0;
 
-
-  private notificationSubscription:
-    Subscription | null = null;
-
-
-  private routerSubscription:
-    Subscription | null = null;
-
+  private notificationSubscription?: Subscription;
+  private routerSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
-
-    private notificationService:
-      NotificationService,
-
+    private notificationService: NotificationService,
     private router: Router,
-
-    private apiErrorService: ApiErrorService
+    private cdr: ChangeDetectorRef
   ) {}
 
-
-  // =========================================================
-  // INIT
-  // =========================================================
-
   ngOnInit(): void {
-
     this.loadUser();
 
-    this.loadNotificationCount();
-
-
-    /*
-     * Listen for notification count changes.
-     */
-
+    // Subscribe to the shared count before starting or refreshing polling.
     this.notificationSubscription =
-      this.notificationService
-        .unreadCount$
-        .subscribe(count => {
+      this.notificationService.unreadCount$.subscribe(count => {
+        this.notificationCount = count;
+        this.cdr.markForCheck();
+      });
 
-          this.notificationCount =
-            count;
+    // Ensure background polling is active.
+    // The service prevents duplicate polling instances.
+    this.notificationService.startPolling();
 
-        });
+    // Refresh the current count without waiting for the next interval.
+    this.notificationService.refreshUnreadCount();
 
-
-    /*
-     * Refresh count when navigating.
-     *
-     * This is useful after opening
-     * Notifications and marking items read.
-     */
-
-    this.routerSubscription =
-      this.router.events
-        .pipe(
-          filter(
-            event =>
-              event instanceof NavigationEnd
-          )
-        )
-        .subscribe(() => {
-
-          this.loadNotificationCount();
-
-        });
-  }
-
-
-  // =========================================================
-  // LOAD USER
-  // =========================================================
-
-  private loadUser(): void {
-
-    this.user =
-      this.authService.getUser();
-
-
-    console.log(
-      'Admin Layout User:',
-      this.user
-    );
-
-    console.log(
-      'Username:',
-      this.user?.Username
-    );
-
-    console.log(
-      'Role:',
-      this.user?.Role
-    );
-  }
-
-
-  // =========================================================
-  // LOAD NOTIFICATION COUNT
-  // =========================================================
-
-  private loadNotificationCount(): void {
-
-    this.notificationService
-      .getNotifications()
-      .subscribe({
-
-        next: (notifications) => {
-
-          this.notificationCount =
-            notifications.filter(
-              notification =>
-                !notification.read
-            ).length;
-
-
-          console.log(
-            'Unread notification count:',
-            this.notificationCount
-          );
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Unable to load notification count:',
-            this.apiErrorService.getErrorMessage(error),
-            error
-          );
-
-          this.notificationCount = 0;
-        }
-
+    // Keep the badge synchronized when navigating between pages.
+    this.routerSubscription = this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd)
+      )
+      .subscribe(() => {
+        this.notificationService.refreshUnreadCount();
       });
   }
 
-
-  // =========================================================
-  // OPEN NOTIFICATIONS
-  // =========================================================
-
-  openNotifications(): void {
-
-    this.router.navigate([
-      '/notifications'
-    ]);
+  private loadUser(): void {
+    this.user = this.authService.getUser();
   }
 
-
-  // =========================================================
-  // AVATAR
-  // =========================================================
+  openNotifications(): void {
+    this.router.navigate(['/notifications']);
+  }
 
   get avatarLetter(): string {
-
     const username =
       this.user?.Username ||
       this.user?.username ||
       '';
 
-
     if (!username) {
-
       return '';
     }
 
-
-    return username
-      .trim()
-      .charAt(0)
-      .toUpperCase();
+    return username.trim().charAt(0).toUpperCase();
   }
 
-
-  // =========================================================
-  // ROLE
-  // =========================================================
-
   get userRole(): string {
-
     return (
       this.user?.Role ||
       this.user?.role ||
@@ -245,32 +107,16 @@ export class AdminLayout
     );
   }
 
-
-  // =========================================================
-  // LOGOUT
-  // =========================================================
-
   logout(): void {
-
     this.authService.logout();
-
-    this.router.navigate([
-      '/login'
-    ]);
+    this.router.navigate(['/login']);
   }
-
-
-  // =========================================================
-  // DESTROY
-  // =========================================================
 
   ngOnDestroy(): void {
+    this.notificationSubscription?.unsubscribe();
+    this.routerSubscription?.unsubscribe();
 
-    this.notificationSubscription
-      ?.unsubscribe();
-
-    this.routerSubscription
-      ?.unsubscribe();
+    // Do not stop global polling here.
+    // The root application may still need notifications.
   }
-
 }

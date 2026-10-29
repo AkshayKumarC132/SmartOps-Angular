@@ -1,11 +1,14 @@
+
 import {
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import {
@@ -22,12 +25,14 @@ import { ApiErrorService } from '../../services/api-error.service';
   templateUrl: './notifications.html',
   styleUrl: './notifications.css'
 })
-export class Notifications implements OnInit {
+export class Notifications implements OnInit, OnDestroy {
   notifications: NotificationItem[] = [];
   loading = true;
   errorMessage = '';
   selectedFilter = 'All';
   selectedType = 'All';
+
+  private notificationsSubscription?: Subscription;
 
   constructor(
     private notificationService: NotificationService,
@@ -36,8 +41,38 @@ export class Notifications implements OnInit {
     private apiErrorService: ApiErrorService
   ) {}
 
+  // =========================================================
+  // INIT
+  // =========================================================
+
   ngOnInit(): void {
+    /*
+     * Subscribe before fetching so that notifications emitted
+     * by background polling are reflected immediately.
+     */
+    this.notificationsSubscription =
+      this.notificationService.notifications$.subscribe(
+        (notifications) => {
+          this.notifications = notifications;
+
+          if (notifications.length > 0) {
+            this.loading = false;
+            this.errorMessage = '';
+          }
+
+          this.cdr.detectChanges();
+        }
+      );
+
     this.loadNotifications();
+  }
+
+  // =========================================================
+  // DESTROY
+  // =========================================================
+
+  ngOnDestroy(): void {
+    this.notificationsSubscription?.unsubscribe();
   }
 
   // =========================================================
@@ -55,12 +90,17 @@ export class Notifications implements OnInit {
           : [];
 
         this.loading = false;
+        this.errorMessage = '';
+
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Unable to load notifications:', error);
 
-        this.notifications = [];
+      error: (error) => {
+        console.error(
+          'Unable to load notifications:',
+          error
+        );
+
         this.loading = false;
 
         if (error.status === 401) {
@@ -132,6 +172,7 @@ export class Notifications implements OnInit {
         return 'Status Change';
 
       case 'ASSIGNED':
+      case 'TICKET_ASSIGNED':
         return 'Assignment';
 
       case 'ATTACHMENT_ADDED':
@@ -139,6 +180,7 @@ export class Notifications implements OnInit {
         return 'Attachment Added';
 
       case 'CREATED':
+      case 'TICKET_CREATED':
         return 'Created';
 
       case 'COMMENT_ADDED':
@@ -156,7 +198,9 @@ export class Notifications implements OnInit {
   // NOTIFICATION ICON
   // =========================================================
 
-  getNotificationIcon(notification: NotificationItem): string {
+  getNotificationIcon(
+    notification: NotificationItem
+  ): string {
     const action = String(notification.action || '')
       .replace(/[()'",]/g, '')
       .trim()
@@ -166,7 +210,10 @@ export class Notifications implements OnInit {
       return 'status';
     }
 
-    if (action === 'ASSIGNED') {
+    if (
+      action === 'ASSIGNED' ||
+      action === 'TICKET_ASSIGNED'
+    ) {
       return 'assignment';
     }
 
@@ -177,7 +224,10 @@ export class Notifications implements OnInit {
       return 'attachment';
     }
 
-    if (action === 'CREATED') {
+    if (
+      action === 'CREATED' ||
+      action === 'TICKET_CREATED'
+    ) {
       return 'created';
     }
 
@@ -212,7 +262,9 @@ export class Notifications implements OnInit {
   // EXTRACT DATABASE TICKET ID
   // =========================================================
 
-  private getTicketId(ticket: unknown): number | null {
+  private getTicketId(
+    ticket: unknown
+  ): number | null {
     if (typeof ticket === 'number') {
       return Number.isInteger(ticket) && ticket > 0
         ? ticket
@@ -229,7 +281,7 @@ export class Notifications implements OnInit {
       return null;
     }
 
-    // Supports identifiers such as "8", "TKT-008" and "TICKET-123".
+    // Supports "8", "TKT-008" and "TICKET-123".
     const match = normalizedTicket.match(/(\d+)$/);
 
     if (!match) {
@@ -245,17 +297,19 @@ export class Notifications implements OnInit {
 
   // =========================================================
   // OPEN NOTIFICATION
-  // Clicking the notification card can open its ticket.
   // =========================================================
 
-  openNotification(notification: NotificationItem): void {
+  openNotification(
+    notification: NotificationItem
+  ): void {
     this.markAsRead(notification);
 
     if (!notification.ticket) {
       return;
     }
 
-    const ticketId = this.getTicketId(notification.ticket);
+    const ticketId =
+      this.getTicketId(notification.ticket);
 
     if (ticketId === null) {
       console.error(
@@ -273,27 +327,34 @@ export class Notifications implements OnInit {
       return;
     }
 
-    void this.router.navigate(['/ticket', ticketId]);
+    void this.router.navigate([
+      '/ticket',
+      ticketId
+    ]);
   }
 
   // =========================================================
-  // MARK ONE NOTIFICATION AS READ
-  // Does not navigate to the ticket.
+  // MARK ONE AS READ
   // =========================================================
 
-  markAsRead(notification: NotificationItem): void {
+  markAsRead(
+    notification: NotificationItem
+  ): void {
     if (notification.read) {
       return;
     }
 
-    this.notificationService.markAsRead(notification.id);
+    this.notificationService.markAsRead(
+      notification.id
+    );
+
     notification.read = true;
 
     this.cdr.detectChanges();
   }
 
   // =========================================================
-  // MARK ALL NOTIFICATIONS AS READ
+  // MARK ALL AS READ
   // =========================================================
 
   async markAllRead(): Promise<void> {
@@ -317,8 +378,9 @@ export class Notifications implements OnInit {
     }
 
     try {
-      // Keep the existing service method and API contract.
-      this.notificationService.markAllAsRead(this.notifications);
+      this.notificationService.markAllAsRead(
+        this.notifications
+      );
 
       this.notifications = this.notifications.map(
         notification => ({
@@ -329,8 +391,6 @@ export class Notifications implements OnInit {
 
       this.cdr.detectChanges();
 
-      // This confirms the local UI update. The service's existing
-      // method determines how the server request is handled.
       await Swal.fire({
         icon: 'success',
         title: 'Notifications updated',
@@ -339,7 +399,10 @@ export class Notifications implements OnInit {
         showConfirmButton: false
       });
     } catch (error) {
-      console.error('Unable to mark all notifications as read:', error);
+      console.error(
+        'Unable to mark all notifications as read:',
+        error
+      );
 
       await Swal.fire({
         icon: 'error',

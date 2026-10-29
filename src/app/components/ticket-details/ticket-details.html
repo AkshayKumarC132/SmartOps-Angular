@@ -1,130 +1,63 @@
+
 <div class="ticket-details-page">
 
-  <!-- =====================================================
-       TOP HEADER
-       ===================================================== -->
-
+  <!-- TOP HEADER -->
   <div class="ticket-topbar">
-
-    <button
-      type="button"
-      class="back-link"
-      (click)="goBack()"
-    >
+    <button type="button" class="back-link" (click)="goBack()">
       <span class="back-arrow">←</span>
       <span>Back</span>
     </button>
 
-    <div
-      class="top-ticket-id"
-      *ngIf="ticket"
-    >
+    <div class="top-ticket-id" *ngIf="ticket">
       {{ ticket.ticket_id }}
     </div>
 
-    <div
-      class="top-status-area"
-      *ngIf="ticket"
-    >
-      <span
-        class="top-status-dot"
-        [ngClass]="ticket.status"
-      ></span>
-
-      <span class="top-status-text">
-        {{ formatStatus(ticket.status) }}
-      </span>
+    <div class="top-status-area" *ngIf="ticket">
+      <span class="top-status-dot" [ngClass]="ticket.status"></span>
+      <span class="top-status-text">{{ formatStatus(ticket.status) }}</span>
     </div>
-
   </div>
 
-
-  <!-- =====================================================
-       LOADING
-       ===================================================== -->
-
-  <div
-    *ngIf="loading"
-    class="state-card"
-  >
+  <!-- LOADING -->
+  <div *ngIf="loading" class="state-card">
     <div class="loading-spinner"></div>
-
     <div>
       <strong>Loading ticket</strong>
       <p>Loading ticket details...</p>
     </div>
   </div>
 
-
-  <!-- =====================================================
-       ERROR
-       ===================================================== -->
-
-  <div
-    *ngIf="!loading && errorMessage"
-    class="error-card"
-  >
+  <!-- ERROR -->
+  <div *ngIf="!loading && errorMessage" class="error-card">
     <div class="error-icon">!</div>
-
     <div>
       <strong>Unable to load ticket</strong>
       <p>{{ errorMessage }}</p>
     </div>
   </div>
 
-
-  <!-- =====================================================
-       SUCCESS
-       ===================================================== -->
-
-  <div
-    *ngIf="!loading && successMessage"
-    class="success-message"
-  >
+  <!-- SUCCESS -->
+  <div *ngIf="!loading && successMessage" class="success-message">
     <span>✓</span>
     {{ successMessage }}
   </div>
 
+  <!-- MAIN CONTENT -->
+  <div *ngIf="!loading && ticket" class="ticket-layout">
 
-  <!-- =====================================================
-       MAIN CONTENT
-       ===================================================== -->
-
-  <div
-    *ngIf="!loading && ticket"
-    class="ticket-layout"
-  >
-
-    <!-- =================================================
-         LEFT / MAIN CONTENT
-         ================================================= -->
-
+    <!-- MAIN COLUMN -->
     <main class="ticket-main">
 
-      <!-- ===============================================
-           TICKET HEADER CARD
-           =============================================== -->
-
+      <!-- TICKET HEADER -->
       <section class="ticket-card ticket-header-card">
-
         <div class="ticket-heading">
-
           <div class="ticket-heading-left">
+            <div class="ticket-reference">{{ ticket.ticket_id }}</div>
 
-            <div class="ticket-reference">
-              {{ ticket.ticket_id }}
-            </div>
-
-            <h1>
-              {{ ticket.ticket_name }}
-            </h1>
+            <h1>{{ ticket.ticket_name }}</h1>
 
             <div class="ticket-badges">
-
-              <span
-                class="status-badge"
-                [ngClass]="ticket.status"
-              >
+              <span class="status-badge" [ngClass]="ticket.status">
                 {{ formatStatus(ticket.status) }}
               </span>
 
@@ -135,21 +68,13 @@
                 {{ ticket.priority || 'No Priority' }}
               </span>
 
-              <span
-                *ngIf="ticket.is_locked"
-                class="lock-badge locked"
-              >
+              <span *ngIf="ticket.is_locked" class="lock-badge locked">
                 🔒 Locked
               </span>
-
             </div>
-
           </div>
 
-          <!-- EDIT BUTTON -->
-
           <div class="header-action">
-
             <button
               *ngIf="!isEditing"
               type="button"
@@ -159,87 +84,58 @@
               <span>✎</span>
               Edit Ticket
             </button>
-
           </div>
-
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           EDIT PANEL
-           =============================================== -->
-
-      <section
-        *ngIf="isEditing"
-        class="ticket-card edit-panel"
-      >
-
+      <!-- EDIT PANEL -->
+      <section *ngIf="isEditing" class="ticket-card edit-panel">
         <div class="section-title-row">
-
           <div>
             <h2>Edit Ticket</h2>
             <p>Update the ticket status and priority.</p>
           </div>
-
         </div>
 
-
         <div class="edit-grid">
-
-          <!-- STATUS -->
-
           <div class="edit-field">
-
-            <label for="ticket-status">
-              Status
-            </label>
+            <label for="ticket-status">Status</label>
 
             <select
               id="ticket-status"
               class="edit-select"
               [(ngModel)]="editStatus"
+              [disabled]="saving"
             >
               <option
                 *ngFor="let status of statusOptions"
-                [value]="status"
+                [ngValue]="status"
               >
                 {{ formatStatus(status) }}
               </option>
             </select>
-
           </div>
 
-
-          <!-- PRIORITY -->
-
           <div class="edit-field">
-
-            <label for="ticket-priority">
-              Priority
-            </label>
+            <label for="ticket-priority">Priority</label>
 
             <select
               id="ticket-priority"
               class="edit-select"
               [(ngModel)]="editPriority"
+              [disabled]="saving"
             >
               <option
                 *ngFor="let priority of priorityOptions"
-                [value]="priority"
+                [ngValue]="priority"
               >
                 {{ priority }}
               </option>
             </select>
-
           </div>
-
         </div>
 
-
         <div class="edit-actions">
-
           <button
             type="button"
             class="cancel-button"
@@ -255,29 +151,15 @@
             [disabled]="saving"
             (click)="saveChanges()"
           >
-            <span *ngIf="!saving">
-              Save Changes
-            </span>
-
-            <span *ngIf="saving">
-              Saving...
-            </span>
+            {{ saving ? 'Saving...' : 'Save Changes' }}
           </button>
-
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           DESCRIPTION
-           =============================================== -->
-
+      <!-- DESCRIPTION -->
       <section class="ticket-card content-card">
-
         <div class="section-heading">
           <div class="section-icon">≡</div>
-
           <div>
             <h2>Description</h2>
             <p>Ticket issue details</p>
@@ -287,19 +169,12 @@
         <div class="description-content">
           {{ ticket.description || 'No description provided.' }}
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           SUMMARY
-           =============================================== -->
-
+      <!-- SUMMARY -->
       <section class="ticket-card content-card">
-
         <div class="section-heading">
           <div class="section-icon">▤</div>
-
           <div>
             <h2>Summary</h2>
             <p>Ticket summary</p>
@@ -309,422 +184,316 @@
         <div class="summary-content">
           {{ ticket.summary || 'No summary available.' }}
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           TAGS
-           =============================================== -->
-
+      <!-- TAGS -->
       <section class="ticket-card content-card">
-
         <div class="section-heading">
           <div class="section-icon">#</div>
-
           <div>
             <h2>Tags</h2>
             <p>Ticket classification</p>
           </div>
         </div>
 
-
-        <div
-          *ngIf="ticket.tags?.length"
-          class="tags-container"
-        >
-
-          <span
-            *ngFor="let tag of ticket.tags"
-            class="tag"
-          >
+        <div *ngIf="ticket.tags?.length" class="tags-container">
+          <span *ngFor="let tag of ticket.tags" class="tag">
             {{ tag }}
           </span>
-
         </div>
 
-
-        <div
-          *ngIf="!ticket.tags?.length"
-          class="empty-value"
-        >
+        <div *ngIf="!ticket.tags?.length" class="empty-value">
           No tags assigned.
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           ATTACHMENTS
-           =============================================== -->
-
+      <!-- ATTACHMENTS -->
       <section class="ticket-card content-card">
-
         <div class="section-heading">
-
           <div class="section-icon">📎</div>
-
           <div>
             <h2>Attachments</h2>
-
             <p>
               {{ ticket.attachments?.length || 0 }}
               attachment{{ ticket.attachments?.length === 1 ? '' : 's' }}
             </p>
           </div>
-
         </div>
-
 
         <div
           *ngIf="ticket.attachments?.length"
           class="attachments-container"
         >
-
           <div
             *ngFor="let attachment of ticket.attachments"
             class="attachment"
           >
-
-            <div class="attachment-icon">
-              📄
-            </div>
-
-            <div class="attachment-name">
-              {{ attachment }}
-            </div>
-
+            <div class="attachment-icon">📄</div>
+            <div class="attachment-name">{{ attachment }}</div>
           </div>
-
         </div>
 
-
-        <div
-          *ngIf="!ticket.attachments?.length"
-          class="empty-value"
-        >
+        <div *ngIf="!ticket.attachments?.length" class="empty-value">
           No attachments available.
         </div>
-
       </section>
 
     </main>
 
-
-    <!-- =================================================
-         RIGHT SIDEBAR
-         ================================================= -->
-
+    <!-- SIDEBAR -->
     <aside class="ticket-sidebar">
 
-
-      <!-- ===============================================
-           DETAILS
-           =============================================== -->
-
+      <!-- DETAILS -->
       <section class="sidebar-card">
-
-        <div class="sidebar-title">
-          Details
-        </div>
-
-
-        <!-- REQUESTER -->
+        <div class="sidebar-title">Details</div>
 
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Requester
-          </span>
-
+          <span class="sidebar-label">Requester</span>
           <span class="sidebar-value">
-            {{
-              ticket.created_by ||
-              ticket.requester ||
-              '—'
-            }}
+            {{ ticket.created_by || ticket.requester || '—' }}
           </span>
-
         </div>
 
-
-        <!-- ASSIGNED -->
-
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Assigned to
-          </span>
-
-          <span class="sidebar-value">
-            {{ ticket.assigned_to || '—' }}
-          </span>
-
+          <span class="sidebar-label">Assigned to</span>
+          <span class="sidebar-value">{{ getAssignedUserName() }}</span>
         </div>
 
-
-        <!-- TEAM -->
-
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Team
-          </span>
-
-          <span class="sidebar-value">
-            {{ ticket.team || '—' }}
-          </span>
-
+          <span class="sidebar-label">Team</span>
+          <span class="sidebar-value">{{ ticket.team || '—' }}</span>
         </div>
 
-
-        <!-- CATEGORY -->
-
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Category
-          </span>
-
-          <span class="sidebar-value">
-            {{ ticket.category || '—' }}
-          </span>
-
+          <span class="sidebar-label">Category</span>
+          <span class="sidebar-value">{{ ticket.category || '—' }}</span>
         </div>
 
-
-        <!-- PRIORITY -->
-
+        <!-- CURRENT PRIORITY -->
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Priority
-          </span>
-
+          <span class="sidebar-label">Priority</span>
           <span class="sidebar-value">
-
             <span
               class="small-priority"
               [ngClass]="ticket.priority?.toLowerCase()"
             >
               {{ ticket.priority || '—' }}
             </span>
-
           </span>
-
         </div>
 
+        <!-- ADMIN PRIORITY CONTROL -->
+        <div *ngIf="isAdmin" class="priority-update-form">
+          <label for="change-ticket-priority">Change priority</label>
 
-        <!-- CREATED -->
+          <select
+            id="change-ticket-priority"
+            class="edit-select"
+            [(ngModel)]="priorityToSave"
+            [disabled]="prioritySaving || loading"
+          >
+            <option
+              *ngFor="let priority of priorityOptions"
+              [ngValue]="priority"
+            >
+              {{ priority }}
+            </option>
+          </select>
+
+          <button
+            type="button"
+            class="assign-button priority-save-button"
+            [disabled]="prioritySaving || loading || !priorityToSave"
+            (click)="changeTicketPriority()"
+          >
+            {{ prioritySaving ? 'Updating...' : 'Save Priority' }}
+          </button>
+
+          <p
+            *ngIf="priorityMessage"
+            class="priority-feedback"
+            [class.priority-error]="priorityError"
+            role="status"
+          >
+            {{ priorityMessage }}
+          </p>
+        </div>
 
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Created
-          </span>
-
+          <span class="sidebar-label">Created</span>
           <span class="sidebar-value">
             {{ ticket.created_at ? (ticket.created_at | date:'medium') : '—' }}
           </span>
-
         </div>
 
-
-        <!-- UPDATED -->
-
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Updated
-          </span>
-
+          <span class="sidebar-label">Updated</span>
           <span class="sidebar-value">
             {{ ticket.updated_at ? (ticket.updated_at | date:'medium') : '—' }}
           </span>
-
         </div>
 
-
-        <!-- STORAGE -->
-
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Storage
-          </span>
-
+          <span class="sidebar-label">SLA Due Date</span>
           <span class="sidebar-value">
-            {{ ticket.storage_type || '—' }}
+            {{ ticket.sla_due_date ? (ticket.sla_due_date | date:'medium') : '—' }}
           </span>
-
         </div>
 
-
-        <!-- LOCK -->
+        <div class="sidebar-row">
+          <span class="sidebar-label">Storage</span>
+          <span class="sidebar-value">{{ ticket.storage_type || '—' }}</span>
+        </div>
 
         <div class="sidebar-row">
-
-          <span class="sidebar-label">
-            Lock status
-          </span>
-
+          <span class="sidebar-label">Lock status</span>
           <span class="sidebar-value">
-
             <span
               class="small-lock"
               [ngClass]="ticket.is_locked ? 'locked' : 'unlocked'"
             >
               {{ ticket.is_locked ? 'Locked' : 'Unlocked' }}
             </span>
-
           </span>
-
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           ASSIGNMENT
-           =============================================== -->
-
+      <!-- ASSIGNMENT -->
       <section class="sidebar-card assignment-card">
-
-        <div class="sidebar-title">
-          Assignment
-        </div>
-
+        <div class="sidebar-title">Assignment</div>
 
         <div class="current-assignment">
-
           <div class="assignment-avatar">
-            {{
-              (ticket.assigned_to || 'U').charAt(0).toUpperCase()
-            }}
+            {{ getAssignedUserName().charAt(0).toUpperCase() }}
           </div>
 
           <div>
-
-            <div class="assignment-name">
-              {{ ticket.assigned_to || 'Unassigned' }}
-            </div>
-
+            <div class="assignment-name">{{ getAssignedUserName() }}</div>
             <div class="assignment-team">
               {{ ticket.team || 'No team assigned' }}
             </div>
-
           </div>
-
         </div>
 
+        <div class="edit-field assignment-field">
+          <label for="assigned-user">Assign ticket to</label>
+
+          <select
+            id="assigned-user"
+            class="edit-select"
+            [(ngModel)]="selectedAssigneeId"
+            [disabled]="assigning || loading"
+          >
+            <option [ngValue]="null">Unassigned</option>
+
+            <option
+              *ngFor="let user of users"
+              [ngValue]="user.id"
+            >
+              {{
+                (user.first_name || user.last_name)
+                  ? ((user.first_name || '') + ' ' + (user.last_name || '')).trim()
+                  : user.username
+              }}
+            </option>
+          </select>
+        </div>
 
         <button
           type="button"
           class="assign-button"
-          *ngIf="ticket.assigned_to"
+          [disabled]="assigning || loading"
+          (click)="assignTicket()"
         >
-          Assigned
+          {{ assigning ? 'Saving...' : 'Save Assignment' }}
         </button>
 
-
-        <div
-          *ngIf="!ticket.assigned_to"
-          class="unassigned-message"
+        <p
+          *ngIf="assignmentMessage"
+          role="status"
+          [class.assignment-error]="assignmentError"
         >
+          {{ assignmentMessage }}
+        </p>
+
+        <div *ngIf="!isTicketAssigned()" class="unassigned-message">
           This ticket is currently unassigned.
         </div>
-
       </section>
 
-
-      <!-- ===============================================
-           STATUS
-           =============================================== -->
-
-      <section class="sidebar-card">
-
-        <div class="sidebar-title">
-          Current Status
-        </div>
-
+      <!-- CURRENT STATUS -->
+      <section class="sidebar-card status-management-card">
+        <div class="sidebar-title">Current Status</div>
 
         <div class="sidebar-status">
-
           <span
             class="large-status-dot"
             [ngClass]="ticket.status"
           ></span>
 
           <div>
-
-            <strong>
-              {{ formatStatus(ticket.status) }}
-            </strong>
-
-            <span>
-              Current ticket status
-            </span>
-
+            <strong>{{ formatStatus(ticket.status) }}</strong>
+            <span>Current ticket status</span>
           </div>
-
         </div>
 
+        <div class="status-update-form">
+          <label for="change-ticket-status">Change ticket status</label>
+
+          <select
+            id="change-ticket-status"
+            class="edit-select"
+            [(ngModel)]="statusToSave"
+            [disabled]="statusSaving || loading"
+          >
+            <option
+              *ngFor="let status of statusOptions"
+              [ngValue]="status"
+            >
+              {{ formatStatus(status) }}
+            </option>
+          </select>
+
+          <button
+            type="button"
+            class="assign-button status-save-button"
+            [disabled]="statusSaving || loading || !statusToSave"
+            (click)="changeTicketStatus()"
+          >
+            {{ statusSaving ? 'Updating...' : 'Save Status' }}
+          </button>
+
+          <p
+            *ngIf="statusMessage"
+            class="status-feedback"
+            [class.status-error]="statusError"
+            role="status"
+          >
+            {{ statusMessage }}
+          </p>
+        </div>
       </section>
 
-
-      <!-- ===============================================
-           QUICK INFORMATION
-           =============================================== -->
-
+      <!-- TICKET INFORMATION -->
       <section class="sidebar-card">
-
-        <div class="sidebar-title">
-          Ticket Information
-        </div>
-
+        <div class="sidebar-title">Ticket Information</div>
 
         <div class="info-item">
-
-          <span>
-            Ticket ID
-          </span>
-
-          <strong>
-            {{ ticket.ticket_id }}
-          </strong>
-
+          <span>Ticket ID</span>
+          <strong>{{ ticket.ticket_id }}</strong>
         </div>
-
 
         <div class="info-item">
-
-          <span>
-            Database ID
-          </span>
-
-          <strong>
-            {{ ticket.id || ticketId }}
-          </strong>
-
+          <span>Database ID</span>
+          <strong>{{ ticket.id || ticketId }}</strong>
         </div>
-
 
         <div class="info-item">
-
-          <span>
-            Category
-          </span>
-
-          <strong>
-            {{ ticket.category || '—' }}
-          </strong>
-
+          <span>Category</span>
+          <strong>{{ ticket.category || '—' }}</strong>
         </div>
-
       </section>
 
     </aside>
-
   </div>
-
 </div>
