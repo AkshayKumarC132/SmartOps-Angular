@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { TicketService } from '../../services/ticket.service';
+import Swal from 'sweetalert2';
 
 import {
   User,
@@ -779,6 +780,12 @@ export class Teams implements OnInit {
             this.successMessage =
               'Team updated successfully.';
 
+            Swal.fire({
+              icon: 'success',
+              title: 'Team updated',
+              text: 'Team details have been updated successfully.',
+              confirmButtonText: 'OK'
+            });
 
             this.loadTeams();
 
@@ -801,6 +808,12 @@ export class Teams implements OnInit {
               'Unable to update team.'
             );
 
+            Swal.fire({
+              icon: 'error',
+              title: 'Unable to update team',
+              text: this.errorMessage || 'Please try again.',
+              confirmButtonText: 'OK'
+            });
 
             this.cdr.detectChanges();
 
@@ -832,6 +845,12 @@ export class Teams implements OnInit {
             this.successMessage =
               'Team created successfully.';
 
+            Swal.fire({
+              icon: 'success',
+              title: 'Team created',
+              text: 'The team has been created successfully.',
+              confirmButtonText: 'OK'
+            });
 
             this.loadTeams();
 
@@ -854,6 +873,12 @@ export class Teams implements OnInit {
               'Unable to create team.'
             );
 
+            Swal.fire({
+              icon: 'error',
+              title: 'Unable to create team',
+              text: this.errorMessage || 'Please try again.',
+              confirmButtonText: 'OK'
+            });
 
             this.cdr.detectChanges();
 
@@ -863,6 +888,70 @@ export class Teams implements OnInit {
 
     }
 
+  }
+
+
+  /* =====================================================
+     DELETE TEAM
+     ===================================================== */
+
+  deleteTeam(team: any, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!team?.id || this.saving || this.memberSaving) {
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Delete team?',
+      text: `Are you sure you want to delete "${team.team_name}"? This action cannot be undone.`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete team',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+      reverseButtons: true
+    }).then(result => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      this.saving = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      this.ticketService.deleteTeam(team.id).subscribe({
+        next: () => {
+          this.saving = false;
+          this.teams = this.teams.filter(item => item.id !== team.id);
+
+          if (this.selectedTeam?.id === team.id) {
+            this.selectedTeam = this.teams.length ? this.teams[0] : null;
+          }
+
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Team deleted',
+            text: `"${team.team_name}" was deleted successfully.`,
+            confirmButtonText: 'OK'
+          });
+        },
+        error: error => {
+          this.saving = false;
+          this.handleSaveError(error, 'Unable to delete team.');
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Unable to delete team',
+            text: this.errorMessage || 'Please try again.',
+            confirmButtonText: 'OK'
+          });
+        }
+      });
+    });
   }
 
 
@@ -1084,9 +1173,17 @@ export class Teams implements OnInit {
         }
 
       });
-
+ 
   }
+   getEligibleUsers(): User[] {
+    return this.users.filter(user => {
+      const role = String((user as any).role || '')
+        .trim()
+        .toLowerCase();
 
+      return role === 'admin' || role === 'team member';
+    });
+  }
 
   /* =====================================================
      EXISTING MEMBER
@@ -1112,34 +1209,21 @@ export class Teams implements OnInit {
   }
 
 
-  /* =====================================================
-     TEAM MEMBER ROLE CHECK
-     ===================================================== */
-
-  isTeamMemberRole(
-    userId: number
-  ): boolean {
-
-    const user =
-      this.users.find(
-        currentUser =>
-          currentUser.id === userId
-      );
-
+   // Allow Admins and Team Members to be assigned to teams.
+  isTeamMemberRole(userId: number): boolean {
+    const user = this.users.find(
+      currentUser => currentUser.id === userId
+    );
 
     if (!user) {
-
       return false;
-
     }
 
-
-    return String(
-      (user as any).role || ''
-    )
+    const role = String((user as any).role || '')
       .trim()
-      .toLowerCase() === 'team member';
+      .toLowerCase();
 
+    return role === 'admin' || role === 'team member';
   }
 
 
@@ -1196,9 +1280,9 @@ export class Teams implements OnInit {
 
 
     /*
-     * Only Team Members can belong to teams.
+     * Admins and Team Members can belong to teams.
      *
-     * Admins and Requesters cannot be
+     *  Requesters cannot be
      * added to teams.
      */
 
@@ -1440,7 +1524,7 @@ export class Teams implements OnInit {
      * before sending the update.
      */
 
-    const allowedSelectedUserIds =
+        const allowedSelectedUserIds =
       this.selectedUserIds.filter(
         userId =>
           this.isTeamMemberRole(userId) &&
@@ -1448,18 +1532,11 @@ export class Teams implements OnInit {
           !this.isMemberOfOtherTeam(userId)
       );
 
-
-    if (
-      allowedSelectedUserIds.length === 0
-    ) {
-
+    if (allowedSelectedUserIds.length === 0) {
       this.memberErrorMessage =
-        'Only unassigned Team Members can be added to a team.';
-
+        'Select an Admin or an unassigned Team Member.';
       return;
-
     }
-
 
     /*
      * Preserve existing members.
@@ -1569,6 +1646,12 @@ export class Teams implements OnInit {
           this.successMessage =
             'Member added successfully.';
 
+          Swal.fire({
+            icon: 'success',
+            title: 'Members added',
+            text: `${allowedSelectedUserIds.length} team member(s) added successfully.`,
+            confirmButtonText: 'OK'
+          });
 
           /*
            * Reload teams.
@@ -1595,6 +1678,12 @@ export class Teams implements OnInit {
             'Unable to add member to team.'
           );
 
+          Swal.fire({
+            icon: 'error',
+            title: 'Unable to add members',
+            text: this.memberErrorMessage || 'Please try again.',
+            confirmButtonText: 'OK'
+          });
 
           this.cdr.detectChanges();
 
@@ -1641,18 +1730,26 @@ export class Teams implements OnInit {
       this.getMemberName(member);
 
 
-    const confirmed =
-      window.confirm(
-        `Remove ${memberName} from ${this.selectedTeam.team_name}?`
-      );
+    Swal.fire({
+      icon: 'warning',
+      title: 'Remove team member?',
+      text: `Remove ${memberName} from ${this.selectedTeam.team_name}?`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, remove',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+      reverseButtons: true
+    }).then(result => {
+      if (!result.isConfirmed) {
+        return;
+      }
 
+      this.performRemoveMember(member, memberName);
+    });
+  }
 
-    if (!confirmed) {
-
-      return;
-
-    }
-
+  private performRemoveMember(member: any, memberName: string): void {
+    if (!this.selectedTeam?.id) return;
 
     /*
      * Get all current member IDs.
@@ -1754,6 +1851,12 @@ export class Teams implements OnInit {
           this.successMessage =
             `${memberName} removed from the team successfully.`;
 
+          Swal.fire({
+            icon: 'success',
+            title: 'Member removed',
+            text: `${memberName} was removed from the team.`,
+            confirmButtonText: 'OK'
+          });
 
           /*
            * Refresh team data.
@@ -1782,6 +1885,12 @@ export class Teams implements OnInit {
             'Unable to remove member from the team.'
           );
 
+          Swal.fire({
+            icon: 'error',
+            title: 'Unable to remove member',
+            text: this.memberErrorMessage || 'Please try again.',
+            confirmButtonText: 'OK'
+          });
 
           this.cdr.detectChanges();
 

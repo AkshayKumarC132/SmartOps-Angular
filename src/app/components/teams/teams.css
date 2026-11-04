@@ -250,6 +250,38 @@
   stroke-linejoin: round;
 }
 
+/* DELETE TEAM BUTTON */
+.delete-team-button {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.delete-team-button:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-team-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.delete-team-button svg {
+  width: 17px;
+  height: 17px;
+}
+
 
 /* =====================================================
    DESCRIPTION

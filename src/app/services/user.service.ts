@@ -153,12 +153,17 @@ export class UserService {
   // Uses DELETE /auth/users/<id>/
   // ==========================================================
 
-  deleteUser(id: number): Observable<any> {
-
-    return this.http.delete<any>(
-      `${this.apiUrl}${id}/`
-    );
-  }
+  deleteUser(
+  id: number,
+  action: 'deactivate' | 'permanent_delete'
+): Observable<any> {
+  return this.http.delete<any>(
+    `${this.apiUrl}${id}/`,
+    {
+      body: { action }
+    }
+  );
+}
 
   // ==========================================================
   // CHANGE PASSWORD

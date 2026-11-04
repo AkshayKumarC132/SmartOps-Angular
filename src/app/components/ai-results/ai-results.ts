@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize, take } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import {
   AIResult,
@@ -488,10 +489,8 @@ export class AiResults implements OnInit {
   // Request AI retest using the existing API
   // --------------------------------------------------
 
-  retestResult(item: AIResult): void {
-    const status = this.normalizeStatus(
-      item.processing_status
-    );
+  async retestResult(item: AIResult): Promise<void> {
+    const status = this.normalizeStatus(item.processing_status);
 
     if (
       this.loading ||
@@ -502,11 +501,19 @@ export class AiResults implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Request an AI retest for ${this.getTicketLabel(item)}?`
-    );
+    const confirmation = await Swal.fire({
+      icon: 'question',
+      title: 'Request AI retest?',
+      text: `Request an AI retest for ${this.getTicketLabel(item)}?`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, retest',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#6557e8',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true
+    });
 
-    if (!confirmed) {
+    if (!confirmation.isConfirmed) {
       return;
     }
 
@@ -521,6 +528,14 @@ export class AiResults implements OnInit {
             `Retest request submitted for ${this.getTicketLabel(item)}.`;
 
           this.cdr.markForCheck();
+
+          void Swal.fire({
+            icon: 'success',
+            title: 'Retest requested',
+            text: this.successMessage,
+            confirmButtonColor: '#6557e8'
+          });
+
           this.loadResults();
         },
 
@@ -534,11 +549,18 @@ export class AiResults implements OnInit {
             'Unable to submit the retest request.';
 
           this.cdr.markForCheck();
+
+          void Swal.fire({
+            icon: 'error',
+            title: 'Retest failed',
+            text: this.errorMessage,
+            confirmButtonColor: '#6557e8'
+          });
         }
       });
   }
 
-  // --------------------------------------------------
+    // --------------------------------------------------
   // Private helpers
   // --------------------------------------------------
 

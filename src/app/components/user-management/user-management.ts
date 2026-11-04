@@ -3,7 +3,7 @@ import {
   Component,
   OnInit
 } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -15,6 +15,7 @@ import {
 
 import { ApiErrorService } from '../../services/api-error.service';
 import { OrganizationContextService } from '../../services/organization-context.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-user-management',
@@ -58,7 +59,8 @@ export class UserManagement implements OnInit {
     private userService: UserService,
     private apiErrorService: ApiErrorService,
     private cdr: ChangeDetectorRef,
-    private organizationContextService: OrganizationContextService
+    private organizationContextService: OrganizationContextService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -483,14 +485,8 @@ export class UserManagement implements OnInit {
           ? response
           : [];
 
-        // Preserve the existing active-user filtering.
-        const activeUsers = allUsers.filter(
-          user => user.is_active === true
-        );
-
-        this.users = this.filterUsersForAdminPortal(
-          activeUsers
-        );
+        // Keep active and inactive accounts visible in User Management.
+        this.users = this.filterUsersForAdminPortal(allUsers);
 
         // Preserve existing AI-access behavior.
         this.users.forEach(user => {
@@ -690,17 +686,12 @@ export class UserManagement implements OnInit {
     }
 
     if (this.userForm.password.length < 7) {
-      this.errorMessage =
-        'Password must contain at least 7 characters.';
+      this.errorMessage = 'Password must contain at least 7 characters.';
       return;
     }
 
     const role = this.userForm.role;
-
-    if (
-      role !== 'Requester' &&
-      role !== 'Team Member'
-    ) {
+    if (role !== 'Requester' && role !== 'Team Member') {
       this.errorMessage = 'Invalid user role.';
       return;
     }
@@ -721,27 +712,53 @@ export class UserManagement implements OnInit {
       last_name: this.userForm.last_name.trim()
     };
 
-    this.saving = true;
-
-    this.userService.registerUser(payload).subscribe({
-      next: response => {
-        console.log('User created:', response);
-
-        this.saving = false;
-        this.showInviteModal = false;
-        this.successMessage = 'User created successfully.';
-
-        this.loadUsers();
-        this.cdr.detectChanges();
-      },
-
-      error: error => {
-        console.error('User creation error:', error);
-
-        this.saving = false;
-        this.handleError(error, 'Unable to create user.');
-        this.cdr.detectChanges();
+    Swal.fire({
+      title: 'Create User?',
+      text: `Create the account for ${payload.username}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Create User',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true
+    }).then(result => {
+      if (!result.isConfirmed) {
+        return;
       }
+
+      this.saving = true;
+      this.userService.registerUser(payload).subscribe({
+        next: () => {
+          this.saving = false;
+          this.showInviteModal = false;
+          this.successMessage = 'User created successfully.';
+          this.loadUsers();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            title: 'User Created!',
+            text: `${payload.username} has been created successfully.`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#0d9488'
+          });
+        },
+        error: error => {
+          console.error('User creation error:', error);
+          this.saving = false;
+          this.handleError(error, 'Unable to create user.');
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            title: 'Creation Failed',
+            text: this.errorMessage || 'Unable to create user.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#dc2626'
+          });
+        }
+      });
     });
   }
 
@@ -865,12 +882,86 @@ export class UserManagement implements OnInit {
   }
 
   // =====================================================
-  // DELETE USER
+  // ACTIVATE / DEACTIVATE USER
+  // =====================================================
+
+  toggleUserStatus(user: User): void {
+    if (!user?.id || this.saving) {
+      return;
+    }
+
+    const activate = user.is_active === false;
+
+    Swal.fire({
+      title: activate ? 'Activate User?' : 'Deactivate User?',
+      text: activate
+        ? `Activate ${this.getUserName(user)}? They will be able to access SmartOps again.`
+        : `Deactivate ${this.getUserName(user)}? They will no longer be able to access SmartOps.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: activate ? 'Yes, Activate' : 'Yes, Deactivate',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: activate ? '#0d9488' : '#d97706',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true
+    }).then(result => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      this.saving = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      this.userService.updateUser(user.id, {
+        is_active: activate
+      }).subscribe({
+        next: () => {
+          user.is_active = activate;
+          this.saving = false;
+          this.successMessage = activate
+            ? 'User activated successfully.'
+            : 'User deactivated successfully.';
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            title: activate ? 'User Activated' : 'User Deactivated',
+            text: `${this.getUserName(user)} has been ${activate ? 'activated' : 'deactivated'}.`,
+            icon: 'success',
+            confirmButtonColor: '#0d9488'
+          });
+        },
+        error: error => {
+          this.saving = false;
+          this.handleError(
+            error,
+            activate ? 'Unable to activate user.' : 'Unable to deactivate user.'
+          );
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            title: 'Action Failed',
+            text: this.errorMessage || 'Unable to update user status.',
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+          });
+        }
+      });
+    });
+  }
+
+  // =====================================================
+  // PERMANENTLY DELETE USER
   // =====================================================
 
   deleteUser(user: User): void {
     if (!user?.id) {
-      this.errorMessage = 'Unable to identify the user.';
+      Swal.fire({
+        title: 'Unable to Delete',
+        text: 'Unable to identify the user.',
+        icon: 'error',
+        confirmButtonColor: '#dc2626'
+      });
       return;
     }
 
@@ -878,45 +969,66 @@ export class UserManagement implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${this.getUserName(user)}?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.saving = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.userService.deleteUser(user.id).subscribe({
-      next: response => {
-        console.log('Delete response:', response);
-
-        // Update the displayed list only after the API succeeds.
-        this.users = this.users.filter(
-          item => item.id !== user.id
-        );
-
-        if (this.editingUser?.id === user.id) {
-          this.editingUser = null;
-          this.showEditModal = false;
-        }
-
-        this.saving = false;
-        this.successMessage = 'User deleted successfully.';
-
-        this.cdr.detectChanges();
-      },
-
-      error: error => {
-        console.error('User deletion request failed:', error);
-
-        this.saving = false;
-        this.handleError(error, 'Unable to delete user.');
-        this.cdr.detectChanges();
+    Swal.fire({
+      title: 'Permanently Delete User?',
+      text: `Permanently delete ${this.getUserName(user)}? This cannot be undone. Existing ticket history may prevent deletion.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Permanently Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true
+    }).then(result => {
+      if (!result.isConfirmed) {
+        return;
       }
+
+      this.saving = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      this.userService.deleteUser(user.id, 'permanent_delete').subscribe({
+        next: () => {
+          this.users = this.users.filter(item => item.id !== user.id);
+
+          if (this.editingUser?.id === user.id) {
+            this.editingUser = null;
+            this.showEditModal = false;
+          }
+
+          this.saving = false;
+          this.successMessage = 'User permanently deleted.';
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            title: 'User Deleted',
+            text: `${this.getUserName(user)} was permanently deleted.`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#0d9488'
+          });
+        },
+        error: error => {
+          console.error('Permanent deletion failed:', error);
+          this.saving = false;
+          this.handleError(error, 'Unable to permanently delete user.');
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Deletion Failed',
+            text: error.error?.message || error.error?.detail || 'Unable to delete user.',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#dc2626'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.router.navigateByUrl('/user-management');
+            }
+          });
+        }
+      });
+
     });
   }
 

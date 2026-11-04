@@ -89,7 +89,13 @@ export class TicketService {
       data
     );
   }
+  // DELETE TEAM
 
+  deleteTeam(id: number): Observable<any> {
+    return this.http.delete(
+      `${environment.apiUrl}/team_detail/${id}/`
+    );
+  }
 
   // ==============================
   // CREATE TICKET
