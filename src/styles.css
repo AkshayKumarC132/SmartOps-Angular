@@ -52,3 +52,47 @@
 .swal2-confirm:hover {
   background-color: #5143d2 !important;
 }
+/* SweetAlert2 buttons matching SmartOps */
+.swal2-actions {
+  gap: 10px !important;
+}
+
+.swal2-confirm,
+.swal2-cancel,
+.swal2-deny {
+  border: 0 !important;
+  border-radius: 7px !important;
+  padding: 10px 16px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.swal2-confirm {
+  background: #6557e8 !important;
+  color: #fff !important;
+}
+
+.swal2-confirm:hover {
+  background: #5143d2 !important;
+}
+
+.swal2-cancel {
+  background: #eef0f4 !important;
+  color: #344054 !important;
+}
+
+.swal2-cancel:hover {
+  background: #e2e5eb !important;
+}
+
+.swal2-deny {
+  background: #dc2626 !important;
+  color: #fff !important;
+}
+
+.swal2-deny:hover {
+  background: #b91c1c !important;
+}
