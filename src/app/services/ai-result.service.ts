@@ -106,6 +106,11 @@ export class AIResultService {
       `${this.baseUrl}${id}/`
     );
   }
+  getConfidence(id: number): Observable<unknown> {
+  return this.http.get<unknown>(
+    `${this.baseUrl}${id}/confidence/`
+  );
+}
 
   retestResult(id: number): Observable<unknown> {
     return this.http.post<unknown>(

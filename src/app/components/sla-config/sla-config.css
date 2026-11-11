@@ -39,7 +39,9 @@
 .organization-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  margin-top: 12px;
   color: #667085;
   font-size: 14px;
 }
@@ -424,7 +426,7 @@
   white-space: nowrap;
 }
 
-.priority-Critical {
+.priority-critical {
   border: 1px solid #ffb3b3;
   background: #fff0f0;
   color: #f04438;

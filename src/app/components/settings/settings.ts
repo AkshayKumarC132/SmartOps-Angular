@@ -324,7 +324,7 @@ export class Settings implements OnInit {
 
     this.http
       .get<any>(
-        `${environment.apiUrl}/dashboard/notification-preferences/`
+        `${environment.apiUrl}/notification-preferences/`
       )
       .subscribe({
         next: (response: any) => {
@@ -422,7 +422,7 @@ export class Settings implements OnInit {
 
     this.http
       .patch<any>(
-        `${environment.apiUrl}/dashboard/notification-preferences/`,
+        `${environment.apiUrl}/notification-preferences/`,
         payload
       )
       .subscribe({

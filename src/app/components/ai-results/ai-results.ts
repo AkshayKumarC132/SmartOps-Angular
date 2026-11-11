@@ -7,7 +7,12 @@ import {
   OnInit
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { finalize, take } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  of,
+  take
+} from 'rxjs';
 import Swal from 'sweetalert2';
 
 import {
@@ -33,6 +38,10 @@ export class AiResults implements OnInit {
   readonly Math = Math;
 
   results: AIResult[] = [];
+
+  // Stores confidence scores retrieved from the backend.
+  confidenceByResult: Record<number, number | null> = {};
+
   loading = false;
   errorMessage = '';
   successMessage = '';
@@ -46,9 +55,10 @@ export class AiResults implements OnInit {
     this.loadResults();
   }
 
-  /**
-   * Load real AI result records from the existing Django API.
-   */
+  // --------------------------------------------------
+  // Load AI Results
+  // --------------------------------------------------
+
   loadResults(): void {
     if (this.loading) {
       return;
@@ -57,6 +67,7 @@ export class AiResults implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.confidenceByResult = {};
 
     this.cdr.markForCheck();
 
@@ -69,7 +80,8 @@ export class AiResults implements OnInit {
           console.log('[AI Results] Loading finished:', {
             loading: this.loading,
             totalResults: this.results.length,
-            completedResults: this.completedResults
+            completedResults: this.completedResults,
+            averageConfidence: this.averageConfidence
           });
 
           this.cdr.markForCheck();
@@ -87,6 +99,9 @@ export class AiResults implements OnInit {
             completedResults: this.completedResults
           });
 
+          // Load confidence scores after retrieving AI results.
+          this.loadConfidenceScores();
+
           this.cdr.markForCheck();
         },
 
@@ -97,6 +112,7 @@ export class AiResults implements OnInit {
           );
 
           this.results = [];
+          this.confidenceByResult = {};
 
           if (error instanceof HttpErrorResponse) {
             if (error.status === 0) {
@@ -110,6 +126,7 @@ export class AiResults implements OnInit {
                 'You do not have permission to view AI results.';
             } else {
               this.errorMessage =
+                error.error?.Error ||
                 error.error?.detail ||
                 error.error?.message ||
                 `Unable to load AI results (HTTP ${error.status}).`;
@@ -126,7 +143,145 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Dashboard metrics
+  // Load Confidence Scores from Django API
+  // --------------------------------------------------
+
+  loadConfidenceScores(): void {
+    const completedResults = this.results.filter(
+      item =>
+        this.normalizeStatus(item.processing_status) === 'COMPLETED'
+    );
+
+    completedResults.forEach(item => {
+      this.aiResultService.getConfidence(item.id)
+        .pipe(
+          take(1),
+          catchError(error => {
+            console.warn(
+              `[AI Results] Confidence unavailable for result ${item.id}:`,
+              error
+            );
+
+            // Confidence failure must not break the results page.
+            return of(null);
+          })
+        )
+        .subscribe(response => {
+          if (response === null) {
+            return;
+          }
+
+          const scores = this.extractConfidenceScores(response);
+
+          
+if (scores.length > 0) {
+  const average =
+    scores.reduce((sum, value) => sum + value, 0) /
+    scores.length;
+
+  this.confidenceByResult[item.id] =
+    Math.round(average * 100) / 100;
+
+
+            console.log(
+              `[AI Results] Confidence loaded for result ${item.id}:`,
+              this.confidenceByResult[item.id]
+            );
+          }
+
+          this.cdr.markForCheck();
+        });
+    });
+  }
+
+  // --------------------------------------------------
+  // Parse Confidence API Response
+  // --------------------------------------------------
+
+  private extractConfidenceScores(response: unknown): number[] {
+    if (
+      response === null ||
+      typeof response !== 'object' ||
+      Array.isArray(response)
+    ) {
+      return [];
+    }
+
+    const data = response as Record<string, unknown>;
+    const confidenceResults = data['confidence_results'];
+
+    if (
+      confidenceResults === null ||
+      typeof confidenceResults !== 'object' ||
+      Array.isArray(confidenceResults)
+    ) {
+      return [];
+    }
+
+    const confidence =
+      confidenceResults as Record<string, unknown>;
+
+    const scores: number[] = [];
+
+    const addScore = (value: unknown): void => {
+      if (
+        typeof value !== 'number' ||
+        !Number.isFinite(value)
+      ) {
+        return;
+      }
+
+      const percentage = value <= 1
+        ? value * 100
+        : value;
+
+      if (percentage >= 0 && percentage <= 100) {
+        scores.push(percentage);
+      }
+    };
+
+    const addArrayScores = (value: unknown): void => {
+      if (!Array.isArray(value)) {
+        return;
+      }
+
+      value.forEach(entry => {
+        if (
+          entry !== null &&
+          typeof entry === 'object' &&
+          !Array.isArray(entry)
+        ) {
+          const record = entry as Record<string, unknown>;
+
+          addScore(record['confidence_score']);
+        }
+      });
+    };
+
+    // Knowledge-base suggestion confidence.
+    addArrayScores(confidence['knowledge_base']);
+
+    // Suggested tag confidence.
+    addArrayScores(confidence['tags']);
+
+    // Suggested team confidence.
+    const team = confidence['team'];
+
+    if (
+      team !== null &&
+      typeof team === 'object' &&
+      !Array.isArray(team)
+    ) {
+      const teamRecord = team as Record<string, unknown>;
+
+      addScore(teamRecord['confidence_score']);
+    }
+
+    return scores;
+  }
+
+  // --------------------------------------------------
+  // Dashboard Metrics
   // --------------------------------------------------
 
   get totalResults(): number {
@@ -155,27 +310,29 @@ export class AiResults implements OnInit {
   }
 
   /**
-   * Only calculates confidence when the API supplies it.
-   * Does not manufacture a confidence score.
+   * Calculates average confidence from actual API data.
+   * Results without confidence scores are excluded.
    */
-  get averageConfidence(): number | null {
-    const values = this.results
-      .map(item => this.getConfidence(item))
-      .filter((value): value is number => value !== null);
-
-    if (values.length === 0) {
-      return null;
-    }
-
-    return Math.round(
-      values.reduce((sum, value) => sum + value, 0) /
-      values.length
+  
+get averageConfidence(): number | null {
+  const values = this.results
+    .map(item => this.getConfidence(item))
+    .filter((value): value is number =>
+      value !== null && Number.isFinite(value)
     );
+
+  if (values.length === 0) {
+    return null;
   }
 
-  /**
-   * Derive result types from actual metadata or result content.
-   */
+  const average =
+    values.reduce((sum, value) => sum + value, 0) /
+    values.length;
+
+  return Math.round(average * 100) / 100;
+}
+
+
   get resultTypes(): string[] {
     return Array.from(
       new Set(
@@ -195,7 +352,7 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Result type and confidence
+  // Result Type and Confidence
   // --------------------------------------------------
 
   getResultType(item: AIResult): string {
@@ -249,7 +406,7 @@ export class AiResults implements OnInit {
       typeof value !== 'number' ||
       !Number.isFinite(value)
     ) {
-      return null;
+      return this.confidenceByResult[item.id] ?? null;
     }
 
     const percentage = value <= 1
@@ -257,14 +414,14 @@ export class AiResults implements OnInit {
       : value;
 
     if (percentage < 0 || percentage > 100) {
-      return null;
+      return this.confidenceByResult[item.id] ?? null;
     }
 
     return Math.round(percentage);
   }
 
   // --------------------------------------------------
-  // Structured AI result data
+  // Structured AI Result Data
   // --------------------------------------------------
 
   getStructuredResult(item: AIResult): StructuredAIResult {
@@ -314,10 +471,10 @@ export class AiResults implements OnInit {
     );
   }
 
-  /**
-   * Return a readable summary without rendering JSON as the
-   * primary content when a structured summary is available.
-   */
+  // --------------------------------------------------
+  // Result Summary
+  // --------------------------------------------------
+
   getResultSummary(item: AIResult): string {
     const result = this.parseResult(item.result);
 
@@ -382,7 +539,7 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Ticket navigation
+  // Ticket Navigation
   // --------------------------------------------------
 
   getTicketLabel(item: AIResult): string {
@@ -403,7 +560,7 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Provider and status formatting
+  // Provider and Status Formatting
   // --------------------------------------------------
 
   formatProvider(provider: string | null): string {
@@ -475,7 +632,7 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Stable list rendering
+  // Stable List Rendering
   // --------------------------------------------------
 
   trackByResultId(
@@ -486,7 +643,7 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Request AI retest using the existing API
+  // Request AI Retest
   // --------------------------------------------------
 
   async retestResult(item: AIResult): Promise<void> {
@@ -543,6 +700,7 @@ export class AiResults implements OnInit {
           console.error('[AI Results] Retest error:', error);
 
           this.errorMessage =
+            error.error?.Error ||
             error.error?.detail ||
             error.error?.message ||
             error.message ||
@@ -560,8 +718,8 @@ export class AiResults implements OnInit {
       });
   }
 
-    // --------------------------------------------------
-  // Private helpers
+  // --------------------------------------------------
+  // Private Helpers
   // --------------------------------------------------
 
   private normalizeStatus(
