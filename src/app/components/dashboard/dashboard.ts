@@ -301,8 +301,11 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   get totalKbArticles(): number {
-    return this.kbArticles.length;
-  }
+  return this.kbArticles.filter(
+    article =>
+      String(article.status || '').toLowerCase().trim() === 'published'
+  ).length;
+}
 
   get recentTickets(): Ticket[] {
     const getTimestamp = (ticket: Ticket): number => {
