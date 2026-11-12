@@ -1,48 +1,25 @@
 <div class="teams-page">
-
-  <!-- =====================================================
-       PAGE HEADER
-       ===================================================== -->
-
+  <!-- PAGE HEADER -->
   <div class="page-header">
-
     <div class="page-heading">
-
-      <h1>
-        Teams
-      </h1>
-
-      <p>
-        Manage SmartOps teams and their members.
-      </p>
-
+      <h1>Teams</h1>
+      <p>Manage SmartOps teams and their members.</p>
     </div>
-
 
     <button
       type="button"
       class="new-team-button"
       (click)="openCreateTeam()"
     >
-
       <svg viewBox="0 0 24 24">
         <path d="M12 5v14"></path>
         <path d="M5 12h14"></path>
       </svg>
-
-      <span>
-        New Team
-      </span>
-
+      <span>New Team</span>
     </button>
-
   </div>
 
-
-  <!-- =====================================================
-       SUCCESS MESSAGE
-       ===================================================== -->
-
+  <!-- SUCCESS MESSAGE -->
   <div
     *ngIf="successMessage"
     class="success-message"
@@ -50,11 +27,7 @@
     {{ successMessage }}
   </div>
 
-
-  <!-- =====================================================
-       ERROR MESSAGE
-       ===================================================== -->
-
+  <!-- ERROR MESSAGE -->
   <div
     *ngIf="errorMessage && !showTeamModal"
     class="error-message"
@@ -62,11 +35,7 @@
     {{ errorMessage }}
   </div>
 
-
-  <!-- =====================================================
-       LOADING
-       ===================================================== -->
-
+  <!-- LOADING -->
   <div
     *ngIf="loading"
     class="message"
@@ -74,75 +43,51 @@
     Loading teams...
   </div>
 
-
-  <!-- =====================================================
-       TEAM CARDS
-       ===================================================== -->
-
+  <!-- TEAM CARDS -->
   <div
     *ngIf="!loading && teams.length > 0"
     class="teams-grid"
   >
-
     <div
       class="team-card"
       *ngFor="
         let team of teams;
         trackBy: trackByTeam
       "
-      [class.selected-team]="
-        selectedTeam?.id === team.id
-      "
+      [class.selected-team]="selectedTeam?.id === team.id"
       (click)="selectTeam(team)"
     >
-
       <!-- TEAM HEADER -->
-
       <div class="team-card-header">
-
         <div class="team-title">
-
           <div class="team-icon-wrapper">
-
             <svg
               class="team-icon"
               viewBox="0 0 24 24"
             >
-
               <circle
                 cx="9"
                 cy="7"
                 r="3"
               ></circle>
-
               <path
                 d="M3 21v-2a6 6 0 0 1 12 0v2"
               ></path>
-
               <circle
                 cx="17"
                 cy="8"
                 r="2"
               ></circle>
-
               <path
                 d="M16 14a5 5 0 0 1 5 5v2"
               ></path>
-
             </svg>
-
           </div>
 
-
-          <h2>
-            {{ team.team_name }}
-          </h2>
-
+          <h2>{{ team.team_name }}</h2>
         </div>
 
-
         <div class="team-card-actions">
-
           <button
             type="button"
             class="edit-button"
@@ -153,22 +98,15 @@
               $event.stopPropagation()
             "
           >
-
-          <svg viewBox="0 0 24 24">
-
-            <path
-              d="M12 20h9"
-            ></path>
-
-            <path
-              d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"
-            ></path>
-
-          </svg>
-
+            <svg viewBox="0 0 24 24">
+              <path d="M12 20h9"></path>
+              <path
+                d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"
+              ></path>
+            </svg>
           </button>
 
-                    <button
+          <button
             type="button"
             class="delete-team-button"
             title="Delete team"
@@ -194,32 +132,21 @@
               <path d="M14 11v5"></path>
             </svg>
           </button>
-
         </div>
-
       </div>
 
-
       <!-- DESCRIPTION -->
-
       <p class="description">
-
         {{
           team.description ||
           'No description available'
         }}
-
       </p>
 
-
       <!-- TEAM FOOTER -->
-
       <div class="team-footer">
-
         <div class="member-section">
-
           <!-- AVATARS -->
-
           <div
             class="member-avatars"
             *ngIf="
@@ -227,7 +154,6 @@
               team.team_member_details.length > 0
             "
           >
-
             <div
               class="member-avatar"
               *ngFor="
@@ -236,56 +162,32 @@
               "
               [title]="getMemberName(member)"
             >
-
               {{ getInitial(member) }}
-
             </div>
-
 
             <div
               class="member-more"
-              *ngIf="
-                team.team_member_details.length > 3
-              "
+              *ngIf="team.team_member_details.length > 3"
             >
-
-              +{{
-                team.team_member_details.length - 3
-              }}
-
+              +{{ team.team_member_details.length - 3 }}
             </div>
-
           </div>
 
-
           <!-- MEMBER COUNT -->
-
           <span class="member-count">
-
             {{ getMemberCount(team) }}
-
             {{ getMemberLabel(team) }}
-
           </span>
-
         </div>
-
 
         <span class="created-badge">
           Created by admin
         </span>
-
       </div>
-
     </div>
-
   </div>
 
-
-  <!-- =====================================================
-       EMPTY TEAMS
-       ===================================================== -->
-
+  <!-- EMPTY TEAMS -->
   <div
     *ngIf="
       !loading &&
@@ -294,53 +196,33 @@
     "
     class="empty-state"
   >
-
     No teams found.
-
   </div>
 
-
-  <!-- =====================================================
-       SELECTED TEAM MEMBERS
-       ===================================================== -->
-
+  <!-- SELECTED TEAM MEMBERS -->
   <section
-    *ngIf="
-      !loading &&
-      selectedTeam
-    "
+    *ngIf="!loading && selectedTeam"
     class="selected-members-section"
   >
-
     <!-- SECTION HEADER -->
-
     <div class="members-section-header">
-
       <div>
-
         <h2>
           Team Members —
           {{ selectedTeam.team_name }}
         </h2>
-
-        <p>
-          Users assigned to this team.
-        </p>
-
+        <p>Users assigned to this team.</p>
       </div>
-
 
       <button
         type="button"
         class="add-member-button"
         (click)="openAddMember()"
       >
-
         <svg
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-
           <circle
             cx="9"
             cy="8"
@@ -349,7 +231,6 @@
             stroke="currentColor"
             stroke-width="1.8"
           ></circle>
-
           <path
             d="M3.5 19a5.5 5.5 0 0 1 11 0"
             fill="none"
@@ -357,7 +238,6 @@
             stroke-width="1.8"
             stroke-linecap="round"
           ></path>
-
           <path
             d="M18 8v6M15 11h6"
             fill="none"
@@ -365,133 +245,74 @@
             stroke-width="1.8"
             stroke-linecap="round"
           ></path>
-
         </svg>
-
         Add Member
-
       </button>
-
     </div>
 
-
     <!-- MEMBER TABLE -->
-
     <div
-      *ngIf="
-        getSelectedMembers().length > 0
-      "
+      *ngIf="getSelectedMembers().length > 0"
       class="members-table-wrapper"
     >
-
       <table class="members-table">
-
         <thead>
-
           <tr>
-
-            <th>
-              USER
-            </th>
-
-            <th>
-              ROLE
-            </th>
-
-            <th>
-              JOINED
-            </th>
-
-            <th>
-              ACTIONS
-            </th>
-
+            <th>USER</th>
+            <th>ROLE</th>
+            <th>JOINED</th>
+            <th>ACTIONS</th>
           </tr>
-
         </thead>
 
-
         <tbody>
-
           <tr
             *ngFor="
               let member of getSelectedMembers();
               trackBy: trackByMember
             "
           >
-
             <!-- USER -->
-
             <td>
-
               <div class="user-cell">
-
                 <div class="table-member-avatar">
-
                   {{ getInitial(member) }}
-
                 </div>
 
-
                 <div class="user-details">
-
                   <strong>
                     {{ getMemberName(member) }}
                   </strong>
-
-                  <span>
-                    {{ member.email }}
-                  </span>
-
+                  <span>{{ member.email }}</span>
                 </div>
-
               </div>
-
             </td>
-
 
             <!-- ROLE -->
-
             <td>
-
               <span class="role-badge">
-
                 {{ member.role }}
-
               </span>
-
             </td>
-
 
             <!-- JOINED -->
-
             <td>
-
               {{ getJoinedDate(member) }}
-
             </td>
 
-
             <!-- ACTION -->
-
             <td>
-
               <button
                 type="button"
                 class="delete-member-button"
                 title="Remove member"
-                [disabled]="
-                  memberSaving ||
-                  saving
-                "
+                [disabled]="memberSaving || saving"
                 (click)="removeMember(member)"
               >
-
                 <svg
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
-
                   <path
                     d="M4 7h16"
                     fill="none"
@@ -499,7 +320,6 @@
                     stroke-width="1.8"
                     stroke-linecap="round"
                   ></path>
-
                   <path
                     d="M10 11v6M14 11v6"
                     fill="none"
@@ -507,7 +327,6 @@
                     stroke-width="1.8"
                     stroke-linecap="round"
                   ></path>
-
                   <path
                     d="M6 7l1 13h10l1-13"
                     fill="none"
@@ -515,7 +334,6 @@
                     stroke-width="1.8"
                     stroke-linejoin="round"
                   ></path>
-
                   <path
                     d="M9 7V4h6v3"
                     fill="none"
@@ -523,113 +341,73 @@
                     stroke-width="1.8"
                     stroke-linejoin="round"
                   ></path>
-
                 </svg>
-
               </button>
-
             </td>
-
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
 
-
     <!-- NO MEMBERS -->
-
     <div
-      *ngIf="
-        getSelectedMembers().length === 0
-      "
+      *ngIf="getSelectedMembers().length === 0"
       class="empty-selected-members"
     >
-
       <div class="empty-members-icon">
-
         <svg viewBox="0 0 24 24">
-
           <circle
             cx="9"
             cy="7"
             r="3"
           ></circle>
-
           <path
             d="M3 21v-2a6 6 0 0 1 12 0v2"
           ></path>
-
           <circle
             cx="17"
             cy="8"
             r="2"
           ></circle>
-
           <path
             d="M16 14a5 5 0 0 1 5 5v2"
           ></path>
-
         </svg>
-
       </div>
 
-
-      <p>
-        No members assigned to this team.
-      </p>
-
+      <p>No members assigned to this team.</p>
     </div>
-
   </section>
-
 </div>
 
-
-<!-- =====================================================
-     CREATE / EDIT TEAM MODAL
-     ===================================================== -->
-
+<!-- CREATE / EDIT TEAM MODAL -->
 <div
   class="modal-backdrop"
   *ngIf="showTeamModal"
   (click)="closeTeamModal()"
 >
-
   <div
     class="team-modal"
     (click)="$event.stopPropagation()"
   >
-
     <div class="modal-header">
-
       <div>
-
         <h2>
-
           {{
             isEditMode
               ? 'Edit Team'
               : 'New Team'
           }}
-
         </h2>
 
-
         <p>
-
           {{
             isEditMode
               ? 'Update the team details.'
               : 'Create a new SmartOps team.'
           }}
-
         </p>
-
       </div>
-
 
       <button
         type="button"
@@ -639,9 +417,7 @@
       >
         ×
       </button>
-
     </div>
-
 
     <div
       *ngIf="errorMessage"
@@ -650,17 +426,12 @@
       {{ errorMessage }}
     </div>
 
-
     <form
       class="team-form"
       (ngSubmit)="saveTeam()"
     >
-
       <div class="form-group">
-
-        <label for="teamName">
-          Team Name
-        </label>
+        <label for="teamName">Team Name</label>
 
         <input
           id="teamName"
@@ -672,12 +443,9 @@
           [disabled]="saving"
           required
         />
-
       </div>
 
-
       <div class="form-group">
-
         <label for="teamDescription">
           Description
         </label>
@@ -690,20 +458,109 @@
           rows="4"
           [disabled]="saving"
         ></textarea>
-
       </div>
 
+      <!-- TEAM MEMBER ASSIGNMENT -->
+      <div class="team-member-assignment">
+        <div class="team-member-section-label">
+          Assign Team Members
+        </div>
 
-      <div class="form-note">
+        <p class="form-help-text">
+          Select Admins or Team Members from your organization.
+          Users already assigned to another team cannot be selected.
+        </p>
 
-        Team members can be managed after
-        the team is created.
+        <div
+          *ngIf="usersLoading"
+          class="add-member-loading"
+        >
+          Loading organization users...
+        </div>
 
+        <div
+          *ngIf="memberErrorMessage"
+          class="modal-error"
+        >
+          {{ memberErrorMessage }}
+        </div>
+
+        <div
+          *ngIf="
+            !usersLoading &&
+            !memberErrorMessage &&
+            getEligibleUsers().length > 0
+          "
+          class="team-form-member-list"
+        >
+          <div
+            *ngFor="
+              let user of getEligibleUsers();
+              trackBy: trackByMember
+            "
+            class="team-form-member-row"
+            [class.selected-member]="
+              isTeamFormMemberSelected(user.id)
+            "
+            [class.already-in-other-team]="
+              isMemberOfOtherTeam(user.id)
+            "
+            (click)="
+              !isMemberOfOtherTeam(user.id) &&
+              toggleTeamFormMember(user.id)
+            "
+          >
+            <input
+              type="checkbox"
+              [checked]="
+                isTeamFormMemberSelected(user.id)
+              "
+              [disabled]="
+                saving ||
+                isMemberOfOtherTeam(user.id)
+              "
+              (click)="$event.stopPropagation()"
+              (change)="toggleTeamFormMember(user.id)"
+            />
+
+            <div class="add-member-avatar">
+              {{ getInitial(user) }}
+            </div>
+
+            <div class="add-member-info">
+              <strong>
+                {{ getUserDisplayName(user) }}
+              </strong>
+              <span>{{ user.email }}</span>
+              <small>@{{ user.username }}</small>
+            </div>
+
+            <span class="add-member-role">
+              {{ user.role }}
+            </span>
+
+            <span
+              *ngIf="isMemberOfOtherTeam(user.id)"
+              class="already-in-other-team"
+            >
+              Already in {{ getOtherTeamName(user.id) }}
+            </span>
+          </div>
+        </div>
+
+        <div
+          *ngIf="
+            !usersLoading &&
+            !memberErrorMessage &&
+            getEligibleUsers().length === 0
+          "
+          class="empty-members"
+        >
+          No eligible Admin or Team Member users found.
+        </div>
       </div>
-
 
       <div class="modal-actions">
-
         <button
           type="button"
           class="cancel-button"
@@ -713,13 +570,11 @@
           Cancel
         </button>
 
-
         <button
           type="submit"
           class="save-button"
           [disabled]="saving"
         >
-
           {{
             saving
               ? 'Saving...'
@@ -727,50 +582,30 @@
                 ? 'Update Team'
                 : 'Create Team'
           }}
-
         </button>
-
       </div>
-
     </form>
-
   </div>
-
 </div>
 
-
-<!-- =====================================================
-     ADD MEMBER MODAL
-     ===================================================== -->
-
+<!-- ADD MEMBER MODAL -->
 <div
   class="modal-backdrop"
   *ngIf="showAddMemberModal"
   (click)="closeAddMember()"
 >
-
   <div
     class="team-modal add-member-modal"
     (click)="$event.stopPropagation()"
   >
-
     <div class="modal-header">
-
       <div>
-
-        <h2>
-          Add Members
-        </h2>
-
+        <h2>Add Members</h2>
         <p>
-
           Add users to
           {{ selectedTeam?.team_name }}
-
         </p>
-
       </div>
-
 
       <button
         type="button"
@@ -780,12 +615,9 @@
       >
         ×
       </button>
-
     </div>
 
-
     <!-- ERROR -->
-
     <div
       *ngIf="memberErrorMessage"
       class="modal-error"
@@ -793,21 +625,15 @@
       {{ memberErrorMessage }}
     </div>
 
-
     <!-- LOADING -->
-
     <div
       *ngIf="usersLoading"
       class="add-member-loading"
     >
-
       Loading users...
-
     </div>
 
-
     <!-- USER LIST -->
-
     <div
       *ngIf="
         !usersLoading &&
@@ -815,108 +641,67 @@
       "
       class="add-member-list"
     >
-
       <div
         *ngFor="
           let user of getEligibleUsers();
           trackBy: trackByMember
         "
         class="add-member-row"
-
         [class.selected-member]="
           isUserSelected(user.id)
         "
-
         [class.existing-member]="
           isExistingMember(user.id)
         "
-
         [class.already-in-other-team]="
           isMemberOfOtherTeam(user.id)
         "
-
         (click)="
           !isExistingMember(user.id) &&
           !isMemberOfOtherTeam(user.id) &&
           toggleUserSelection(user.id)
         "
       >
-
         <!-- CHECKBOX -->
-
         <input
           type="checkbox"
-
-          [checked]="
-            isUserSelected(user.id)
-          "
-
+          [checked]="isUserSelected(user.id)"
           [disabled]="
             isExistingMember(user.id) ||
             isMemberOfOtherTeam(user.id)
           "
-
           (click)="$event.stopPropagation()"
-
-          (change)="
-            toggleUserSelection(user.id)
-          "
+          (change)="toggleUserSelection(user.id)"
         />
 
-
         <!-- AVATAR -->
-
         <div class="add-member-avatar">
-
           {{ getInitial(user) }}
-
         </div>
 
-
         <!-- USER INFO -->
-
         <div class="add-member-info">
-
           <strong>
             {{ getUserDisplayName(user) }}
           </strong>
-
-          <span>
-            {{ user.email }}
-          </span>
-
-          <small>
-            @{{ user.username }}
-          </small>
-
+          <span>{{ user.email }}</span>
+          <small>@{{ user.username }}</small>
         </div>
 
-
         <!-- ROLE -->
-
         <span class="add-member-role">
-
           {{ user.role }}
-
         </span>
-
 
         <!-- ALREADY MEMBER -->
-
         <span
-          *ngIf="
-            isExistingMember(user.id)
-          "
+          *ngIf="isExistingMember(user.id)"
           class="already-member"
         >
-
           Already added
-
         </span>
 
-
         <!-- ALREADY IN ANOTHER TEAM -->
-
         <span
           *ngIf="
             !isExistingMember(user.id) &&
@@ -924,19 +709,13 @@
           "
           class="already-member already-in-other-team"
         >
-
           Already in
           {{ getOtherTeamName(user.id) }}
-
         </span>
-
       </div>
-
     </div>
 
-
     <!-- NO USERS -->
-
     <div
       *ngIf="
         !usersLoading &&
@@ -945,46 +724,32 @@
       "
       class="empty-members"
     >
-
       <div class="empty-members-icon">
-
         <svg viewBox="0 0 24 24">
-
           <circle
             cx="9"
             cy="7"
             r="3"
           ></circle>
-
           <path
             d="M3 21v-2a6 6 0 0 1 12 0v2"
           ></path>
-
           <circle
             cx="17"
             cy="8"
             r="2"
           ></circle>
-
           <path
             d="M16 14a5 5 0 0 1 5 5v2"
           ></path>
-
         </svg>
-
       </div>
 
-      <p>
-        No users found.
-      </p>
-
+      <p>No users found.</p>
     </div>
 
-
     <!-- MODAL ACTIONS -->
-
     <div class="modal-actions">
-
       <button
         type="button"
         class="cancel-button"
@@ -993,7 +758,6 @@
       >
         Cancel
       </button>
-
 
       <button
         type="button"
@@ -1004,17 +768,12 @@
         "
         (click)="addMembers()"
       >
-
         {{
           memberSaving
             ? 'Adding...'
             : 'Add Selected'
         }}
-
       </button>
-
     </div>
-
   </div>
-
 </div>

@@ -129,6 +129,9 @@
    ========================= */
 
 .article-card {
+  
+  cursor: pointer;
+
   min-width: 0;
 
   height: 150px;

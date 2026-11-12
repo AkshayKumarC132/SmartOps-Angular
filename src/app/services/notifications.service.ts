@@ -15,7 +15,7 @@ import {
 
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
-
+import { AuthService } from './auth.service';
 export interface NotificationItem {
   id: number;
   ticket: string | null;
@@ -43,7 +43,7 @@ export class NotificationService {
   private readonly readStorageKey =
     'smartops_read_notifications';
 
-  private readonly pollingIntervalMs = 15000;
+  private readonly pollingIntervalMs = 1800000;
 
   private pollingSubscription?: Subscription;
   private pollingStarted = false;
@@ -70,28 +70,31 @@ export class NotificationService {
   readonly newNotification$ =
     this.newNotificationSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,private authService: AuthService) {}
 
   // =========================================================
   // START GLOBAL POLLING
   // =========================================================
 
   startPolling(): void {
-    if (this.pollingStarted) {
+  if (!this.authService.isLoggedIn() || this.pollingStarted) {
+    return;
+  }
+
+  this.pollingStarted = true;
+
+  this.pollingSubscription = timer(
+    0,
+    this.pollingIntervalMs
+  ).subscribe(() => {
+    if (!this.authService.isLoggedIn()) {
+      this.stopPolling();
       return;
     }
 
-    this.pollingStarted = true;
-
-    // Fetch immediately, then every 15 seconds.
-    this.pollingSubscription = timer(
-      0,
-      this.pollingIntervalMs
-    ).subscribe(() => {
-      this.fetchActivities(true);
-    });
-  }
-
+    this.fetchActivities(true);
+  });
+}
   // =========================================================
   // STOP POLLING
   // =========================================================
@@ -105,13 +108,16 @@ export class NotificationService {
   // =========================================================
   // GET NOTIFICATIONS FOR THE NOTIFICATIONS PAGE
   // =========================================================
-
   getNotifications(): Observable<NotificationItem[]> {
+    if (!this.authService.isLoggedIn()) {
+      return of([]);
+    }
+
     return this.http.get<any>(this.apiUrl).pipe(
       map((response: any) => {
         const activities = this.normalizeActivities(response);
         const incoming = this.convertActivities(activities);
-
+        
         const merged = this.mergeNotifications(
           this.notificationsSubject.value,
           incoming
@@ -161,7 +167,10 @@ export class NotificationService {
     if (this.pollingRequestInProgress) {
       return;
     }
-
+    if (!this.authService.isLoggedIn()) {
+  this.stopPolling();
+  return;
+}
     this.pollingRequestInProgress = true;
 
     this.http.get<any>(this.apiUrl).pipe(
@@ -634,8 +643,12 @@ export class NotificationService {
   // =========================================================
 
   refreshUnreadCount(): void {
-    this.fetchActivities(false);
+  if (!this.authService.isLoggedIn()) {
+    return;
   }
+
+  this.fetchActivities(false);
+}
 
   // =========================================================
   // GET TICKET DATABASE ID

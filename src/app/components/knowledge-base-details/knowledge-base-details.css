@@ -271,6 +271,7 @@
 }
 
 .article-content a {
+  cursor: pointer;
   color: #2563eb;
   text-decoration: none;
 }

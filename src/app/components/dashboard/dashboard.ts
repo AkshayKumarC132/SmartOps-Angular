@@ -8,7 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { AuthService } from '../../services/auth.service';
@@ -93,11 +93,24 @@ export class Dashboard implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authService.getUser();
+  this.user = this.authService.getUser();
 
-    // The aggregated endpoint is called when the Dashboard component opens.
-    this.loadDashboardData();
-  }
+  // Initial dashboard data load.
+  this.loadDashboardData();
+
+  // Automatically refresh dashboard data every 60 seconds.
+  interval(120000)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(() => {
+      if (!this.authService.isLoggedIn()) {
+        return;
+      }
+
+      console.log('[Dashboard] Automatic metrics refresh started.');
+
+      this.loadDashboardData();
+    });
+}
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -113,7 +126,23 @@ export class Dashboard implements OnInit, OnDestroy {
     if (this.requestInProgress) {
       return;
     }
+    const isInitialLoad = this.dashboardLastUpdated === null;
 
+this.requestInProgress = true;
+
+// Show the full-page loader only during the initial load.
+if (isInitialLoad) {
+  this.loading = true;
+
+  this.ticketsLoading = true;
+  this.teamsLoading = true;
+  this.kbArticlesLoading = true;
+  this.usersLoading = true;
+  this.activitiesLoading = true;
+  this.apiMonitoringLoading = true;
+}
+
+this.errorMessage = '';
     this.requestInProgress = true;
     this.loading = true;
     this.errorMessage = '';

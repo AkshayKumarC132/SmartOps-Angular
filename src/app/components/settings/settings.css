@@ -1,6 +1,3 @@
-/* =========================================================
-   SETTINGS PAGE
-   ========================================================= */
 
 .settings-page {
   width: 100%;
@@ -9,11 +6,6 @@
   box-sizing: border-box;
   background: #f7f9fb;
 }
-
-
-/* =========================================================
-   PAGE HEADER
-   ========================================================= */
 
 .settings-header {
   display: flex;
@@ -35,22 +27,12 @@
   color: #7a8494;
 }
 
-
-/* =========================================================
-   SETTINGS LAYOUT
-   ========================================================= */
-
 .settings-layout {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
-
-
-/* =========================================================
-   SETTINGS MENU
-   ========================================================= */
 
 .settings-menu {
   background: #ffffff;
@@ -63,29 +45,19 @@
 .settings-menu button {
   width: 100%;
   min-height: 44px;
-
   display: flex;
   align-items: center;
   gap: 11px;
-
   border: none;
   border-radius: 8px;
-
   padding: 10px 12px;
-
   background: transparent;
   color: #667085;
-
   font-size: 13px;
   font-weight: 500;
-
   cursor: pointer;
-
   text-align: left;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .settings-menu button:hover {
@@ -105,92 +77,55 @@
   flex-shrink: 0;
 }
 
-
-/* =========================================================
-   SETTINGS CONTENT
-   ========================================================= */
-
 .settings-content {
   min-width: 0;
 }
 
-
-/* =========================================================
-   SETTINGS CARD
-   ========================================================= */
-
 .settings-card {
   width: 100%;
   background: #ffffff;
-
   border: 1px solid #e5e9ef;
   border-radius: 14px;
-
   box-sizing: border-box;
-
   overflow: hidden;
 }
 
-
-/* =========================================================
-   CARD HEADER
-   ========================================================= */
-
 .card-header {
   padding: 22px 24px;
-
   border-bottom: 1px solid #edf0f3;
 }
 
 .card-header h2 {
   margin: 0;
-
   font-size: 18px;
   font-weight: 650;
-
   color: #172033;
 }
 
 .card-header p {
   margin: 6px 0 0;
-
   font-size: 12px;
-
   color: #7a8494;
 }
-
-
-/* =========================================================
-   PROFILE SUMMARY
-   ========================================================= */
 
 .profile-summary {
   display: flex;
   align-items: center;
-
   gap: 15px;
-
   padding: 22px 24px;
-
   border-bottom: 1px solid #edf0f3;
 }
 
 .large-avatar {
   width: 52px;
   height: 52px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   flex-shrink: 0;
-
   border-radius: 50%;
-
   background: #e8f6f5;
-
   color: #229e98;
-
   font-size: 18px;
   font-weight: 700;
 }
@@ -198,87 +133,54 @@
 .profile-user-info {
   display: flex;
   flex-direction: column;
-
   gap: 4px;
-
   min-width: 0;
 }
 
 .profile-user-info strong {
   color: #172033;
-
   font-size: 15px;
   font-weight: 650;
 }
 
 .profile-user-info span:not(.role-badge) {
   color: #7a8494;
-
   font-size: 12px;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-
-/* =========================================================
-   ROLE BADGE
-   ========================================================= */
-
 .role-badge {
   width: fit-content;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   margin-top: 3px;
-
   padding: 3px 9px;
-
   border-radius: 999px;
-
   background: #eef2ff;
-
   color: #5364b8;
-
   font-size: 10px;
   font-weight: 600;
 }
 
-
-/* =========================================================
-   FORM GRID
-   ========================================================= */
-
 .form-grid {
   display: grid;
-
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
   gap: 18px 20px;
-
   padding: 24px;
 }
 
-
-/* =========================================================
-   FORM GROUP
-   ========================================================= */
-
 .form-group {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
 }
 
 .form-group label {
   margin-bottom: 7px;
-
   color: #344054;
-
   font-size: 12px;
   font-weight: 600;
 }
@@ -286,184 +188,100 @@
 .form-group input {
   width: 100%;
   height: 40px;
-
   box-sizing: border-box;
-
   padding: 0 12px;
-
   border: 1px solid #d8dee7;
   border-radius: 7px;
-
   background: #ffffff;
-
   color: #172033;
-
   font-family: inherit;
   font-size: 13px;
-
   outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .form-group input:focus {
   border-color: #32aaa4;
-
-  box-shadow:
-    0 0 0 3px rgba(50, 170, 164, 0.10);
+  box-shadow: 0 0 0 3px rgba(50, 170, 164, 0.10);
 }
 
 .form-group input::placeholder {
   color: #a0a8b5;
 }
 
-
-/* =========================================================
-   DISABLED / READONLY INPUTS
-   ========================================================= */
-
 .form-group input:disabled,
 .form-group input[readonly] {
   background: #f6f8fa;
-
   color: #667085;
-
   border-color: #e1e5ea;
-
   cursor: not-allowed;
-
   opacity: 1;
 }
 
 .form-group small {
   margin-top: 5px;
-
   color: #98a1af;
-
   font-size: 10px;
 }
-
-
-/* =========================================================
-   ORGANIZATION FIELD
-   ========================================================= */
 
 .form-group input[value="—"] {
   color: #98a1af;
 }
 
-
-/* =========================================================
-   SUCCESS MESSAGE
-   ========================================================= */
-
 .success-message {
   margin: 0 24px 18px;
-
   padding: 10px 12px;
-
   border: 1px solid #b9e4df;
   border-radius: 7px;
-
   background: #eefaf8;
-
   color: #16756f;
-
   font-size: 12px;
   line-height: 1.4;
 }
-
-
-/* =========================================================
-   ERROR MESSAGE
-   ========================================================= */
 
 .error-message {
   margin: 0 24px 18px;
-
   padding: 10px 12px;
-
   border: 1px solid #f3c1c1;
   border-radius: 7px;
-
   background: #fff4f4;
-
   color: #c03939;
-
   font-size: 12px;
   line-height: 1.4;
 }
-
-
-/* =========================================================
-   NOTIFICATION MESSAGE OVERRIDE
-   ========================================================= */
 
 .notification-message {
   margin-top: 18px;
   margin-bottom: 0;
 }
 
-
-/* =========================================================
-   CARD ACTIONS
-   ========================================================= */
-
 .card-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-
   padding: 16px 24px;
-
   border-top: 1px solid #edf0f3;
 }
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 
 .save-button,
 .secondary-button,
 .danger-button {
   height: 38px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   padding: 0 16px;
-
   border-radius: 7px;
-
   font-family: inherit;
-
   font-size: 12px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    opacity 0.2s ease,
-    transform 0.15s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
 }
-
-
-/* =========================================================
-   SAVE BUTTON
-   ========================================================= */
 
 .save-button {
   border: 1px solid #239f99;
-
   background: #239f99;
-
   color: #ffffff;
 }
 
@@ -481,24 +299,15 @@
   opacity: 0.6;
 }
 
-
-/* =========================================================
-   SECONDARY BUTTON
-   ========================================================= */
-
 .secondary-button {
   border: 1px solid #d4dbe4;
-
   background: #ffffff;
-
   color: #344054;
 }
 
 .secondary-button:hover:not(:disabled) {
   border-color: #32aaa4;
-
   color: #229e98;
-
   background: #f6fbfb;
 }
 
@@ -507,37 +316,21 @@
   opacity: 0.6;
 }
 
-
-/* =========================================================
-   DANGER BUTTON
-   ========================================================= */
-
 .danger-button {
   border: 1px solid #efc2c2;
-
   background: #ffffff;
-
   color: #d04444;
 }
 
 .danger-button:hover {
   background: #fff5f5;
-
   border-color: #e4aaaa;
 }
 
-
-/* =========================================================
-   PASSWORD SECTION
-   ========================================================= */
-
 .password-section {
   display: grid;
-
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
   gap: 18px 20px;
-
   padding: 24px;
 }
 
@@ -545,28 +338,17 @@
   grid-column: 1 / -1;
 }
 
-
-/* =========================================================
-   PASSWORD ACTION
-   ========================================================= */
-
 .password-action {
   grid-column: 1 / -1;
-
   display: flex;
   justify-content: flex-end;
-
   padding-top: 4px;
 }
 
-
-/* =========================================================
-   SESSIONS
-   ========================================================= */
+/* Sessions */
 
 .sessions-section {
   padding: 24px;
-
   border-top: 1px solid #edf0f3;
 }
 
@@ -576,106 +358,68 @@
 
 .section-title h3 {
   margin: 0;
-
   color: #172033;
-
   font-size: 14px;
   font-weight: 650;
 }
 
 .section-title p {
   margin: 5px 0 0;
-
   color: #7a8494;
-
   font-size: 11px;
 }
 
-
-/* =========================================================
-   SESSION CARD
-   ========================================================= */
-
 .session-card {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 15px;
-
   padding: 14px 15px;
-
   margin-bottom: 12px;
-
   border: 1px solid #e4e8ee;
-
   border-radius: 8px;
-
   background: #fafbfc;
 }
 
 .session-info {
   display: flex;
   flex-direction: column;
-
   gap: 4px;
-
   min-width: 0;
 }
 
 .session-info strong {
   color: #344054;
-
   font-size: 12px;
 }
 
 .session-info span {
   color: #8a94a3;
-
   font-size: 10px;
 }
 
 .session-status {
   flex-shrink: 0;
-
   padding: 4px 9px;
-
   border-radius: 999px;
-
   background: #eaf7f1;
-
   color: #25815b;
-
   font-size: 10px;
   font-weight: 600;
 }
 
-
-/* =========================================================
-   NOTIFICATION PREFERENCES
-   ========================================================= */
+/* Notification preferences */
 
 .notification-preferences {
   padding: 24px;
 }
 
-
-/* =========================================================
-   PREFERENCE SECTION TITLE
-   ========================================================= */
-
 .preference-section-title {
   display: flex;
-
   align-items: center;
-
   gap: 9px;
-
   margin-bottom: 5px;
-
   color: #344054;
-
   font-size: 12px;
   font-weight: 650;
 }
@@ -683,27 +427,16 @@
 .preference-section-title svg {
   width: 18px;
   height: 18px;
-
   flex-shrink: 0;
-
   color: #239f99;
 }
 
-
-/* =========================================================
-   PREFERENCE ROW
-   ========================================================= */
-
 .preference-row {
   min-height: 52px;
-
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 20px;
-
   border-bottom: 1px solid #f0f2f5;
 }
 
@@ -713,74 +446,46 @@
 
 .preference-row strong {
   color: #344054;
-
   font-size: 12px;
   font-weight: 500;
 }
 
-
-/* =========================================================
-   TOGGLE
-   ========================================================= */
-
 .toggle {
   position: relative;
-
   width: 38px;
   height: 21px;
-
   flex-shrink: 0;
-
   display: inline-block;
 }
 
 .toggle input {
   position: absolute;
-
   width: 1px;
   height: 1px;
-
   opacity: 0;
-
   pointer-events: none;
 }
 
 .slider {
   position: absolute;
-
   inset: 0;
-
   cursor: pointer;
-
   border-radius: 999px;
-
   background: #d5dae1;
-
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .slider::before {
   content: "";
-
   position: absolute;
-
   width: 17px;
   height: 17px;
-
   left: 2px;
   top: 2px;
-
   border-radius: 50%;
-
   background: #ffffff;
-
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.15);
-
-  transition:
-    transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
 }
 
 .toggle input:checked + .slider {
@@ -792,95 +497,55 @@
 }
 
 .toggle input:focus-visible + .slider {
-  box-shadow:
-    0 0 0 3px rgba(44, 168, 162, 0.18);
+  box-shadow: 0 0 0 3px rgba(44, 168, 162, 0.18);
 }
-
-
-/* =========================================================
-   PREFERENCE DIVIDER
-   ========================================================= */
 
 .preference-divider {
   height: 1px;
-
   margin: 22px 0;
-
   background: #e9edf1;
 }
 
-
-/* =========================================================
-   PREFERENCES ACTIONS
-   ========================================================= */
-
 .preferences-actions {
   display: flex;
-
   justify-content: flex-end;
-
   padding-top: 22px;
 }
 
-
-/* =========================================================
-   LOADING STATE
-   ========================================================= */
+/* Loading state */
 
 .loading-state {
   min-height: 300px;
-
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
   justify-content: center;
-
   gap: 12px;
-
   color: #7a8494;
-
   font-size: 12px;
 }
-
-
-/* =========================================================
-   LOADING SPINNER
-   ========================================================= */
 
 .spinner {
   width: 28px;
   height: 28px;
-
   border: 3px solid #e5eeee;
-
   border-top-color: #2ca8a2;
-
   border-radius: 50%;
-
   animation: settings-spin 0.8s linear infinite;
 }
 
 @keyframes settings-spin {
-
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
-
 }
 
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* Responsive */
 
 @media (max-width: 900px) {
-
   .settings-page {
     padding: 22px;
   }
@@ -891,23 +556,17 @@
 
   .settings-menu {
     display: flex;
-
     gap: 6px;
-
     overflow-x: auto;
   }
 
   .settings-menu button {
     width: auto;
-
     flex: 0 0 auto;
   }
-
 }
 
-
 @media (max-width: 650px) {
-
   .settings-page {
     padding: 16px;
   }
@@ -918,13 +577,11 @@
 
   .form-grid {
     grid-template-columns: 1fr;
-
     padding: 18px;
   }
 
   .password-section {
     grid-template-columns: 1fr;
-
     padding: 18px;
   }
 
@@ -934,7 +591,6 @@
 
   .password-action {
     grid-column: auto;
-
     justify-content: stretch;
   }
 
@@ -973,19 +629,15 @@
   .preferences-actions .save-button {
     width: 100%;
   }
-
 }
 
-
 @media (max-width: 420px) {
-
   .settings-menu {
     border-radius: 9px;
   }
 
   .settings-menu button {
     padding: 9px 10px;
-
     font-size: 11px;
   }
 
@@ -1005,7 +657,6 @@
 
   .session-card {
     align-items: flex-start;
-
     flex-direction: column;
   }
 
@@ -1016,13 +667,9 @@
   .preference-row strong {
     line-height: 1.4;
   }
-
 }
 
-
-/* =========================================================
-   PROFILE INFORMATION BUTTON
-   ========================================================= */
+/* Profile information button */
 
 .profile-card-header {
   display: flex;
@@ -1043,11 +690,7 @@
   background: #eefaf8;
   color: #239f99;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .user-info-button svg {
@@ -1078,9 +721,7 @@
   }
 }
 
-/* =========================================================
-   SWEETALERT2 USER INFORMATION MODAL
-   ========================================================= */
+/* SweetAlert2 user information modal */
 
 .smartops-user-info-popup .user-info-modal {
   text-align: left;
@@ -1164,5 +805,80 @@
   .smartops-user-info-popup .user-info-row {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+}
+
+/* Current device session styling */
+
+.settings-card .sessions-section {
+  padding: 24px;
+  border-top: 1px solid #edf0f3;
+}
+
+.settings-card .sessions-section .section-title {
+  margin-bottom: 18px;
+}
+
+.settings-card .session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  background: #f7fbfb;
+  border: 1px solid #dce9e9;
+  border-left: 4px solid #239f99;
+  border-radius: 10px;
+}
+
+.settings-card .session-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-card .session-info strong {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.settings-card .session-info span {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settings-card .session-info small {
+  color: #98a2b3;
+  font-size: 11px;
+}
+
+.settings-card .session-status {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #e7f7ef;
+  color: #218653;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.settings-card .session-logout-button {
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .settings-card .sessions-section {
+    padding: 18px;
+  }
+
+  .settings-card .session-card {
+    padding: 14px;
+    gap: 10px;
   }
 }

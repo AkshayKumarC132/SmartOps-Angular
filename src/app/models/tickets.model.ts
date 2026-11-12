@@ -19,6 +19,9 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
 
+  sla_response_due_date?: string | null;
+  sla_resolution_due_date?: string | null;
+
   // Actual SLA deadline returned by the backend API.
   // null means no deadline has been configured.
   sla_due_date?: string | null;

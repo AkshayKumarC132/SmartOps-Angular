@@ -9,17 +9,13 @@ import {
 import { CommonModule } from '@angular/common';
 
 import {
-  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet
 } from '@angular/router';
 
-import {
-  Subscription,
-  filter
-} from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notifications.service';
@@ -38,11 +34,10 @@ import { NotificationService } from '../../services/notifications.service';
 })
 export class AdminLayout implements OnInit, OnDestroy {
   user: any = null;
-
+ sidebarCollapsed = false;
   notificationCount = 0;
 
   private notificationSubscription?: Subscription;
-  private routerSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
@@ -54,28 +49,17 @@ export class AdminLayout implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUser();
 
-    // Subscribe to the shared count before starting or refreshing polling.
+    // Subscribe to the shared notification count.
     this.notificationSubscription =
       this.notificationService.unreadCount$.subscribe(count => {
         this.notificationCount = count;
         this.cdr.markForCheck();
       });
 
-    // Ensure background polling is active.
-    // The service prevents duplicate polling instances.
+    // Start a single notification polling mechanism.
+    // The service performs the initial request immediately,
+    // followed by requests at the configured interval.
     this.notificationService.startPolling();
-
-    // Refresh the current count without waiting for the next interval.
-    this.notificationService.refreshUnreadCount();
-
-    // Keep the badge synchronized when navigating between pages.
-    this.routerSubscription = this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd)
-      )
-      .subscribe(() => {
-        this.notificationService.refreshUnreadCount();
-      });
   }
 
   private loadUser(): void {
@@ -85,7 +69,12 @@ export class AdminLayout implements OnInit, OnDestroy {
   openNotifications(): void {
     this.router.navigate(['/notifications']);
   }
-
+  openProfile(): void {
+  this.router.navigate(['/settings']);
+}
+ toggleSidebar(): void {
+  this.sidebarCollapsed = !this.sidebarCollapsed;
+}
   get avatarLetter(): string {
     const username =
       this.user?.Username ||
@@ -108,15 +97,18 @@ export class AdminLayout implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    // Stop notification polling before clearing the session.
+    this.notificationService.stopPolling();
+
     this.authService.logout();
+
     this.router.navigate(['/login']);
   }
 
   ngOnDestroy(): void {
+    // Release the notification badge subscription.
+    // Do not stop polling here because the layout may be
+    // recreated while the authenticated session remains active.
     this.notificationSubscription?.unsubscribe();
-    this.routerSubscription?.unsubscribe();
-
-    // Do not stop global polling here.
-    // The root application may still need notifications.
   }
 }

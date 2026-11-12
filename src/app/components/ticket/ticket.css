@@ -155,8 +155,62 @@
 
 table {
   width: 100%;
+  min-width: 1255px;
+  table-layout: fixed;
   border-collapse: collapse;
-  min-width: 1200px;
+}
+
+/* TABLE COLUMN WIDTHS */
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 90px;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 230px;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 105px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 100px;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+  width: 135px;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+  width: 125px;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+  width: 150px;
+}
+
+th:nth-child(8),
+td:nth-child(8) {
+  width: 220px;
+}
+
+th:nth-child(9),
+td:nth-child(9) {
+  width: 100px;
+}
+
+/* Allow the long SLA heading to wrap. */
+th:nth-child(8) {
+  white-space: normal;
+  line-height: 1.4;
 }
 
 thead {
@@ -188,6 +242,22 @@ tbody tr:last-child td {
 
 tbody tr:hover {
   background: #fcfcfd;
+}
+
+/* WHOLE TICKET ROW CLICKABLE */
+
+tbody tr.clickable-ticket-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+tbody tr.clickable-ticket-row:hover {
+  background: #f0fdfb;
+}
+
+tbody tr.clickable-ticket-row:focus-visible {
+  outline: 2px solid #159b8d;
+  outline-offset: -2px;
 }
 
 /* TICKET */

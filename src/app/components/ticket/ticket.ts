@@ -55,7 +55,7 @@ export class Tickets implements OnInit {
   loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (response: any) => {
-        const users = Array.isArray(response)
+        const users: User[] = Array.isArray(response)
           ? response
           : response?.results ?? [];
 
@@ -69,7 +69,7 @@ export class Tickets implements OnInit {
   }
 
   // ============================================
-  // LOAD TICKETS
+  // LOAD TICKETS FROM BACKEND
   // ============================================
 
   loadTickets(): void {
@@ -84,13 +84,13 @@ export class Tickets implements OnInit {
           ? response
           : response?.results ?? [];
 
-        // Keep the actual API values. Do not generate SLA dates.
+        // Use the actual values returned by the backend.
+        // Do not generate or calculate SLA deadlines in the frontend.
         this.tickets = tickets;
 
         this.loading = false;
         this.cdr.detectChanges();
       },
-
       error: (error: any) => {
         console.error('Admin Tickets Error:', error);
 
@@ -178,11 +178,15 @@ export class Tickets implements OnInit {
   }
 
   // ============================================
-  // GET ACTUAL SLA DEADLINE
+  // GET ACTUAL SLA RESOLUTION DEADLINE
   // ============================================
 
   getSlaDueDate(ticket: Ticket): string | null {
-    const dueDate = ticket?.sla_due_date;
+    // Backend TicketSerializer exposes this exact field.
+    const slaTicket = ticket as Ticket & {
+      sla_resolution_due_date?: string | null;
+    };
+    const dueDate = slaTicket?.sla_resolution_due_date;
 
     if (
       dueDate === null ||
@@ -192,7 +196,7 @@ export class Tickets implements OnInit {
       return null;
     }
 
-    // Only display a valid date returned by the API.
+    // Display only a valid date returned by the API.
     const parsedDate = new Date(dueDate);
 
     if (Number.isNaN(parsedDate.getTime())) {
@@ -377,7 +381,7 @@ export class Tickets implements OnInit {
   }
 
   // ============================================
-  // OPEN TICKET
+  // OPEN TICKET DETAILS
   // ============================================
 
   openTicket(id: number): void {

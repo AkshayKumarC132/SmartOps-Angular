@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -31,41 +32,21 @@ import {
 })
 export class Settings implements OnInit {
 
-  // =========================================================
-  // USER
-  // =========================================================
-
   user: any = null;
   organizationName = '—';
   loading = true;
   saving = false;
 
-  // =========================================================
-  // PROFILE MESSAGES
-  // =========================================================
-
   successMessage = '';
   errorMessage = '';
 
-  // =========================================================
-  // ACTIVE SECTION
-  // =========================================================
-
   activeSection = 'profile';
-
-  // =========================================================
-  // PROFILE FORM
-  // =========================================================
 
   form = {
     first_name: '',
     last_name: '',
     email: ''
   };
-
-  // =========================================================
-  // PASSWORD FORM
-  // =========================================================
 
   passwordForm = {
     current_password: '',
@@ -99,15 +80,7 @@ export class Settings implements OnInit {
     }
   }
 
-  // =========================================================
-  // USER ID
-  // =========================================================
-
   private currentUserId: number | null = null;
-
-  // =========================================================
-  // NOTIFICATION PREFERENCES
-  // =========================================================
 
   notificationPreferences: NotificationPreferences = {
     in_app: {
@@ -135,10 +108,6 @@ export class Settings implements OnInit {
   notificationSuccessMessage = '';
   notificationErrorMessage = '';
 
-  // =========================================================
-  // CONSTRUCTOR
-  // =========================================================
-
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -148,17 +117,9 @@ export class Settings implements OnInit {
     private apiErrorService: ApiErrorService
   ) {}
 
-  // =========================================================
-  // INIT
-  // =========================================================
-
   ngOnInit(): void {
     this.loadProfile();
   }
-
-  // =========================================================
-  // LOAD PROFILE
-  // =========================================================
 
   loadProfile(): void {
     const loggedInUser = this.authService.getUser();
@@ -282,10 +243,6 @@ export class Settings implements OnInit {
     });
   }
 
-  // =========================================================
-  // DEFAULT NOTIFICATION PREFERENCES
-  // =========================================================
-
   private getDefaultNotificationPreferences():
     NotificationPreferences {
 
@@ -309,10 +266,6 @@ export class Settings implements OnInit {
       }
     };
   }
-
-  // =========================================================
-  // LOAD NOTIFICATION PREFERENCES
-  // =========================================================
 
   loadNotificationPreferences(): void {
     if (!this.currentUserId) {
@@ -382,10 +335,6 @@ export class Settings implements OnInit {
       });
   }
 
-  // =========================================================
-  // SAVE NOTIFICATION PREFERENCES
-  // =========================================================
-
   saveNotificationPreferences(): void {
     this.notificationSuccessMessage = '';
     this.notificationErrorMessage = '';
@@ -400,7 +349,6 @@ export class Settings implements OnInit {
       return;
     }
 
-    // Capture the current values of all switches.
     const payload: NotificationPreferences = {
       in_app: {
         ...this.notificationPreferences.in_app
@@ -493,10 +441,6 @@ export class Settings implements OnInit {
         }
       });
   }
-
-  // =========================================================
-  // SET ORGANIZATION FROM USER RESPONSE
-  // =========================================================
 
   setOrganizationFromUser(
     response: any,
@@ -617,10 +561,6 @@ export class Settings implements OnInit {
     }
   }
 
-  // =========================================================
-  // LOAD ORGANIZATION
-  // =========================================================
-
   loadOrganization(organizationId: number): void {
     console.log(
       'Loading organization:',
@@ -670,41 +610,21 @@ export class Settings implements OnInit {
       });
   }
 
-  // =========================================================
-  // USER ID
-  // =========================================================
-
   get userId(): number | null {
     return this.currentUserId;
   }
-
-  // =========================================================
-  // USERNAME
-  // =========================================================
 
   get username(): string {
     return this.user?.username || '';
   }
 
-  // =========================================================
-  // EMAIL
-  // =========================================================
-
   get email(): string {
     return this.user?.email || '';
   }
 
-  // =========================================================
-  // ROLE
-  // =========================================================
-
   get role(): string {
     return this.user?.role || '';
   }
-
-  // =========================================================
-  // DISPLAY NAME
-  // =========================================================
 
   get displayName(): string {
     const firstName = this.user?.first_name || '';
@@ -713,10 +633,6 @@ export class Settings implements OnInit {
 
     return fullName || this.username;
   }
-
-  // =========================================================
-  // AVATAR
-  // =========================================================
 
   get avatarLetter(): string {
     const name =
@@ -727,9 +643,36 @@ export class Settings implements OnInit {
     return name.charAt(0).toUpperCase();
   }
 
-  // =========================================================
-  // SHOW COMPLETE USER INFORMATION
-  // =========================================================
+  // Detect the browser currently using SmartOps.
+  get currentBrowser(): string {
+    const userAgent = navigator.userAgent;
+
+    if (/EdgA\//.test(userAgent)) return 'Microsoft Edge (Android)';
+    if (/EdgiOS\//.test(userAgent)) return 'Microsoft Edge (iOS)';
+    if (/Edg\//.test(userAgent)) return 'Microsoft Edge';
+    if (/OPR\//.test(userAgent)) return 'Opera';
+    if (/SamsungBrowser\//.test(userAgent)) return 'Samsung Internet';
+    if (/FxiOS\//.test(userAgent)) return 'Firefox (iOS)';
+    if (/Firefox\//.test(userAgent)) return 'Mozilla Firefox';
+    if (/CriOS\//.test(userAgent)) return 'Google Chrome (iOS)';
+    if (/Chrome\//.test(userAgent)) return 'Google Chrome';
+    if (/Safari\//.test(userAgent)) return 'Safari';
+
+    return 'Unknown Browser';
+  }
+
+  // Detect the operating system currently using SmartOps.
+  get currentOperatingSystem(): string {
+    const userAgent = navigator.userAgent;
+
+    if (/Android/.test(userAgent)) return 'Android';
+    if (/iPhone|iPad|iPod/.test(userAgent)) return 'iOS';
+    if (/Windows NT/.test(userAgent)) return 'Windows';
+    if (/Macintosh|Mac OS X/.test(userAgent)) return 'macOS';
+    if (/Linux/.test(userAgent)) return 'Linux';
+
+    return 'Unknown OS';
+  }
 
   async showUserInfo(): Promise<void> {
     if (!this.user) {
@@ -841,10 +784,6 @@ export class Settings implements OnInit {
     });
   }
 
-  // =========================================================
-  // SELECT SECTION
-  // =========================================================
-
   selectSection(section: string): void {
     this.activeSection = section;
 
@@ -855,10 +794,6 @@ export class Settings implements OnInit {
     this.notificationSuccessMessage = '';
     this.notificationErrorMessage = '';
   }
-
-  // =========================================================
-  // SAVE PROFILE
-  // =========================================================
 
   saveProfile(): void {
     this.successMessage = '';
@@ -949,10 +884,6 @@ export class Settings implements OnInit {
         }
       });
   }
-
-  // =========================================================
-  // CHANGE PASSWORD
-  // =========================================================
 
   changePassword(): void {
     this.passwordSuccessMessage = '';
@@ -1058,10 +989,6 @@ export class Settings implements OnInit {
       }
     });
   }
-
-  // =========================================================
-  // LOGOUT
-  // =========================================================
 
   logout(): void {
     this.authService.logout();

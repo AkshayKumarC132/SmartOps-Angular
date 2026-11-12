@@ -1,7 +1,5 @@
-
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NotificationService } from './services/notifications.service';
 
 @Component({
   selector: 'app-root',
@@ -10,13 +8,4 @@ import { NotificationService } from './services/notifications.service';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit {
-  constructor(
-    private notificationService: NotificationService
-  ) {}
-
-  ngOnInit(): void {
-    // Start global notification polling regardless of the current route.
-    this.notificationService.startPolling();
-  }
-}
+export class App {}
