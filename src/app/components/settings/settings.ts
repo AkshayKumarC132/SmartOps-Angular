@@ -991,7 +991,10 @@ export class Settings implements OnInit {
   }
 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logoutApi().subscribe({
+      next: () => {
+        void this.router.navigate(['/login']);
+      }
+    });
   }
 }

@@ -98,8 +98,8 @@ export class Dashboard implements OnInit, OnDestroy {
   // Initial dashboard data load.
   this.loadDashboardData();
 
-  // Automatically refresh dashboard data every 60 seconds.
-  interval(120000)
+  // Automatically refresh dashboard data every 20 minutes.
+  interval(1200000)
     .pipe(takeUntil(this.destroy$))
     .subscribe(() => {
       if (!this.authService.isLoggedIn()) {

@@ -8,7 +8,14 @@ import {
 
 import { Router } from '@angular/router';
 
-import { Observable, tap } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  map,
+  Observable,
+  of,
+  tap
+} from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
@@ -742,46 +749,37 @@ export class AuthService {
   // CLEAR SESSION
   // ==========================================================
 
-  clearSession(): void {
+clearSession(): void {
+  // Stop any previously scheduled automatic logout.
+  this.clearSessionTimer();
 
-    this.clearSessionTimer();
-
-
-    localStorage.removeItem(
-      'access_token'
-    );
-
-
-    localStorage.removeItem(
-      'refresh_token'
-    );
-
-
-    localStorage.removeItem(
-      'user'
-    );
-
-
-    localStorage.removeItem(
-      this.sessionExpiryKey
-    );
-
-  }
-
+  // Clear all application storage.
+  localStorage.clear();
+  sessionStorage.clear();
+}
 
   // ==========================================================
   // LOGOUT
   // ==========================================================
 
-  logout(): void {
+  logoutApi(): Observable<boolean> {
+  const refreshToken = localStorage.getItem('refresh_token');
 
-    console.log(
-      'Manual logout initiated.'
-    );
+  const request$ = refreshToken
+    ? this.http.post(
+        `${this.apiUrl.replace(/\/+$/, '')}/auth/logout/`,
+        { refresh: refreshToken }
+      ).pipe(
+        map(() => true),
+        catchError(error => {
+          console.error('Logout API failed:', error);
+          return of(false);
+        })
+      )
+    : of(false);
 
-
-    this.clearSession();
-
-  }
-
+  return request$.pipe(
+    finalize(() => this.clearSession())
+  );
+}
 }

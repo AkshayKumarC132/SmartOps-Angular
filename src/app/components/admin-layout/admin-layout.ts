@@ -97,14 +97,14 @@ export class AdminLayout implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    // Stop notification polling before clearing the session.
-    this.notificationService.stopPolling();
+  this.notificationService.stopPolling();
 
-    this.authService.logout();
-
-    this.router.navigate(['/login']);
-  }
-
+  this.authService.logoutApi().subscribe({
+    next: () => {
+      this.router.navigateByUrl('/login', { replaceUrl: true });
+    }
+  });
+}
   ngOnDestroy(): void {
     // Release the notification badge subscription.
     // Do not stop polling here because the layout may be

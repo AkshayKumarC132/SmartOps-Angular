@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -15,7 +16,11 @@ import {
 
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
-import { AuthService } from './auth.service';
+
+// =========================================================
+// NOTIFICATION INTERFACE
+// =========================================================
+
 export interface NotificationItem {
   id: number;
   ticket: string | null;
@@ -37,20 +42,38 @@ export interface NotificationItem {
   providedIn: 'root'
 })
 export class NotificationService {
+
+  // =========================================================
+  // API CONFIGURATION
+  // =========================================================
+
   private readonly apiUrl =
-    `${environment.apiUrl}/tickets-activity/`;
+    `${environment.apiUrl.replace(/\/+$/, '')}/notifications/`;
 
   private readonly readStorageKey =
     'smartops_read_notifications';
 
-  private readonly pollingIntervalMs = 1800000;
+  // Check only the Notifications API every 20 minutes.
+  private readonly pollingIntervalMs = 1200000;
+
+  // =========================================================
+  // POLLING VARIABLES
+  // =========================================================
 
   private pollingSubscription?: Subscription;
+
   private pollingStarted = false;
+
   private initialFetchCompleted = false;
+
   private pollingRequestInProgress = false;
 
-  private knownActivityIds = new Set<number>();
+  // Stores IDs already processed by background polling.
+  private knownNotificationIds = new Set<number>();
+
+  // =========================================================
+  // NOTIFICATION SUBJECTS
+  // =========================================================
 
   private readonly unreadCountSubject =
     new BehaviorSubject<number>(0);
@@ -70,54 +93,76 @@ export class NotificationService {
   readonly newNotification$ =
     this.newNotificationSubject.asObservable();
 
-  constructor(private http: HttpClient,private authService: AuthService) {}
+  constructor(
+    private http: HttpClient
+  ) {}
 
   // =========================================================
-  // START GLOBAL POLLING
+  // START GLOBAL NOTIFICATION POLLING
   // =========================================================
 
   startPolling(): void {
-  if (!this.authService.isLoggedIn() || this.pollingStarted) {
-    return;
-  }
 
-  this.pollingStarted = true;
-
-  this.pollingSubscription = timer(
-    0,
-    this.pollingIntervalMs
-  ).subscribe(() => {
-    if (!this.authService.isLoggedIn()) {
-      this.stopPolling();
+    if (this.pollingStarted) {
+      console.log(
+        '[SmartOps Notifications] Polling already running.'
+      );
       return;
     }
 
-    this.fetchActivities(true);
-  });
-}
+    this.pollingStarted = true;
+
+    console.log(
+      '[SmartOps Notifications] Starting notification polling.',
+      this.apiUrl
+    );
+
+    // Fetch immediately and then every 5 seconds.
+    this.pollingSubscription = timer(
+      0,
+      this.pollingIntervalMs
+    ).subscribe(() => {
+      this.fetchNotifications(true);
+    });
+  }
+
   // =========================================================
   // STOP POLLING
   // =========================================================
 
   stopPolling(): void {
+
     this.pollingSubscription?.unsubscribe();
+
     this.pollingSubscription = undefined;
+
     this.pollingStarted = false;
+
+    console.log(
+      '[SmartOps Notifications] Polling stopped.'
+    );
   }
 
   // =========================================================
-  // GET NOTIFICATIONS FOR THE NOTIFICATIONS PAGE
+  // GET NOTIFICATIONS FOR NOTIFICATIONS PAGE
   // =========================================================
+
   getNotifications(): Observable<NotificationItem[]> {
-    if (!this.authService.isLoggedIn()) {
-      return of([]);
-    }
+
+    console.log(
+      '[SmartOps Notifications] Fetching notifications.'
+    );
 
     return this.http.get<any>(this.apiUrl).pipe(
+
       map((response: any) => {
-        const activities = this.normalizeActivities(response);
-        const incoming = this.convertActivities(activities);
-        
+
+        const notifications =
+          this.normalizeNotifications(response);
+
+        const incoming =
+          this.convertNotifications(notifications);
+
         const merged = this.mergeNotifications(
           this.notificationsSubject.value,
           incoming
@@ -126,6 +171,16 @@ export class NotificationService {
         this.publishNotifications(merged);
 
         return this.notificationsSubject.value;
+      }),
+
+      catchError(error => {
+
+        console.error(
+          '[SmartOps Notifications] Failed to load notifications:',
+          error
+        );
+
+        return of(this.notificationsSubject.value);
       })
     );
   }
@@ -134,7 +189,8 @@ export class NotificationService {
   // NORMALIZE API RESPONSE
   // =========================================================
 
-  private normalizeActivities(response: any): any[] {
+  private normalizeNotifications(response: any): any[] {
+
     if (Array.isArray(response)) {
       return response;
     }
@@ -143,8 +199,8 @@ export class NotificationService {
       return response.results;
     }
 
-    if (Array.isArray(response?.activities)) {
-      return response.activities;
+    if (Array.isArray(response?.notifications)) {
+      return response.notifications;
     }
 
     if (Array.isArray(response?.data)) {
@@ -160,60 +216,78 @@ export class NotificationService {
   }
 
   // =========================================================
-  // BACKGROUND POLLING
+  // BACKGROUND NOTIFICATION POLLING
   // =========================================================
 
-  private fetchActivities(showNewNotifications: boolean): void {
+  private fetchNotifications(
+    showNewNotifications: boolean
+  ): void {
+
     if (this.pollingRequestInProgress) {
       return;
     }
-    if (!this.authService.isLoggedIn()) {
-  this.stopPolling();
-  return;
-}
+
     this.pollingRequestInProgress = true;
 
+    console.log(
+      '[SmartOps Notifications] Checking Notifications API.'
+    );
+
     this.http.get<any>(this.apiUrl).pipe(
-      map((response: any) => this.normalizeActivities(response)),
+
+      map((response: any) =>
+        this.normalizeNotifications(response)
+      ),
 
       catchError(error => {
+
         console.error(
-          '[SmartOps Notifications] Polling request failed:',
+          '[SmartOps Notifications] Polling failed:',
           error
         );
 
-        // Preserve the existing badge if the request fails.
         return of(null);
       }),
 
       finalize(() => {
+
         this.pollingRequestInProgress = false;
       })
-    ).subscribe(activities => {
-      if (activities === null) {
+
+    ).subscribe(notifications => {
+
+      if (notifications === null) {
         return;
       }
 
-      const sortedActivities = [...activities].sort(
+      const sortedNotifications = [...notifications].sort(
         (a, b) =>
           new Date(a.created_at).getTime() -
           new Date(b.created_at).getTime()
       );
 
-      // First successful poll establishes the baseline.
-      // Existing activities do not trigger startup toasts.
+      // -----------------------------------------------------
+      // FIRST FETCH
+      // -----------------------------------------------------
+
+      // Existing notifications should appear in the list,
+      // but must not generate popups on application startup.
+
       if (!this.initialFetchCompleted) {
-        for (const activity of sortedActivities) {
-          const id = Number(activity.id);
+
+        for (const notification of sortedNotifications) {
+
+          const id = Number(notification.id);
 
           if (Number.isFinite(id)) {
-            this.knownActivityIds.add(id);
+            this.knownNotificationIds.add(id);
           }
         }
 
         this.initialFetchCompleted = true;
 
-        const incoming = this.convertActivities(activities);
+        const incoming =
+          this.convertNotifications(notifications);
 
         this.publishNotifications(
           this.mergeNotifications(
@@ -223,9 +297,9 @@ export class NotificationService {
         );
 
         console.log(
-          '[SmartOps Notifications] Initial poll complete.',
+          '[SmartOps Notifications] Initial fetch completed.',
           {
-            activities: this.notificationsSubject.value.length,
+            total: this.notificationsSubject.value.length,
             unread: this.unreadCountSubject.value
           }
         );
@@ -233,27 +307,40 @@ export class NotificationService {
         return;
       }
 
-      const newActivities: any[] = [];
+      // -----------------------------------------------------
+      // DETECT NEW NOTIFICATIONS
+      // -----------------------------------------------------
 
-      for (const activity of sortedActivities) {
-        const id = Number(activity.id);
+      const newNotifications: any[] = [];
+
+      for (const notification of sortedNotifications) {
+
+        const id = Number(notification.id);
 
         if (!Number.isFinite(id)) {
+
           console.warn(
-            '[SmartOps Notifications] Activity has no valid ID:',
-            activity
+            '[SmartOps Notifications] Invalid notification ID:',
+            notification
           );
+
           continue;
         }
 
-        if (!this.knownActivityIds.has(id)) {
-          newActivities.push(activity);
-          this.knownActivityIds.add(id);
+        if (!this.knownNotificationIds.has(id)) {
+
+          newNotifications.push(notification);
+
+          this.knownNotificationIds.add(id);
         }
       }
 
-      // Merge incoming data with the current shared list.
-      const incoming = this.convertActivities(activities);
+      // -----------------------------------------------------
+      // UPDATE NOTIFICATION LIST
+      // -----------------------------------------------------
+
+      const incoming =
+        this.convertNotifications(notifications);
 
       this.publishNotifications(
         this.mergeNotifications(
@@ -262,17 +349,32 @@ export class NotificationService {
         )
       );
 
-      // Alert only for newly detected activities.
-      if (showNewNotifications) {
-        for (const activity of newActivities) {
-          const notification = this.convertActivity(activity);
+      // -----------------------------------------------------
+      // SHOW POPUP FOR NEW NOTIFICATIONS
+      // -----------------------------------------------------
+
+      if (
+        showNewNotifications &&
+        newNotifications.length > 0
+      ) {
+
+        console.log(
+          '[SmartOps Notifications] New notifications detected:',
+          newNotifications.length
+        );
+
+        for (const item of newNotifications) {
+
+          const notification =
+            this.convertNotification(item);
 
           console.log(
-            '[SmartOps Notifications] New activity detected:',
+            '[SmartOps Notifications] Showing popup:',
             notification
           );
 
           this.newNotificationSubject.next(notification);
+
           this.showToast(notification);
         }
       }
@@ -287,19 +389,31 @@ export class NotificationService {
     existing: NotificationItem[],
     incoming: NotificationItem[]
   ): NotificationItem[] {
-    const notificationMap = new Map<number, NotificationItem>();
+
+    const notificationMap =
+      new Map<number, NotificationItem>();
 
     for (const notification of existing) {
-      notificationMap.set(notification.id, notification);
+
+      notificationMap.set(
+        notification.id,
+        notification
+      );
     }
 
     for (const notification of incoming) {
-      const previous = notificationMap.get(notification.id);
+
+      const previous =
+        notificationMap.get(notification.id);
 
       notificationMap.set(notification.id, {
+
         ...notification,
-        // Preserve read state across polling and page navigation.
-        read: Boolean(previous?.read || notification.read)
+
+        // Preserve locally updated read state.
+        read: Boolean(
+          previous?.read || notification.read
+        )
       });
     }
 
@@ -311,18 +425,20 @@ export class NotificationService {
   }
 
   // =========================================================
-  // PUBLISH NOTIFICATIONS AND UNREAD COUNT
+  // PUBLISH NOTIFICATIONS
   // =========================================================
 
   private publishNotifications(
     notifications: NotificationItem[]
   ): void {
+
     const merged = this.mergeNotifications(
       this.notificationsSubject.value,
       notifications
     );
 
     this.notificationsSubject.next(merged);
+
     this.updateUnreadCount(merged);
 
     console.log(
@@ -331,19 +447,24 @@ export class NotificationService {
       '| Total:',
       merged.length,
       '| Unread:',
-      merged.filter(notification => !notification.read).length
+      merged.filter(item => !item.read).length
     );
   }
 
   // =========================================================
-  // CONVERT ACTIVITIES
+  // CONVERT NOTIFICATION RECORDS
   // =========================================================
 
-  private convertActivities(
-    activities: any[]
+  private convertNotifications(
+    notifications: any[]
   ): NotificationItem[] {
-    return activities
-      .map(activity => this.convertActivity(activity))
+
+    return notifications
+
+      .map(notification =>
+        this.convertNotification(notification)
+      )
+
       .sort(
         (a, b) =>
           new Date(b.created_at).getTime() -
@@ -351,62 +472,147 @@ export class NotificationService {
       );
   }
 
-  private convertActivity(activity: any): NotificationItem {
-    const action = this.cleanAction(activity.action);
+  // =========================================================
+  // CONVERT SINGLE NOTIFICATION
+  // =========================================================
+
+  private convertNotification(
+    item: any
+  ): NotificationItem {
+
+    const action = this.cleanAction(
+      item.action || item.event_type
+    );
 
     const ticket =
-      activity.ticket ||
-      activity.ticket_identifier ||
+      item.ticket ||
+      item.ticket_identifier ||
       null;
 
+    const id = Number(item.id);
+
     const readIds = this.getReadIds();
-    const id = Number(activity.id);
+
+    const description =
+      item.description ||
+      item.message ||
+      '';
+
+    const details =
+      item.details ||
+      item.message ||
+      this.getDetails(action, item);
 
     return {
+
       id,
+
       ticket,
-      performed_by: activity.performed_by || null,
+
+      performed_by:
+        item.performed_by ||
+        item.actor ||
+        null,
+
       action,
-      field: activity.field || null,
-      old_value: activity.old_value || null,
-      new_value: activity.new_value || null,
-      description: activity.description || '',
-      created_at: activity.created_at || '',
-      title: this.getTitle(action, ticket, activity),
-      details: this.getDetails(action, activity),
-      read: readIds.includes(id),
-      channel: 'In App',
-      deliveryStatus: 'Sent'
+
+      field:
+        item.field || null,
+
+      old_value:
+        item.old_value || null,
+
+      new_value:
+        item.new_value || null,
+
+      description,
+
+      created_at:
+        item.created_at || '',
+
+      title:
+        item.title ||
+        this.getTitle(action, ticket, item),
+
+      details,
+
+      read: Boolean(
+        item.is_read ??
+        item.read ??
+        readIds.includes(id)
+      ),
+
+      channel:
+        item.channel || 'In App',
+
+      deliveryStatus:
+        item.deliveryStatus || 'Delivered'
     };
   }
 
   // =========================================================
-  // SHOW ALERT FOR NEW ACTIVITY
+  // SHOW POPUP FOR NEW NOTIFICATION
   // =========================================================
 
-  private showToast(notification: NotificationItem): void {
-    const ticketId = this.getTicketId(notification.ticket);
+  private showToast(
+    notification: NotificationItem
+  ): void {
+
+    const ticketId =
+      this.getTicketId(notification.ticket);
+
+    console.log(
+      '[SmartOps Notifications] Displaying popup:',
+      notification.title
+    );
 
     void Swal.fire({
+
       toast: true,
+
       position: 'top-end',
+
       icon: 'info',
+
       title: notification.title,
-      text: notification.details !== '—'
-        ? notification.details
-        : '',
+
+      text:
+        notification.details !== '—'
+          ? notification.details
+          : '',
+
       showConfirmButton: true,
+
       confirmButtonText: 'View',
+
       showCloseButton: true,
+
       timer: 8000,
+
       timerProgressBar: true,
+
       didOpen: toast => {
-        toast.addEventListener('mouseenter', Swal.stopTimer);
-        toast.addEventListener('mouseleave', Swal.resumeTimer);
+
+        toast.addEventListener(
+          'mouseenter',
+          Swal.stopTimer
+        );
+
+        toast.addEventListener(
+          'mouseleave',
+          Swal.resumeTimer
+        );
       }
+
     }).then(result => {
-      if (result.isConfirmed && ticketId !== null) {
-        window.location.href = `/ticket/${ticketId}`;
+
+      if (
+        result.isConfirmed &&
+        ticketId !== null
+      ) {
+
+        window.location.href =
+          `/ticket/${ticketId}`;
       }
     });
   }
@@ -416,9 +622,13 @@ export class NotificationService {
   // =========================================================
 
   private cleanAction(action: any): string {
+
     return String(action || '')
+
       .replace(/[()'",]/g, '')
+
       .trim()
+
       .toUpperCase();
   }
 
@@ -429,20 +639,27 @@ export class NotificationService {
   private getTitle(
     action: string,
     ticket: string | null,
-    activity: any
+    item: any
   ): string {
-    const ticketText = ticket ? ` ${ticket}` : '';
+
+    const ticketText = ticket
+      ? ` ${ticket}`
+      : '';
 
     switch (action) {
+
       case 'CREATED':
       case 'TICKET_CREATED':
+
         return `New ticket${ticketText} created`;
 
       case 'STATUS_CHANGED': {
+
         const newStatus =
-          String(activity.new_value || '').toUpperCase();
+          String(item.new_value || '').toUpperCase();
 
         if (newStatus === 'REOPENED') {
+
           return `Ticket${ticketText} has been reopened`;
         }
 
@@ -451,38 +668,50 @@ export class NotificationService {
 
       case 'ASSIGNED':
       case 'TICKET_ASSIGNED':
+
         return `Ticket${ticketText} was assigned`;
 
       case 'ATTACHMENT_ADDED':
+
         return `Attachment added to${ticketText}`;
 
       case 'ATTACHMENT_DELETED':
+
         return `Attachment deleted from${ticketText}`;
 
       case 'TAG_ADDED':
+
         return `Tag added to${ticketText}`;
 
       case 'TAG_REMOVED':
+
         return `Tag removed from${ticketText}`;
 
       case 'DELETED':
       case 'TICKET_DELETED':
+
         return `Ticket${ticketText} was deleted`;
 
       case 'ACCESS_DENIED':
+
         return `Access denied for${ticketText}`;
 
       case 'UPDATED':
+
         return `Ticket${ticketText} was updated`;
 
       case 'COMMENT_ADDED':
+
         return `Comment added to${ticketText}`;
 
       case 'KB_GENERATED':
+
         return `Knowledge base generated for${ticketText}`;
 
       default:
-        return `Activity on${ticketText}`;
+
+        return item.title ||
+          `Activity on${ticketText}`;
     }
   }
 
@@ -490,13 +719,26 @@ export class NotificationService {
   // NOTIFICATION DETAILS
   // =========================================================
 
-  private getDetails(action: string, activity: any): string {
+  private getDetails(
+    action: string,
+    item: any
+  ): string {
+
+    if (item.message) {
+      return item.message;
+    }
+
+    if (item.description) {
+      return item.description;
+    }
+
     if (
       action === 'STATUS_CHANGED' &&
-      activity.old_value &&
-      activity.new_value
+      item.old_value &&
+      item.new_value
     ) {
-      return `${activity.old_value} → ${activity.new_value}`;
+
+      return `${item.old_value} → ${item.new_value}`;
     }
 
     if (
@@ -504,39 +746,41 @@ export class NotificationService {
         action === 'ASSIGNED' ||
         action === 'TICKET_ASSIGNED'
       ) &&
-      activity.new_value
+      item.new_value
     ) {
-      return activity.new_value;
+
+      return item.new_value;
     }
 
     if (
       action === 'ATTACHMENT_ADDED' &&
-      activity.new_value
+      item.new_value
     ) {
-      return activity.new_value;
+
+      return item.new_value;
     }
 
     if (
       action === 'ATTACHMENT_DELETED' &&
-      activity.old_value
+      item.old_value
     ) {
-      return activity.old_value;
-    }
 
-    if (activity.description) {
-      return activity.description;
+      return item.old_value;
     }
 
     return '—';
   }
 
   // =========================================================
-  // READ IDS IN LOCAL STORAGE
+  // GET READ IDS FROM LOCAL STORAGE
   // =========================================================
 
   private getReadIds(): number[] {
+
     try {
-      const value = localStorage.getItem(this.readStorageKey);
+
+      const value =
+        localStorage.getItem(this.readStorageKey);
 
       if (!value) {
         return [];
@@ -547,9 +791,11 @@ export class NotificationService {
       return Array.isArray(parsed)
         ? parsed.map(Number)
         : [];
+
     } catch (error) {
+
       console.warn(
-        '[SmartOps Notifications] Could not read saved read IDs:',
+        '[SmartOps Notifications] Unable to read saved read IDs:',
         error
       );
 
@@ -557,59 +803,103 @@ export class NotificationService {
     }
   }
 
+  // =========================================================
+  // SAVE READ IDS
+  // =========================================================
+
   private saveReadIds(ids: number[]): void {
+
     try {
+
       localStorage.setItem(
+
         this.readStorageKey,
+
         JSON.stringify([...new Set(ids)])
       );
+
     } catch (error) {
+
       console.error(
-        '[SmartOps Notifications] Could not save read IDs:',
+        '[SmartOps Notifications] Unable to save read IDs:',
         error
       );
     }
   }
 
   // =========================================================
-  // MARK ONE AS READ
+  // MARK ONE NOTIFICATION AS READ
   // =========================================================
 
   markAsRead(id: number): void {
+
     const readIds = this.getReadIds();
 
     if (!readIds.includes(id)) {
+
       readIds.push(id);
+
       this.saveReadIds(readIds);
     }
 
+    // Update UI immediately.
     const updated = this.notificationsSubject.value.map(
       notification =>
+
         notification.id === id
+
           ? { ...notification, read: true }
+
           : notification
     );
 
     this.publishNotifications(updated);
+
+    // Persist read state in Django.
+    this.http.post(
+      `${this.apiUrl}${id}/read/`,
+      {}
+    ).subscribe({
+
+      next: () => {
+
+        console.log(
+          '[SmartOps Notifications] Notification marked as read:',
+          id
+        );
+      },
+
+      error: error => {
+
+        console.error(
+          '[SmartOps Notifications] Failed to mark notification as read:',
+          error
+        );
+      }
+    });
   }
 
   // =========================================================
-  // MARK ALL AS READ
+  // MARK ALL NOTIFICATIONS AS READ
   // =========================================================
 
   markAllAsRead(
     notifications: NotificationItem[]
   ): void {
+
     const readIds = this.getReadIds();
 
     for (const notification of notifications) {
+
       if (!readIds.includes(notification.id)) {
+
         readIds.push(notification.id);
       }
     }
 
     this.saveReadIds(readIds);
 
+    // Update UI immediately.
     const updated = this.notificationsSubject.value.map(
       notification => ({
         ...notification,
@@ -618,6 +908,28 @@ export class NotificationService {
     );
 
     this.publishNotifications(updated);
+
+    // Persist all read states in Django.
+    this.http.post(
+      `${this.apiUrl}mark-all-read/`,
+      {}
+    ).subscribe({
+
+      next: () => {
+
+        console.log(
+          '[SmartOps Notifications] All notifications marked as read.'
+        );
+      },
+
+      error: error => {
+
+        console.error(
+          '[SmartOps Notifications] Failed to mark all notifications as read:',
+          error
+        );
+      }
+    });
   }
 
   // =========================================================
@@ -627,6 +939,7 @@ export class NotificationService {
   private updateUnreadCount(
     notifications: NotificationItem[]
   ): void {
+
     const count = notifications.filter(
       notification => !notification.read
     ).length;
@@ -634,28 +947,34 @@ export class NotificationService {
     this.unreadCountSubject.next(count);
   }
 
+  // =========================================================
+  // GET CURRENT UNREAD COUNT
+  // =========================================================
+
   getCurrentUnreadCount(): number {
+
     return this.unreadCountSubject.value;
   }
 
   // =========================================================
-  // REFRESH
+  // REFRESH NOTIFICATIONS
   // =========================================================
 
   refreshUnreadCount(): void {
-  if (!this.authService.isLoggedIn()) {
-    return;
-  }
 
-  this.fetchActivities(false);
-}
+    this.fetchNotifications(false);
+  }
 
   // =========================================================
   // GET TICKET DATABASE ID
   // =========================================================
 
-  private getTicketId(ticket: unknown): number | null {
+  private getTicketId(
+    ticket: unknown
+  ): number | null {
+
     if (typeof ticket === 'number') {
+
       return Number.isSafeInteger(ticket) && ticket > 0
         ? ticket
         : null;
