@@ -1,15 +1,17 @@
-
 import {
   Component,
   ChangeDetectorRef,
   NgZone
 } from '@angular/core';
 
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
+
 import { AuthService } from '../../services/auth.service';
+
 
 @Component({
   selector: 'app-login',
@@ -27,8 +29,10 @@ export class Login {
   errorMessage = '';
   loading = false;
 
+
   private readonly invalidLoginMessage =
     'Invalid username/password/role.';
+
 
   constructor(
     private readonly authService: AuthService,
@@ -39,6 +43,7 @@ export class Login {
   ) {
     const error = this.route.snapshot.queryParamMap.get('error');
 
+
     if (error === 'not-admin') {
       this.errorMessage = this.invalidLoginMessage;
     } else if (error === 'session-expired') {
@@ -47,12 +52,15 @@ export class Login {
     }
   }
 
+
   login(): void {
     if (this.loading) {
       return;
     }
 
+
     this.errorMessage = '';
+
 
     if (!this.username.trim() || !this.password) {
       this.errorMessage = this.invalidLoginMessage;
@@ -60,8 +68,10 @@ export class Login {
       return;
     }
 
+
     this.loading = true;
     this.cdr.detectChanges();
+
 
     this.authService
       .login(this.username.trim(), this.password)
@@ -72,63 +82,105 @@ export class Login {
             const user = this.authService.getUser();
             const role = this.authService.getUserRole();
 
-            // Only Admin users may continue.
+
+            // Step 1: Validate login response and Admin role.
             if (
               !accessToken ||
               !user ||
               !role ||
               role.trim().toLowerCase() !== 'admin'
             ) {
-              this.authService.logout();
-              this.password = '';
-              this.errorMessage = this.invalidLoginMessage;
-              this.loading = false;
-              this.cdr.detectChanges();
+              this.cancelPendingLogin();
               return;
             }
 
-            this.loading = false;
-            this.cdr.detectChanges();
 
-            this.router.navigate(['/dashboard'])
-              .then((navigated: boolean) => {
+            // Step 2: Confirm the pending backend session.
+            this.authService.confirmSession().subscribe({
+              next: () => {
                 this.ngZone.run(() => {
-                  if (!navigated) {
-                    this.errorMessage =
-                      'Unable to open the dashboard. Please try again.';
-                  }
-
+                  this.loading = false;
                   this.cdr.detectChanges();
-                });
-              })
-              .catch((error: unknown) => {
-                console.error('Dashboard navigation error:', error);
 
-                this.ngZone.run(() => {
-                  this.errorMessage =
-                    'Unable to open the dashboard. Please try again.';
-                  this.cdr.detectChanges();
+
+                  // Step 3: Navigate only after confirmation.
+                  this.router.navigate(['/dashboard'])
+                    .then((navigated: boolean) => {
+                      this.ngZone.run(() => {
+                        if (!navigated) {
+                          this.errorMessage =
+                            'Unable to open the dashboard. Please try again.';
+                        }
+
+
+                        this.cdr.detectChanges();
+                      });
+                    })
+                    .catch((error: unknown) => {
+                      console.error('Dashboard navigation error:', error);
+
+
+                      this.ngZone.run(() => {
+                        this.errorMessage =
+                          'Unable to open the dashboard. Please try again.';
+
+
+                        this.cdr.detectChanges();
+                      });
+                    });
                 });
-              });
+              },
+
+
+              error: (error: unknown) => {
+                console.error('Session confirmation failed:', error);
+                this.cancelPendingLogin();
+              }
+            });
           });
         },
 
+
         error: (error: unknown) => {
           console.error('Login request failed:', error);
+
 
           this.ngZone.run(() => {
             this.loading = false;
             this.password = '';
             this.errorMessage = this.invalidLoginMessage;
-
             this.cdr.detectChanges();
-
-            console.log('Login UI updated:', {
-              loading: this.loading,
-              errorMessage: this.errorMessage
-            });
           });
         }
       });
+  }
+
+
+  // Cancel the backend session when frontend validation fails.
+  private cancelPendingLogin(): void {
+    this.authService.cancelPendingSession().subscribe({
+      next: () => {
+        this.finishFailedLogin();
+      },
+      error: (error: unknown) => {
+        console.error('Pending session cancellation failed:', error);
+
+
+        // Always clear local authentication data.
+        this.finishFailedLogin();
+      }
+    });
+  }
+
+
+  // Reset the login screen after a failed login confirmation.
+  private finishFailedLogin(): void {
+    this.ngZone.run(() => {
+      this.authService.clearSession();
+      this.password = '';
+      this.errorMessage = this.invalidLoginMessage;
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
 }

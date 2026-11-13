@@ -59,6 +59,7 @@ export class Teams implements OnInit {
 
   ngOnInit(): void {
     this.loadTeams();
+    this.loadUsers();
   }
 
   /* =====================================================
@@ -341,29 +342,30 @@ export class Teams implements OnInit {
      ===================================================== */
 
   getJoinedDate(member: any): string {
-    const date =
-      member?.joined_at ||
-      member?.joined_date ||
-      member?.date_joined ||
-      member?.created_at;
+    if (!member?.id) {
+      return '-';
+    }
+
+    // Get the authoritative joining date from User Management.
+    const user = this.users.find(
+      (currentUser: any) =>
+        Number(currentUser.id) === Number(member.id)
+    );
+
+    // Use `any` because the current User interface may not declare date_joined yet.
+    const date = (user as any)?.date_joined;
 
     if (!date) {
       return '-';
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
-    if (
-      isNaN(
-        parsedDate.getTime()
-      )
-    ) {
+    if (isNaN(parsedDate.getTime())) {
       return '-';
     }
 
-    return parsedDate
-      .toLocaleDateString('en-GB');
+    return parsedDate.toLocaleDateString('en-GB');
   }
 
   /* =====================================================
@@ -788,7 +790,7 @@ export class Teams implements OnInit {
     );
 
     this.userService
-      .getUsers()
+      .getTeamUsers()
       .subscribe({
 
         next: (response) => {
@@ -881,11 +883,9 @@ export class Teams implements OnInit {
   toggleTeamFormMember(
     userId: number
   ): void {
-    // Backend validation independently checks organization and allowed role.
-    if (
-      !this.isTeamMemberRole(userId) ||
-      this.isMemberOfOtherTeam(userId)
-    ) {
+    // A user can belong to multiple teams.
+    // Role and organization validation remains enforced by the backend.
+    if (!this.isTeamMemberRole(userId)) {
       return;
     }
 
@@ -960,81 +960,6 @@ export class Teams implements OnInit {
   }
 
   /* =====================================================
-     GET OTHER TEAM FOR USER
-     ===================================================== */
-
-  getOtherTeamForUser(
-    userId: number
-  ): any | null {
-    if (!userId) {
-      return null;
-    }
-
-    const user =
-      this.users.find(
-        currentUser =>
-          currentUser.id === userId
-      );
-
-    if (!user) {
-      return null;
-    }
-
-    const otherTeam =
-      this.teams.find(team => {
-        if (!team) {
-          return false;
-        }
-
-        // During Edit, ignore the team currently being edited.
-        // During Create, check membership against every existing team.
-        if (
-          this.selectedTeam?.id !== undefined &&
-          team.id === this.selectedTeam.id
-        ) {
-          return false;
-        }
-
-        const memberIds =
-          this.getTeamMemberIds(team);
-
-        return memberIds.includes(userId);
-      });
-
-    return otherTeam || null;
-  }
-
-  /* =====================================================
-     MEMBER OF ANOTHER TEAM
-     ===================================================== */
-
-  isMemberOfOtherTeam(
-    userId: number
-  ): boolean {
-    return !!this.getOtherTeamForUser(
-      userId
-    );
-  }
-
-  /* =====================================================
-     OTHER TEAM NAME
-     ===================================================== */
-
-  getOtherTeamName(
-    userId: number
-  ): string {
-    const team =
-      this.getOtherTeamForUser(
-        userId
-      );
-
-    return (
-      team?.team_name ||
-      'another team'
-    );
-  }
-
-  /* =====================================================
      USER SELECTED
      ===================================================== */
 
@@ -1058,14 +983,10 @@ export class Teams implements OnInit {
       return;
     }
 
+    // A user already in this team cannot be added a second time.
+    // Membership in other teams does not prevent selection.
     if (
       this.isExistingMember(userId)
-    ) {
-      return;
-    }
-
-    if (
-      this.isMemberOfOtherTeam(userId)
     ) {
       return;
     }
@@ -1129,15 +1050,14 @@ export class Teams implements OnInit {
       this.selectedUserIds.filter(
         userId =>
           this.isTeamMemberRole(userId) &&
-          !this.isExistingMember(userId) &&
-          !this.isMemberOfOtherTeam(userId)
+          !this.isExistingMember(userId)
       );
 
     if (
       allowedSelectedUserIds.length === 0
     ) {
       this.memberErrorMessage =
-        'Select an Admin or an unassigned Team Member.';
+        'Select an Admin or Team Member who is not already in this team.';
       return;
     }
 

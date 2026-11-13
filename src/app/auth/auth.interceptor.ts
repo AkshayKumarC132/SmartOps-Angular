@@ -85,6 +85,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
+        localStorage.removeItem('session_expires_at');
 
         // Avoid repeatedly navigating to the login page.
         if (!router.url.startsWith('/login')) {

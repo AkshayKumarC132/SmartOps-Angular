@@ -1,4 +1,3 @@
-
 import { Routes } from '@angular/router';
 
 import { Login } from './components/login/login';
@@ -99,6 +98,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/audit-log/audit-log')
             .then(m => m.AuditLog)
+      },
+
+      // INTEGRATIONS
+      {
+        path: 'integrations',
+        loadComponent: () =>
+          import('./components/integrations/integrations')
+            .then(m => m.Integrations)
       },
 
       {

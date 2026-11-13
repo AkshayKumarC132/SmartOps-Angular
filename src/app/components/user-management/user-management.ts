@@ -41,7 +41,11 @@ export class UserManagement implements OnInit {
 
   showInviteModal = false;
   showEditModal = false;
+  showUserDetailsModal = false;
+  loadingUserDetails = false;
+  detailsErrorMessage = '';
 
+  selectedUserDetails: User | null = null;
   editingUser: User | null = null;
 
   userForm = {
@@ -575,6 +579,50 @@ export class UserManagement implements OnInit {
 
     return fullName || user.username || 'User';
   }
+  
+// =====================================================
+// VIEW USER INFORMATION
+// =====================================================
+
+openUserDetails(user: User): void {
+  if (!user?.id) {
+    return;
+  }
+
+  this.selectedUserDetails = { ...user };
+  this.showUserDetailsModal = true;
+  this.loadingUserDetails = true;
+  this.detailsErrorMessage = '';
+
+  this.userService.getUser(user.id).subscribe({
+    next: response => {
+      this.selectedUserDetails =
+        this.normalizeAIAccess(response);
+
+      this.loadingUserDetails = false;
+      this.cdr.detectChanges();
+    },
+
+    error: error => {
+      console.error('User details error:', error);
+
+      this.loadingUserDetails = false;
+
+      this.detailsErrorMessage =
+        this.apiErrorService.getErrorMessage(error) ||
+        'Unable to refresh user information.';
+
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+closeUserDetailsModal(): void {
+  this.showUserDetailsModal = false;
+  this.selectedUserDetails = null;
+  this.loadingUserDetails = false;
+  this.detailsErrorMessage = '';
+}
 
   getInitial(user: User): string {
     const name =

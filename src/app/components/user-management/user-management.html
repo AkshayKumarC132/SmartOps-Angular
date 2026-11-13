@@ -97,6 +97,12 @@
         <tbody>
           <tr
             *ngFor="let user of filteredUsers; trackBy: trackByUser"
+            class="user-row-clickable"
+            tabindex="0"
+            [attr.aria-label]="'View details for ' + user.username"
+            (click)="openUserDetails(user)"
+            (keydown.enter)="openUserDetails(user)"
+            (keydown.space)="openUserDetails(user); $event.preventDefault()"
           >
             <!-- USER -->
             <td>
@@ -107,7 +113,12 @@
 
                 <div class="user-info">
                   <strong>{{ getUserName(user) }}</strong>
-                  <span>@{{ user.username }}</span>
+                  <button type="button"
+                  class="username-link"
+                  title="View user information"
+                  (click)="$event.stopPropagation(); openUserDetails(user)">
+                   @{{ user.username }}
+                  </button>
                 </div>
               </div>
             </td>
@@ -164,7 +175,7 @@
                   class="action-button edit-action"
                   title="Edit user"
                   [disabled]="saving"
-                  (click)="openEditUser(user)"
+                  (click)="$event.stopPropagation(); openEditUser(user)"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 20h9"></path>
@@ -181,7 +192,7 @@
                   title="Permanently delete user"
                   aria-label="Permanently delete user"
                   [disabled]="saving"
-                  (click)="deleteUser(user)"
+                  (click)="$event.stopPropagation(); deleteUser(user)"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 6h18"></path>
@@ -574,5 +585,134 @@
       </div>
 
     </form>
+  </div>
+</div>
+
+<!-- =====================================================
+     USER INFORMATION MODAL
+     ===================================================== -->
+
+<div
+  *ngIf="showUserDetailsModal"
+  class="modal-backdrop"
+  (click)="closeUserDetailsModal()"
+>
+  <div
+    class="user-modal user-details-modal"
+    (click)="$event.stopPropagation()"
+  >
+
+    <div class="modal-header">
+      <div>
+        <h2>User Information</h2>
+        <p>Account details and access information</p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeUserDetailsModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div
+      *ngIf="loadingUserDetails"
+      class="user-details-state"
+    >
+      Loading user information...
+    </div>
+
+    <div
+      *ngIf="detailsErrorMessage"
+      class="modal-error"
+    >
+      {{ detailsErrorMessage }}
+    </div>
+
+    <div
+      *ngIf="selectedUserDetails as detail"
+      class="user-details-content"
+    >
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Username</span>
+        <strong>@{{ detail.username }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Full Name</span>
+        <strong>{{ getUserName(detail) }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Email</span>
+        <strong>{{ detail.email || '—' }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">First Name</span>
+        <strong>{{ detail.first_name || '—' }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Last Name</span>
+        <strong>{{ detail.last_name || '—' }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Role</span>
+        <span
+          class="role-badge"
+          [ngClass]="getRoleClass(detail.role)"
+        >
+          {{ detail.role }}
+        </span>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Account Status</span>
+        <span
+          class="status-badge"
+          [class.status-active]="detail.is_active !== false"
+          [class.status-inactive]="detail.is_active === false"
+        >
+          {{ detail.is_active === false ? 'Inactive' : 'Active' }}
+        </span>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">AI Access</span>
+        <span
+          class="ai-badge"
+          [class.ai-enabled]="detail.is_ai_enabled"
+        >
+          {{ detail.is_ai_enabled ? 'Enabled' : 'Disabled' }}
+        </span>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Joined Date</span>
+        <strong>{{ formatDate(detail.created_at) }}</strong>
+      </div>
+
+      <div class="user-detail-item">
+        <span class="user-detail-label">Last Updated</span>
+        <strong>{{ formatDate(detail.updated_at) }}</strong>
+      </div>
+
+    </div>
+
+    <div class="user-details-footer">
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="closeUserDetailsModal()"
+      >
+        Close
+      </button>
+    </div>
+
   </div>
 </div>

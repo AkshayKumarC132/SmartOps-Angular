@@ -467,8 +467,7 @@
         </div>
 
         <p class="form-help-text">
-          Select Admins or Team Members from your organization.
-          Users already assigned to another team cannot be selected.
+          Select Admins or Team Members from your organization. A user can belong to multiple teams.
         </p>
 
         <div
@@ -502,23 +501,14 @@
             [class.selected-member]="
               isTeamFormMemberSelected(user.id)
             "
-            [class.already-in-other-team]="
-              isMemberOfOtherTeam(user.id)
-            "
-            (click)="
-              !isMemberOfOtherTeam(user.id) &&
-              toggleTeamFormMember(user.id)
-            "
+            (click)="toggleTeamFormMember(user.id)"
           >
             <input
               type="checkbox"
               [checked]="
                 isTeamFormMemberSelected(user.id)
               "
-              [disabled]="
-                saving ||
-                isMemberOfOtherTeam(user.id)
-              "
+              [disabled]="saving"
               (click)="$event.stopPropagation()"
               (change)="toggleTeamFormMember(user.id)"
             />
@@ -537,13 +527,6 @@
 
             <span class="add-member-role">
               {{ user.role }}
-            </span>
-
-            <span
-              *ngIf="isMemberOfOtherTeam(user.id)"
-              class="already-in-other-team"
-            >
-              Already in {{ getOtherTeamName(user.id) }}
             </span>
           </div>
         </div>
@@ -653,12 +636,8 @@
         [class.existing-member]="
           isExistingMember(user.id)
         "
-        [class.already-in-other-team]="
-          isMemberOfOtherTeam(user.id)
-        "
         (click)="
           !isExistingMember(user.id) &&
-          !isMemberOfOtherTeam(user.id) &&
           toggleUserSelection(user.id)
         "
       >
@@ -666,10 +645,7 @@
         <input
           type="checkbox"
           [checked]="isUserSelected(user.id)"
-          [disabled]="
-            isExistingMember(user.id) ||
-            isMemberOfOtherTeam(user.id)
-          "
+          [disabled]="isExistingMember(user.id)"
           (click)="$event.stopPropagation()"
           (change)="toggleUserSelection(user.id)"
         />
@@ -699,18 +675,6 @@
           class="already-member"
         >
           Already added
-        </span>
-
-        <!-- ALREADY IN ANOTHER TEAM -->
-        <span
-          *ngIf="
-            !isExistingMember(user.id) &&
-            isMemberOfOtherTeam(user.id)
-          "
-          class="already-member already-in-other-team"
-        >
-          Already in
-          {{ getOtherTeamName(user.id) }}
         </span>
       </div>
     </div>

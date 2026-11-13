@@ -9,51 +9,108 @@ import { environment } from '../../environments/environment';
 })
 export class IntegrationService {
 
-  private apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
 
-  constructor(
-    private http: HttpClient
-  ) {}
+  constructor(private http: HttpClient) {}
 
-  getEmailEndpoints(): Observable<any[]> {
-    return this.http.get<any[]>(
+  // ================================
+  // EMAIL ENDPOINTS
+  // ================================
+
+  getEmailEndpoints(): Observable<any> {
+    return this.http.get<any>(
       `${this.apiUrl}/email-endpoints/`
     );
   }
 
-  createEmailEndpoint(
-    data: any
-  ): Observable<any> {
+  createEmailEndpoint(data: any): Observable<any> {
     return this.http.post<any>(
       `${this.apiUrl}/email-endpoints/`,
       data
     );
   }
 
-  getEmailDeliveries(): Observable<any[]> {
-    return this.http.get<any[]>(
+  updateEmailEndpoint(
+    id: number,
+    data: any
+  ): Observable<any> {
+    return this.http.patch<any>(
+      `${this.apiUrl}/email-endpoints/${id}/`,
+      data
+    );
+  }
+
+  deleteEmailEndpoint(id: number): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/email-endpoints/${id}/`
+    );
+  }
+
+  // ================================
+  // EMAIL DELIVERIES
+  // ================================
+
+  getEmailDeliveries(): Observable<any> {
+    return this.http.get<any>(
       `${this.apiUrl}/email-deliveries/`
     );
   }
 
-  getWebhookEndpoints(): Observable<any[]> {
-    return this.http.get<any[]>(
+  retryEmailDelivery(id: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/email-deliveries/${id}/retry/`,
+      {}
+    );
+  }
+
+  // ================================
+  // WEBHOOK ENDPOINTS
+  // ================================
+
+  getWebhookEndpoints(): Observable<any> {
+    return this.http.get<any>(
       `${this.apiUrl}/webhook-endpoints/`
     );
   }
 
-  createWebhookEndpoint(
-    data: any
-  ): Observable<any> {
+  createWebhookEndpoint(data: any): Observable<any> {
     return this.http.post<any>(
       `${this.apiUrl}/webhook-endpoints/`,
       data
     );
   }
 
-  getWebhookDeliveries(): Observable<any[]> {
-    return this.http.get<any[]>(
+  updateWebhookEndpoint(
+    id: number,
+    data: any
+  ): Observable<any> {
+    return this.http.patch<any>(
+      `${this.apiUrl}/webhook-endpoints/${id}/`,
+      data
+    );
+  }
+
+  deleteWebhookEndpoint(id: number): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/webhook-endpoints/${id}/`
+    );
+  }
+
+  // ================================
+  // WEBHOOK DELIVERIES
+  // ================================
+
+  getWebhookDeliveries(): Observable<any> {
+    return this.http.get<any>(
       `${this.apiUrl}/webhook-deliveries/`
     );
   }
+
+  retryWebhookDelivery(id: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/webhook-deliveries/${id}/retry/`,
+      {}
+    );
+  }
+
 }

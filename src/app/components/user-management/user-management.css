@@ -249,6 +249,21 @@
 .users-table tbody tr:hover {
   background: #fafafa;
 }
+/* Entire user row clickable */
+
+.user-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-row-clickable:hover {
+  background: #eff8ff !important;
+}
+
+.user-row-clickable:focus-visible {
+  outline: 2px solid #24a99a;
+  outline-offset: -2px;
+}
 
 /* =====================================================
    USER DETAILS
@@ -1011,4 +1026,91 @@
   color: #991b1b;
   background: #fee2e2;
   border-color: #fca5a5;
+}
+/* =====================================================
+   CLICKABLE USERNAME
+   ===================================================== */
+
+.username-link {
+  padding: 0;
+  color: #175cd3;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.username-link:hover {
+  color: #0d9488;
+  text-decoration: underline;
+}
+
+.username-link:focus-visible {
+  outline: 2px solid #24a99a;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+
+/* =====================================================
+   USER DETAILS MODAL
+   ===================================================== */
+
+.user-details-modal {
+  max-width: 650px;
+}
+
+.user-details-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 22px 24px;
+  overflow-y: auto;
+}
+
+.user-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px;
+  background: #f8fafc;
+  border: 1px solid #eaecf0;
+  border-radius: 7px;
+}
+
+.user-detail-label {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.user-detail-item strong {
+  color: #101828;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.user-details-state {
+  padding: 20px 24px;
+  color: #667085;
+  font-size: 13px;
+  text-align: center;
+}
+
+.user-details-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 24px;
+  border-top: 1px solid #eaecf0;
+}
+
+@media (max-width: 600px) {
+  .user-details-content {
+    grid-template-columns: 1fr;
+  }
 }

@@ -92,7 +92,15 @@ export class UserService {
       this.apiUrl
     );
   }
+  // ==========================================================
+  // GET USERS FROM CURRENT ORGANIZATION FOR TEAMS
+  // ==========================================================
 
+  getTeamUsers(): Observable<User[]> {
+  return this.http.get<User[]>(
+    `${this.apiUrl}?organization_only=true`
+  );
+}
   // ==========================================================
   // GET USER BY ID
   // ==========================================================

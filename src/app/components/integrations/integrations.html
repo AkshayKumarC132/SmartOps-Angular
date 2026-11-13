@@ -1,48 +1,937 @@
 <div class="integrations-page">
 
-  <button
-    type="button"
-    (click)="goBack()"
+  <!-- HEADER -->
+  <header class="page-header">
+    <div>
+      <h1>Integrations</h1>
+      <p>Manage email and webhook endpoints and monitor notification delivery.</p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="refresh()"
+      [disabled]="loading || refreshing"
+    >
+      <span class="refresh-icon">↻</span>
+      {{ refreshing ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </header>
+
+
+  <!-- MESSAGES -->
+  <div
+    class="message success-message"
+    *ngIf="successMessage"
+    role="status"
   >
-    Back to Dashboard
-  </button>
+    {{ successMessage }}
+    <button type="button" (click)="successMessage = ''">×</button>
+  </div>
 
-  <h1>Integrations</h1>
+  <div
+    class="message error-message"
+    *ngIf="errorMessage"
+    role="alert"
+  >
+    {{ errorMessage }}
+    <button type="button" (click)="errorMessage = ''">×</button>
+  </div>
 
-  <p>
-    Manage SmartOps email and webhook integrations.
-  </p>
 
-  <div class="integration-options">
+  <!-- INITIAL LOADING -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Loading integration information...</span>
+  </div>
 
-    <button
-      type="button"
-      (click)="goToEmailEndpoints()"
+
+  <ng-container *ngIf="!loading">
+
+    <!-- SUMMARY CARDS -->
+    <section class="summary-grid">
+
+      <div class="summary-card">
+        <div class="summary-label">Total Endpoints</div>
+        <div class="summary-value">{{ totalEndpoints }}</div>
+        <div class="summary-description">
+          Email and webhook endpoints
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Active Endpoints</div>
+        <div class="summary-value">{{ activeEndpoints }}</div>
+        <div class="summary-description">
+          Currently enabled endpoints
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Total Deliveries</div>
+        <div class="summary-value">{{ totalDeliveries }}</div>
+        <div class="summary-description">
+          Email and webhook deliveries
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Failed Deliveries</div>
+        <div class="summary-value failed-value">
+          {{ failedDeliveries }}
+        </div>
+        <div class="summary-description">
+          Deliveries requiring attention
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- NAVIGATION TABS -->
+    <nav class="integration-tabs">
+
+      <button
+        type="button"
+        [class.active]="activeTab === 'overview'"
+        (click)="setTab('overview')"
+      >
+        Overview
+      </button>
+
+      <button
+        type="button"
+        [class.active]="activeTab === 'email'"
+        (click)="setTab('email')"
+      >
+        Email Endpoints
+      </button>
+
+      <button
+        type="button"
+        [class.active]="activeTab === 'webhook'"
+        (click)="setTab('webhook')"
+      >
+        Webhook Endpoints
+      </button>
+
+      <button
+        type="button"
+        [class.active]="activeTab === 'deliveries'"
+        (click)="setTab('deliveries')"
+      >
+        Delivery Logs
+      </button>
+
+    </nav>
+
+
+    <!-- ==========================================
+         OVERVIEW
+         ========================================== -->
+    <section
+      class="content-card"
+      *ngIf="activeTab === 'overview'"
     >
-      Email Endpoints
-    </button>
 
-    <button
-      type="button"
-      (click)="goToEmailDeliveries()"
+      <div class="section-heading">
+        <div>
+          <h2>Integration Overview</h2>
+          <p>Current endpoint configuration and delivery activity.</p>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+
+        <button
+          type="button"
+          class="overview-card"
+          (click)="setTab('email')"
+        >
+          <div class="overview-icon email-icon">✉</div>
+
+          <div>
+            <h3>Email Integrations</h3>
+            <p>{{ emailEndpoints.length }} configured endpoints</p>
+            <span>Manage email endpoints →</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="overview-card"
+          (click)="setTab('webhook')"
+        >
+          <div class="overview-icon webhook-icon">⌘</div>
+
+          <div>
+            <h3>Webhook Integrations</h3>
+            <p>{{ webhookEndpoints.length }} configured endpoints</p>
+            <span>Manage webhook endpoints →</span>
+          </div>
+        </button>
+
+      </div>
+
+      <div class="recent-heading">
+        <h3>Recent Delivery Activity</h3>
+
+        <button
+          type="button"
+          class="text-button"
+          (click)="setTab('deliveries')"
+        >
+          View all deliveries →
+        </button>
+      </div>
+
+      <div
+        class="table-wrapper"
+        *ngIf="deliveryRows.length > 0"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Channel</th>
+              <th>Endpoint</th>
+              <th>Event</th>
+              <th>Status</th>
+              <th>Attempts</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              *ngFor="let row of deliveryRows.slice(0, 5)"
+              (click)="openDeliveryDetails(row)"
+              class="clickable-row"
+            >
+              <td>{{ formatDate(row.created_at) }}</td>
+
+              <td>
+                <span
+                  class="channel-label"
+                  [ngClass]="row.channel.toLowerCase()"
+                >
+                  {{ row.channel }}
+                </span>
+              </td>
+
+              <td>{{ getDeliveryTarget(row) }}</td>
+
+              <td>{{ formatEvent(row.event_type) }}</td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusClass(row.status)"
+                >
+                  {{ row.status }}
+                </span>
+              </td>
+
+              <td>{{ row.attempt_count || 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="empty-inline"
+        *ngIf="deliveryRows.length === 0"
+      >
+        No delivery activity found yet.
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         EMAIL ENDPOINTS
+         ========================================== -->
+    <section
+      class="content-card"
+      *ngIf="activeTab === 'email'"
     >
-      Email Deliveries
-    </button>
 
-    <button
-      type="button"
-      (click)="goToWebhookEndpoints()"
+      <div class="section-heading">
+        <div>
+          <h2>Email Endpoints</h2>
+          <p>Configure email destinations for SmartOps events.</p>
+        </div>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="openCreateForm('email')"
+        >
+          + Add Email Endpoint
+        </button>
+      </div>
+
+      <div class="section-error" *ngIf="emailEndpointError">
+        {{ emailEndpointError }}
+      </div>
+
+      <div
+        class="table-wrapper"
+        *ngIf="emailEndpoints.length > 0"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email Address</th>
+              <th>Subscribed Events</th>
+              <th>Created By</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let endpoint of emailEndpoints">
+
+              <td class="endpoint-name">
+                {{ endpoint.name }}
+              </td>
+
+              <td>{{ endpoint.email || '-' }}</td>
+
+              <td>
+                <div class="event-list">
+                  <span
+                    class="event-chip"
+                    *ngFor="let event of endpoint.events"
+                  >
+                    {{ formatEvent(event) }}
+                  </span>
+
+                  <span *ngIf="!endpoint.events?.length">None</span>
+                </div>
+              </td>
+
+              <td>{{ endpoint.created_by || '-' }}</td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="
+                    endpoint.is_active
+                      ? 'status-success'
+                      : 'status-default'
+                  "
+                >
+                  {{ endpoint.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="table-action"
+                  (click)="toggleEndpoint(endpoint, 'email')"
+                >
+                  {{ endpoint.is_active ? 'Deactivate' : 'Activate' }}
+                </button>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="empty-state"
+        *ngIf="emailEndpoints.length === 0 && !emailEndpointError"
+      >
+        <h3>No email endpoints</h3>
+        <p>Create an email endpoint to receive SmartOps event notifications.</p>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="openCreateForm('email')"
+        >
+          Add Email Endpoint
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         WEBHOOK ENDPOINTS
+         ========================================== -->
+    <section
+      class="content-card"
+      *ngIf="activeTab === 'webhook'"
     >
-      Webhook Endpoints
-    </button>
 
-    <button
-      type="button"
-      (click)="goToWebhookDeliveries()"
+      <div class="section-heading">
+        <div>
+          <h2>Webhook Endpoints</h2>
+          <p>Configure external systems to receive SmartOps events.</p>
+        </div>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="openCreateForm('webhook')"
+        >
+          + Add Webhook Endpoint
+        </button>
+      </div>
+
+      <div class="section-error" *ngIf="webhookEndpointError">
+        {{ webhookEndpointError }}
+      </div>
+
+      <div
+        class="table-wrapper"
+        *ngIf="webhookEndpoints.length > 0"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Webhook URL</th>
+              <th>Subscribed Events</th>
+              <th>Created By</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let endpoint of webhookEndpoints">
+
+              <td class="endpoint-name">
+                {{ endpoint.name }}
+              </td>
+
+              <td class="url-cell">
+                {{ endpoint.url || '-' }}
+              </td>
+
+              <td>
+                <div class="event-list">
+                  <span
+                    class="event-chip"
+                    *ngFor="let event of endpoint.events"
+                  >
+                    {{ formatEvent(event) }}
+                  </span>
+
+                  <span *ngIf="!endpoint.events?.length">None</span>
+                </div>
+              </td>
+
+              <td>{{ endpoint.created_by || '-' }}</td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="
+                    endpoint.is_active
+                      ? 'status-success'
+                      : 'status-default'
+                  "
+                >
+                  {{ endpoint.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="table-action"
+                  (click)="toggleEndpoint(endpoint, 'webhook')"
+                >
+                  {{ endpoint.is_active ? 'Deactivate' : 'Activate' }}
+                </button>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="empty-state"
+        *ngIf="webhookEndpoints.length === 0 && !webhookEndpointError"
+      >
+        <h3>No webhook endpoints</h3>
+        <p>Create a webhook endpoint to connect an external application.</p>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="openCreateForm('webhook')"
+        >
+          Add Webhook Endpoint
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         DELIVERY LOGS
+         ========================================== -->
+    <section
+      class="content-card"
+      *ngIf="activeTab === 'deliveries'"
     >
-      Webhook Deliveries
-    </button>
 
+      <div class="section-heading">
+        <div>
+          <h2>Delivery Logs</h2>
+          <p>Inspect email and webhook delivery results.</p>
+        </div>
+
+        <select
+          class="filter-select"
+          [(ngModel)]="deliveryFilter"
+          aria-label="Filter delivery logs"
+        >
+          <option value="ALL">All channels and statuses</option>
+          <option value="EMAIL">Email</option>
+          <option value="WEBHOOK">Webhook</option>
+          <option value="SUCCESS">Success</option>
+          <option value="PENDING">Pending</option>
+          <option value="FAILED">Failed</option>
+        </select>
+      </div>
+
+      <div class="section-error" *ngIf="emailDeliveryError">
+        Email deliveries: {{ emailDeliveryError }}
+      </div>
+
+      <div class="section-error" *ngIf="webhookDeliveryError">
+        Webhook deliveries: {{ webhookDeliveryError }}
+      </div>
+
+      <div
+        class="table-wrapper"
+        *ngIf="filteredDeliveries.length > 0"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Channel</th>
+              <th>Endpoint</th>
+              <th>Event</th>
+              <th>Status</th>
+              <th>Attempts</th>
+              <th>HTTP</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let row of filteredDeliveries">
+
+              <td>{{ formatDate(row.created_at) }}</td>
+
+              <td>
+                <span
+                  class="channel-label"
+                  [ngClass]="row.channel.toLowerCase()"
+                >
+                  {{ row.channel }}
+                </span>
+              </td>
+
+              <td>{{ getDeliveryTarget(row) }}</td>
+
+              <td>{{ formatEvent(row.event_type) }}</td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusClass(row.status)"
+                >
+                  {{ row.status }}
+                </span>
+              </td>
+
+              <td>{{ row.attempt_count || 0 }}</td>
+
+              <td>{{ row.response_status || '-' }}</td>
+
+              <td class="action-cell">
+                <button
+                  type="button"
+                  class="table-action"
+                  (click)="openDeliveryDetails(row)"
+                >
+                  Details
+                </button>
+
+                <button
+                  type="button"
+                  class="retry-button"
+                  *ngIf="
+                    row.status?.toUpperCase() === 'FAILED'
+                  "
+                  (click)="retryDelivery(row)"
+                >
+                  Retry
+                </button>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="empty-state"
+        *ngIf="filteredDeliveries.length === 0"
+      >
+        <h3>No delivery records found</h3>
+        <p>Delivery records will appear here when integrations are triggered.</p>
+      </div>
+
+    </section>
+
+  </ng-container>
+
+
+  <!-- ==========================================
+       CREATE ENDPOINT MODAL
+       ========================================== -->
+  <div
+    class="modal-backdrop"
+    *ngIf="createFormType"
+    (click)="closeCreateForm()"
+  >
+    <div
+      class="modal-card"
+      (click)="$event.stopPropagation()"
+    >
+
+      <div class="modal-heading">
+        <div>
+          <h2>
+            {{
+              createFormType === 'email'
+                ? 'Create Email Endpoint'
+                : 'Create Webhook Endpoint'
+            }}
+          </h2>
+
+          <p>Choose which SmartOps events this endpoint receives.</p>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          (click)="closeCreateForm()"
+        >
+          ×
+        </button>
+      </div>
+
+
+      <!-- EMAIL FORM -->
+      <form
+        *ngIf="createFormType === 'email'"
+        (ngSubmit)="saveEndpoint()"
+      >
+
+        <label for="email-name">Endpoint Name</label>
+
+        <input
+          id="email-name"
+          type="text"
+          name="emailName"
+          [(ngModel)]="emailForm.name"
+          placeholder="Example: Support Alerts"
+          required
+        />
+
+        <label for="email-address">Email Address</label>
+
+        <input
+          id="email-address"
+          type="email"
+          name="emailAddress"
+          [(ngModel)]="emailForm.email"
+          placeholder="alerts@example.com"
+          required
+        />
+
+        <div class="event-selection">
+          <strong>Subscribe to Events</strong>
+
+          <label
+            class="event-option"
+            *ngFor="let event of availableEvents"
+          >
+            <input
+              type="checkbox"
+              [checked]="selectedEvents.includes(event)"
+              (change)="
+                toggleEvent(
+                  event,
+                  $any($event.target).checked
+                )
+              "
+            />
+
+            {{ formatEvent(event) }}
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="closeCreateForm()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Saving...' : 'Create Endpoint' }}
+          </button>
+        </div>
+
+      </form>
+
+
+      <!-- WEBHOOK FORM -->
+      <form
+        *ngIf="createFormType === 'webhook'"
+        (ngSubmit)="saveEndpoint()"
+      >
+
+        <label for="webhook-name">Endpoint Name</label>
+
+        <input
+          id="webhook-name"
+          type="text"
+          name="webhookName"
+          [(ngModel)]="webhookForm.name"
+          placeholder="Example: CRM Webhook"
+          required
+        />
+
+        <label for="webhook-url">Webhook URL</label>
+
+        <input
+          id="webhook-url"
+          type="url"
+          name="webhookUrl"
+          [(ngModel)]="webhookForm.url"
+          placeholder="https://example.com/webhook"
+          required
+        />
+
+        <div class="event-selection">
+          <strong>Subscribe to Events</strong>
+
+          <label
+            class="event-option"
+            *ngFor="let event of availableEvents"
+          >
+            <input
+              type="checkbox"
+              [checked]="selectedEvents.includes(event)"
+              (change)="
+                toggleEvent(
+                  event,
+                  $any($event.target).checked
+                )
+              "
+            />
+
+            {{ formatEvent(event) }}
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="closeCreateForm()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Saving...' : 'Create Endpoint' }}
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       DELIVERY DETAILS MODAL
+       ========================================== -->
+  <div
+    class="modal-backdrop"
+    *ngIf="selectedDelivery"
+    (click)="closeDeliveryDetails()"
+  >
+    <div
+      class="modal-card details-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      <div class="modal-heading">
+        <div>
+          <h2>Delivery Details</h2>
+          <p>
+            {{ selectedDelivery.channel }} delivery
+            #{{ selectedDelivery.id }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          (click)="closeDeliveryDetails()"
+        >
+          ×
+        </button>
+      </div>
+
+
+      <div class="detail-grid">
+
+        <div>
+          <label>Channel</label>
+          <strong>{{ selectedDelivery.channel }}</strong>
+        </div>
+
+        <div>
+          <label>Status</label>
+          <span
+            class="status-badge"
+            [ngClass]="getStatusClass(selectedDelivery.status)"
+          >
+            {{ selectedDelivery.status }}
+          </span>
+        </div>
+
+        <div>
+          <label>Endpoint</label>
+          <strong>
+            {{ getDeliveryTarget(selectedDelivery) }}
+          </strong>
+        </div>
+
+        <div>
+          <label>Event</label>
+          <strong>
+            {{ formatEvent(selectedDelivery.event_type) }}
+          </strong>
+        </div>
+
+        <div>
+          <label>Attempts</label>
+          <strong>
+            {{ selectedDelivery.attempt_count || 0 }}
+          </strong>
+        </div>
+
+        <div>
+          <label>HTTP Response</label>
+          <strong>
+            {{ selectedDelivery.response_status || '-' }}
+          </strong>
+        </div>
+
+        <div>
+          <label>Created At</label>
+          <strong>
+            {{ formatDate(selectedDelivery.created_at) }}
+          </strong>
+        </div>
+
+        <div>
+          <label>Delivered At</label>
+          <strong>
+            {{ formatDate(selectedDelivery.delivered_at) }}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div
+        class="detail-section"
+        *ngIf="getDeliveryError(selectedDelivery)"
+      >
+        <h3>Last Error / Response</h3>
+
+        <pre>{{ getDeliveryError(selectedDelivery) }}</pre>
+      </div>
+
+
+      <div
+        class="detail-section"
+        *ngIf="selectedDelivery.channel === 'WEBHOOK'"
+      >
+        <h3>Payload</h3>
+
+        <pre>{{ formatJson(selectedDelivery.payload) }}</pre>
+      </div>
+
+
+      <div
+        class="detail-section"
+        *ngIf="selectedDelivery.channel === 'EMAIL'"
+      >
+        <h3>Email Subject</h3>
+        <pre>{{ selectedDelivery.subject || '-' }}</pre>
+
+        <h3>Email Message</h3>
+        <pre>{{ selectedDelivery.message || '-' }}</pre>
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="closeDeliveryDetails()"
+        >
+          Close
+        </button>
+
+        <button
+          type="button"
+          class="retry-button"
+          *ngIf="
+            selectedDelivery.status?.toUpperCase() === 'FAILED'
+          "
+          (click)="retryDelivery(selectedDelivery)"
+        >
+          Retry Delivery
+        </button>
+
+      </div>
+
+    </div>
   </div>
 
 </div>

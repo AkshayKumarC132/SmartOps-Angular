@@ -181,7 +181,12 @@
             </svg>
           </span>
 
-          <h2>{{ team.name }}</h2>
+          <button type="button"
+          class="team-name-link"
+          (click)="openTeamDetails(team)"
+          [attr.aria-label]="'View details for ' + team.name">
+          {{ team.name }} 
+          </button>
 
           <span class="rules-count">
             {{ team.rules.length }}
@@ -536,8 +541,136 @@
 
       </form>
 
-    </div>
-
   </div>
 
 </div>
+<!-- ========================================
+     TEAM DETAILS MODAL
+     ======================================== -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showTeamDetailsModal"
+  (click)="closeTeamDetails()"
+>
+  <div
+    class="rule-modal team-details-modal"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- HEADER -->
+
+    <div class="modal-header">
+      <div>
+        <h2>Team Information</h2>
+        <p>Team details and assigned members.</p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeTeamDetails()"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+
+
+    <!-- TEAM INFORMATION -->
+
+    <div
+      class="team-details-content"
+      *ngIf="selectedTeamDetails as team"
+    >
+
+      <div class="team-detail-item">
+        <span>Team Name</span>
+        <strong>{{ team.name }}</strong>
+      </div>
+
+      <div class="team-detail-item">
+        <span>Team ID</span>
+        <strong>#{{ team.id }}</strong>
+      </div>
+
+      <div class="team-detail-item full-width">
+        <span>Description</span>
+
+        <strong>
+          {{ team.description || 'No description available.' }}
+        </strong>
+      </div>
+
+      <div class="team-members-heading">
+        Assigned Members
+        <span>{{ team.members.length }}</span>
+      </div>
+
+
+      <!-- MEMBERS -->
+
+      <div
+        *ngIf="team.members.length > 0"
+        class="team-details-members"
+      >
+
+        <div
+          class="team-details-member"
+          *ngFor="let member of team.members"
+        >
+
+          <div class="team-details-avatar">
+            {{ getTeamMemberName(member).charAt(0).toUpperCase() }}
+          </div>
+
+          <div class="team-details-member-info">
+            <strong>
+              {{ getTeamMemberName(member) }}
+            </strong>
+
+            <span>
+              @{{ member.username }}
+            </span>
+
+            <small>
+              {{ member.email || 'No email available' }}
+            </small>
+          </div>
+
+          <span class="team-member-role">
+            {{ member.role || 'Member' }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- NO MEMBERS -->
+
+      <div
+        *ngIf="team.members.length === 0"
+        class="team-details-empty"
+      >
+        No members assigned to this team.
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="closeTeamDetails()"
+      >
+        Close
+      </button>
+    </div>
+
+  </div>
+</div>
+    </div>

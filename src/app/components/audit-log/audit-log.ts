@@ -22,7 +22,7 @@ interface AuditActivity {
   old_value: string | null;
   new_value: string | null;
   description: string;
-  result: string;
+  result: string | null;
   created_at: string;
 }
 
@@ -37,6 +37,7 @@ export class AuditLog implements OnInit {
   activities: AuditActivity[] = [];
   loading = true;
   errorMessage = '';
+  refreshing = false;
 
   constructor(
     private http: HttpClient,
@@ -50,9 +51,23 @@ export class AuditLog implements OnInit {
   }
 
   // LOAD AUDIT LOGS
-  loadAuditLogs(): void {
-    this.loading = true;
+  loadAuditLogs(showInitialLoader = true): void {
+    // Prevent duplicate requests while a load or refresh is already running.
+    if (this.refreshing) {
+      return;
+    }
+
+    this.refreshing = true;
+
+    if (showInitialLoader) {
+      this.loading = true;
+    }
+
+    // Clear a previous error when a new request starts.
     this.errorMessage = '';
+
+    const startedAt = performance.now();
+    console.info('[Audit Log] Request started');
 
     this.http.get<AuditActivity[]>(
       `${environment.apiUrl}/tickets-activity/`
@@ -63,14 +78,25 @@ export class AuditLog implements OnInit {
           : [];
 
         this.loading = false;
+        this.refreshing = false;
+
+        const duration = Math.round(performance.now() - startedAt);
+        console.info(
+          `[Audit Log] Loaded ${this.activities.length} records in ${duration} ms`
+        );
+
         this.cdr.detectChanges();
       },
 
       error: (error) => {
-        console.error('Unable to load audit logs:', error);
+        console.error('[Audit Log] Request failed:', error);
 
-        this.activities = [];
+        const duration = Math.round(performance.now() - startedAt);
+        console.warn(`[Audit Log] Failed after ${duration} ms`);
+
+        // Keep previously loaded records visible when a refresh fails.
         this.loading = false;
+        this.refreshing = false;
 
         if (error.status === 401) {
           this.errorMessage =
@@ -251,39 +277,71 @@ export class AuditLog implements OnInit {
     return actor ? actor.charAt(0).toUpperCase() : '?';
   }
 
-  // DETAILS
+  // DETAILED AUDIT INFORMATION
   getDetails(activity: AuditActivity): string {
-    const action = this.normalizeAction(activity.action);
+    const details: string[] = [];
+    const field = activity.field?.trim();
+    const oldValue = activity.old_value?.trim();
+    const newValue = activity.new_value?.trim();
+    const description = activity.description?.trim();
 
-    if (
-      action === 'STATUS_CHANGED' &&
-      activity.old_value &&
-      activity.new_value
-    ) {
-      return `${activity.old_value} → ${activity.new_value}`;
+    if (field) {
+      details.push(`Field: ${field}`);
     }
 
-    if (action === 'ASSIGNED' && activity.new_value) {
-      return activity.new_value;
+    if (oldValue || newValue) {
+      details.push(`${oldValue || '—'} → ${newValue || '—'}`);
     }
 
-    if (
-      (action === 'ATTACHMENT_ADDED' ||
-        action === 'ATTACHMENT_DELETED') &&
-      activity.new_value
-    ) {
-      return activity.new_value;
+    if (description) {
+      details.push(description);
     }
 
-    if (activity.description?.trim()) {
-      return activity.description.trim();
+    return details.length > 0 ? details.join(' | ') : '—';
+  }
+
+  // RESULT CSS CLASS
+  getResultClass(result: string | null | undefined): string {
+    const status = String(result || '').trim().toUpperCase();
+
+    switch (status) {
+      case 'SUCCESS':
+        return 'result-success';
+      case 'DENIED':
+      case 'ACCESS_DENIED':
+        return 'result-denied';
+      case 'FAILED':
+      case 'ERROR':
+        return 'result-failed';
+      default:
+        return 'result-default';
+    }
+  }
+
+  // FORMAT RESULT LABEL
+  formatResult(result: string | null | undefined): string {
+    const status = String(result || '').trim().toUpperCase();
+
+    if (!status) {
+      return 'Unknown';
     }
 
-    if (activity.field?.trim()) {
-      return activity.field.trim();
+    switch (status) {
+      case 'SUCCESS':
+        return 'Success';
+      case 'DENIED':
+      case 'ACCESS_DENIED':
+        return 'Denied';
+      case 'FAILED':
+        return 'Failed';
+      case 'ERROR':
+        return 'Error';
+      default:
+        return status
+          .replace(/_/g, ' ')
+          .toLowerCase()
+          .replace(/\b\w/g, char => char.toUpperCase());
     }
-
-    return '—';
   }
 
   // DATE FORMATTING
@@ -308,10 +366,13 @@ export class AuditLog implements OnInit {
     });
   }
 
-  // REFRESH
+  // REFRESH WITHOUT HIDING THE CURRENT TABLE
   refresh(): void {
-    if (!this.loading) {
-      this.loadAuditLogs();
+    if (this.loading || this.refreshing) {
+      return;
     }
+
+    // loadAuditLogs() sets refreshing itself; do not set it before this call.
+    this.loadAuditLogs(false);
   }
 }

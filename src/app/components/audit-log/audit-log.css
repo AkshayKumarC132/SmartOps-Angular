@@ -168,7 +168,7 @@ tbody tr:hover {
 
 th:nth-child(1),
 td:nth-child(1) {
-  width: 22%;
+  width: 16%;
 }
 
 th:nth-child(2),
@@ -183,12 +183,17 @@ td:nth-child(3) {
 
 th:nth-child(4),
 td:nth-child(4) {
-  width: 20%;
+  width: 14%;
 }
 
 th:nth-child(5),
 td:nth-child(5) {
-  width: 34%;
+  width: 36%;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+  width: 10%;
 }
 
 
@@ -710,5 +715,109 @@ tbody tr:hover {
   .refresh-btn,
   tbody tr {
     transition: none;
+  }
+}
+
+
+/* =========================================================
+   DETAILED AUDIT INFORMATION AND RESULT BADGES
+   ========================================================= */
+
+/* Six columns need a little more room; the wrapper provides horizontal scrolling. */
+.table-wrapper table {
+  min-width: 1120px;
+}
+
+.details-cell {
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  vertical-align: middle;
+}
+
+.details-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.details-field {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.details-change {
+  color: #475467;
+  font-size: 12px;
+}
+
+.details-description {
+  color: #667085;
+  font-size: 11px;
+  white-space: normal;
+}
+
+.details-empty {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.result-cell {
+  white-space: nowrap;
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.result-success {
+  color: #067647;
+  background: #ecfdf3;
+  border-color: #abefc6;
+}
+
+.result-denied {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.result-failed {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.result-default {
+  color: #475467;
+  background: #f2f4f7;
+  border-color: #d0d5dd;
+}
+
+@media (max-width: 900px) {
+  .table-wrapper table {
+    min-width: 1120px;
+  }
+}
+
+@media (max-width: 600px) {
+  .table-wrapper table {
+    min-width: 1120px;
   }
 }

@@ -31,13 +31,22 @@ interface SlaRule {
 // ========================================
 // TEAM INTERFACE
 // ========================================
+interface SlaTeamMember {
+  id: number;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  role?: string;
+}
 
 interface SlaTeam {
   id: number;
   name: string;
+  description?: string;
+  members: SlaTeamMember[];
   rules: SlaRule[];
 }
-
 @Component({
   selector: 'app-sla-config',
   standalone: true,
@@ -72,7 +81,8 @@ organizationPlan = 'Not configured';
   // ========================================
 
   showRuleModal = false;
-
+  showTeamDetailsModal = false;
+  selectedTeamDetails: SlaTeam | null = null;
   editingRule: SlaRule | null = null;
 
   editingTeam: SlaTeam | null = null;
@@ -129,7 +139,26 @@ ngOnInit(): void {
   this.loadOrganizationInfo();
   this.loadTeams();
 }
+// ========================================
+// TEAM DETAILS
+// ========================================
 
+openTeamDetails(team: SlaTeam): void {
+  this.selectedTeamDetails = team;
+  this.showTeamDetailsModal = true;
+}
+
+closeTeamDetails(): void {
+  this.showTeamDetailsModal = false;
+  this.selectedTeamDetails = null;
+}
+
+getTeamMemberName(member: SlaTeamMember): string {
+  const fullName =
+    `${member.first_name || ''} ${member.last_name || ''}`.trim();
+
+  return fullName || member.username || `User ${member.id}`;
+}
 // ========================================
 // LOAD ORGANIZATION INFORMATION
 // ========================================
@@ -263,15 +292,14 @@ console.log(
               }));
 
             return {
-              id: teamId,
-
-              name:
-                team.team_name ||
-                team.name ||
-                `Team ${teamId}`,
-
-              rules
-            };
+            id: teamId,
+            name: team.team_name || team.name,
+            description: team.description || '',
+            members: Array.isArray(team.team_member_details)
+            ? team.team_member_details
+            : [],
+            rules
+          };
           }
         );
 
