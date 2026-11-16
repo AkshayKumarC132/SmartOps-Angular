@@ -1,109 +1,128 @@
 
 import { Injectable } from '@angular/core';
-
-import {
-  HttpClient,
-  HttpHeaders
-} from '@angular/common/http';
-
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-
-import {
-  catchError,
-  finalize,
-  map,
-  Observable,
-  of,
-  tap
-} from 'rxjs';
-
+import { Observable, tap, finalize } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+
 
 
 // ============================================================
 // USER INTERFACE
 // ============================================================
 
+
 export interface SmartOpsUser {
+
 
   id?: number | string;
   ID?: number | string;
+  'User Id'?: number | string;
+
 
   username?: string;
   Username?: string;
 
+
   role?: string;
   Role?: string;
+
 
   email?: string;
   first_name?: string;
   last_name?: string;
 
+
   firstName?: string;
   lastName?: string;
 
+
   Organization?: string | number | Record<string, unknown> | null;
+
 
   organization?: number | string | Record<string, unknown> | null;
   organization_id?: number | string | null;
   organization_name?: string;
 
-  [key: string]: unknown;
 
+  [key: string]: unknown;
 }
+
+
 
 
 // ============================================================
 // LOGIN RESPONSE INTERFACE
 // ============================================================
 
+
 export interface LoginResponse {
 
-  Access?: string;
-  access?: string;
-  access_token?: string;
-  accessToken?: string;
 
-  Refresh?: string;
-  refresh?: string;
-  refresh_token?: string;
-  refreshToken?: string;
+  Message?: string;
+
+
+  'Confirmation Token'?: string;
+
 
   'User Information'?: SmartOpsUser;
-  user?: SmartOpsUser;
-  User?: SmartOpsUser;
 
-  data?: {
-    user?: SmartOpsUser;
-  };
-
-  Data?: {
-    User?: SmartOpsUser;
-    'User Information'?: SmartOpsUser;
-  };
 
   [key: string]: unknown;
-
 }
+
+
+
+
+// ============================================================
+// CONFIRM SESSION RESPONSE INTERFACE
+// ============================================================
+
+
+export interface ConfirmSessionResponse {
+
+
+  Message?: string;
+
+
+  Access?: string;
+  Refresh?: string;
+
+
+  'User Information'?: SmartOpsUser;
+
+
+  [key: string]: unknown;
+}
+
+
 
 
 // ============================================================
 // AUTH SERVICE
 // ============================================================
 
+
 @Injectable({
   providedIn: 'root'
 })
 
+
 export class AuthService {
+
 
   private readonly apiUrl =
     environment.apiUrl.replace(/\/+$/, '');
 
+
   private readonly sessionExpiryKey =
     'session_expires_at';
 
+
   private sessionTimer: ReturnType<typeof setTimeout> | null = null;
+
+
 
 
   constructor(
@@ -111,23 +130,30 @@ export class AuthService {
     private readonly router: Router
   ) {
 
+
     // Restore the expiry timer when the page is refreshed.
     this.restoreSessionTimer();
 
+
   }
+
+
 
 
   // ==========================================================
   // LOGIN
   // ==========================================================
 
+
   login(
     username: string,
     password: string
   ): Observable<LoginResponse> {
 
-    // Clear any previous session before a new login.
+
+    // Clear any previous local session before a new login.
     this.clearSession();
+
 
     return this.http.post<LoginResponse>(
       `${this.apiUrl}/auth/login/`,
@@ -135,183 +161,29 @@ export class AuthService {
         username,
         password
       }
-    ).pipe(
-
-      tap((response: LoginResponse) => {
-
-        const accessToken =
-          response?.Access ??
-          response?.access ??
-          response?.access_token ??
-          response?.accessToken ??
-          null;
-
-
-        const refreshToken =
-          response?.Refresh ??
-          response?.refresh ??
-          response?.refresh_token ??
-          response?.refreshToken ??
-          null;
-
-
-        const userInformation =
-          this.extractUser(response);
-
-
-        // Validate access token.
-        if (
-          typeof accessToken !== 'string' ||
-          !accessToken.trim()
-        ) {
-
-          this.clearSession();
-
-          throw new Error(
-            'Login response did not contain a valid access token.'
-          );
-
-        }
-
-
-        // Validate user information.
-        if (!userInformation) {
-
-          this.clearSession();
-
-          throw new Error(
-            'Login response did not contain valid user information.'
-          );
-
-        }
-
-
-        // Read the actual JWT expiration timestamp.
-        const expiresAt =
-          this.getJwtExpiration(accessToken);
-
-
-        if (
-          !expiresAt ||
-          expiresAt <= Date.now()
-        ) {
-
-          this.clearSession();
-
-          throw new Error(
-            'Login returned an expired or invalid access token.'
-          );
-
-        }
-
-
-        // Store access token.
-        localStorage.setItem(
-          'access_token',
-          accessToken
-        );
-
-
-        // Store refresh token.
-        if (
-          typeof refreshToken === 'string' &&
-          refreshToken.trim()
-        ) {
-
-          localStorage.setItem(
-            'refresh_token',
-            refreshToken
-          );
-
-        }
-
-
-        // Store user information.
-        localStorage.setItem(
-          'user',
-          JSON.stringify(userInformation)
-        );
-
-
-        // Store the fixed session-expiry timestamp.
-        localStorage.setItem(
-          this.sessionExpiryKey,
-          String(expiresAt)
-        );
-
-
-        // Start the automatic logout timer.
-        this.scheduleSessionExpiry(expiresAt);
-
-
-        console.log(
-          'Login successful.'
-        );
-
-
-        console.log(
-          'Session expires at:',
-          new Date(expiresAt).toLocaleString()
-        );
-
-      })
-
     );
 
-  }
-
-
-  // ==========================================================
-  // EXTRACT USER FROM LOGIN RESPONSE
-  // ==========================================================
-
-  private extractUser(
-    response: LoginResponse | null | undefined
-  ): SmartOpsUser | null {
-
-    const candidates: unknown[] = [
-
-      response?.['User Information'],
-      response?.user,
-      response?.User,
-      response?.data?.user,
-      response?.Data?.User,
-      response?.Data?.['User Information']
-
-    ];
-
-
-    for (const candidate of candidates) {
-
-      if (
-        candidate !== null &&
-        typeof candidate === 'object' &&
-        !Array.isArray(candidate)
-      ) {
-
-        return candidate as SmartOpsUser;
-
-      }
-
-    }
-
-
-    return null;
 
   }
+
+
 
 
   // ==========================================================
   // READ JWT EXPIRATION
   // ==========================================================
 
+
   private getJwtExpiration(
     token: string
   ): number | null {
 
+
     try {
 
+
       const parts = token.split('.');
+
 
       if (parts.length !== 3) {
         return null;
@@ -346,27 +218,152 @@ export class AuthService {
 
     } catch (error) {
 
+
       console.error(
         'Unable to read JWT expiration:',
         error
       );
 
+
       return null;
+
 
     }
 
+
   }
+
+
+
+
+  // ==========================================================
+  // CONFIRM LOGIN SESSION
+  // ==========================================================
+
+
+  confirmSession(
+    confirmationToken: string
+  ): Observable<ConfirmSessionResponse> {
+
+
+    return this.http.post<ConfirmSessionResponse>(
+      `${this.apiUrl}/auth/session/confirm/`,
+      {
+        confirmation_token: confirmationToken
+      }
+    ).pipe(
+
+
+      tap((response: ConfirmSessionResponse) => {
+
+
+        const accessToken = response?.Access;
+        const refreshToken = response?.Refresh;
+        const userInformation = response?.['User Information'];
+
+
+        // Validate confirmation response.
+        if (
+          typeof accessToken !== 'string' ||
+          !accessToken.trim() ||
+          typeof refreshToken !== 'string' ||
+          !refreshToken.trim() ||
+          !userInformation
+        ) {
+
+
+          throw new Error(
+            'Session confirmation response is incomplete.'
+          );
+
+
+        }
+
+
+        // Read the actual access-token expiration.
+        const expiresAt =
+          this.getJwtExpiration(accessToken);
+
+
+        if (
+          !expiresAt ||
+          expiresAt <= Date.now()
+        ) {
+
+
+          throw new Error(
+            'Session confirmation returned an invalid or expired access token.'
+          );
+
+
+        }
+
+
+        // Store JWT tokens only after backend confirmation.
+        localStorage.setItem(
+          'access_token',
+          accessToken
+        );
+
+
+        localStorage.setItem(
+          'refresh_token',
+          refreshToken
+        );
+
+
+        // Store confirmed user information.
+        localStorage.setItem(
+          'user',
+          JSON.stringify(userInformation)
+        );
+
+
+        // Store access-token expiry.
+        localStorage.setItem(
+          this.sessionExpiryKey,
+          String(expiresAt)
+        );
+
+
+        // Start automatic logout timer.
+        this.scheduleSessionExpiry(expiresAt);
+
+
+        console.log(
+          'Login session confirmed successfully.'
+        );
+
+
+        console.log(
+          'Session expires at:',
+          new Date(expiresAt).toLocaleString()
+        );
+
+
+      })
+
+
+    );
+
+
+  }
+
+
 
 
   // ==========================================================
   // SCHEDULE AUTOMATIC SESSION EXPIRY
   // ==========================================================
 
+
   private scheduleSessionExpiry(
     expiresAt: number
   ): void {
 
+
     this.clearSessionTimer();
+
 
     const remainingTime =
       expiresAt - Date.now();
@@ -374,8 +371,10 @@ export class AuthService {
 
     if (remainingTime <= 0) {
 
+
       this.expireSession();
       return;
+
 
     }
 
@@ -387,18 +386,25 @@ export class AuthService {
 
     this.sessionTimer = setTimeout(() => {
 
+
       this.expireSession();
+
 
     }, remainingTime);
 
+
   }
+
+
 
 
   // ==========================================================
   // RESTORE SESSION TIMER AFTER PAGE REFRESH
   // ==========================================================
 
+
   private restoreSessionTimer(): void {
+
 
     const accessToken =
       localStorage.getItem('access_token');
@@ -418,15 +424,15 @@ export class AuthService {
       expiresAt <= Date.now()
     ) {
 
+
       this.expireSession();
       return;
+
 
     }
 
 
-    // The JWT is authoritative; do not extend its expiry
-    // using a client-stored timestamp.
-
+    // JWT expiry is authoritative.
     localStorage.setItem(
       this.sessionExpiryKey,
       String(expiresAt)
@@ -435,31 +441,44 @@ export class AuthService {
 
     this.scheduleSessionExpiry(expiresAt);
 
+
   }
+
+
 
 
   // ==========================================================
   // CLEAR SESSION TIMER
   // ==========================================================
 
+
   private clearSessionTimer(): void {
+
 
     if (this.sessionTimer !== null) {
 
+
       clearTimeout(this.sessionTimer);
+
 
       this.sessionTimer = null;
 
+
     }
 
+
   }
+
+
 
 
   // ==========================================================
   // AUTOMATIC SESSION EXPIRY
   // ==========================================================
 
+
   private expireSession(): void {
+
 
     const hadActiveSession =
       !!localStorage.getItem('access_token');
@@ -479,6 +498,7 @@ export class AuthService {
       !this.router.url.startsWith('/login')
     ) {
 
+
       void this.router.navigate(
         ['/login'],
         {
@@ -488,16 +508,22 @@ export class AuthService {
         }
       );
 
+
     }
 
+
   }
+
+
 
 
   // ==========================================================
   // GET ACCESS TOKEN
   // ==========================================================
 
+
   getAccessToken(): string | null {
+
 
     const token =
       localStorage.getItem('access_token');
@@ -517,88 +543,31 @@ export class AuthService {
       Date.now() >= expiresAt
     ) {
 
+
       this.expireSession();
       return null;
+
 
     }
 
 
     return token;
 
-  }
-
-
-  // ==========================================================
-  // CONFIRM LOGIN SESSION
-  // ==========================================================
-
-  confirmSession(): Observable<any> {
-
-    const accessToken = this.getAccessToken();
-
-
-    if (!accessToken) {
-
-      throw new Error(
-        'Access token is missing. Session cannot be confirmed.'
-      );
-
-    }
-
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${accessToken}`
-    });
-
-
-    return this.http.post<any>(
-      `${this.apiUrl}/auth/session/confirm/`,
-      {},
-      { headers }
-    );
 
   }
 
 
-  // ==========================================================
-  // CANCEL PENDING SESSION
-  // ==========================================================
-
-  cancelPendingSession(): Observable<any> {
-
-    const accessToken = this.getAccessToken();
-
-
-    if (!accessToken) {
-
-      throw new Error(
-        'Access token is missing.'
-      );
-
-    }
-
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${accessToken}`
-    });
-
-
-    return this.http.post<any>(
-      `${this.apiUrl}/auth/session/cancel/`,
-      {},
-      { headers }
-    );
-
-  }
 
 
   // ==========================================================
   // GET REFRESH TOKEN
   // ==========================================================
 
+
   getRefreshToken(): string | null {
 
-    // Never return a refresh token after the fixed session expires.
+
+    // Do not use refresh tokens after local session expiry.
     if (!this.getAccessToken()) {
       return null;
     }
@@ -608,14 +577,19 @@ export class AuthService {
       'refresh_token'
     );
 
+
   }
+
+
 
 
   // ==========================================================
   // GET USER
   // ==========================================================
 
+
   getUser(): SmartOpsUser | null {
+
 
     if (!this.getAccessToken()) {
       return null;
@@ -633,6 +607,7 @@ export class AuthService {
 
     try {
 
+
       const parsedUser: unknown =
         JSON.parse(storedUser);
 
@@ -643,30 +618,40 @@ export class AuthService {
         !Array.isArray(parsedUser)
       ) {
 
+
         return parsedUser as SmartOpsUser;
+
 
       }
 
 
     } catch {
 
+
       // Invalid JSON must not be reused.
+
 
     }
 
 
     this.clearSession();
 
+
     return null;
 
+
   }
+
+
 
 
   // ==========================================================
   // GET USER ROLE
   // ==========================================================
 
+
   getUserRole(): string | null {
+
 
     const user = this.getUser();
 
@@ -682,104 +667,174 @@ export class AuthService {
       !role.trim()
     ) {
 
+
       return null;
+
 
     }
 
 
     return role.trim();
 
+
   }
+
+
 
 
   // ==========================================================
   // ADMIN CHECK
   // ==========================================================
 
+
   isAdmin(): boolean {
+
 
     return (
       this.getUserRole()?.toLowerCase() === 'admin'
     );
 
+
   }
+
+
 
 
   // ==========================================================
   // TEAM MEMBER CHECK
   // ==========================================================
 
+
   isTeamMember(): boolean {
+
 
     return (
       this.getUserRole()?.toLowerCase() === 'team member'
     );
 
+
   }
+
+
 
 
   // ==========================================================
   // REQUESTER CHECK
   // ==========================================================
 
+
   isRequester(): boolean {
+
 
     return (
       this.getUserRole()?.toLowerCase() === 'requester'
     );
 
+
   }
+
+
 
 
   // ==========================================================
   // LOGIN STATUS
   // ==========================================================
 
+
   isLoggedIn(): boolean {
+
 
     return (
       !!this.getAccessToken() &&
       !!this.getUser()
     );
 
+
   }
+
+
 
 
   // ==========================================================
   // CLEAR SESSION
   // ==========================================================
 
-clearSession(): void {
-  // Stop any previously scheduled automatic logout.
-  this.clearSessionTimer();
 
-  // Clear all application storage.
-  localStorage.clear();
-  sessionStorage.clear();
-}
+  clearSession(): void {
+
+
+    this.clearSessionTimer();
+
+
+    localStorage.removeItem(
+      'access_token'
+    );
+
+
+    localStorage.removeItem(
+      'refresh_token'
+    );
+
+
+    localStorage.removeItem(
+      'user'
+    );
+
+
+    localStorage.removeItem(
+      this.sessionExpiryKey
+    );
+
+
+  }
+
+
+
 
   // ==========================================================
   // LOGOUT
   // ==========================================================
 
-  logoutApi(): Observable<boolean> {
-  const refreshToken = localStorage.getItem('refresh_token');
 
-  const request$ = refreshToken
-    ? this.http.post(
-        `${this.apiUrl.replace(/\/+$/, '')}/auth/logout/`,
-        { refresh: refreshToken }
-      ).pipe(
-        map(() => true),
-        catchError(error => {
-          console.error('Logout API failed:', error);
-          return of(false);
-        })
-      )
-    : of(false);
+  logout(): void {
+    console.log('Manual logout initiated.');
 
-  return request$.pipe(
-    finalize(() => this.clearSession())
-  );
-}
+
+    const accessToken = this.getAccessToken();
+    const refreshToken = localStorage.getItem('refresh_token');
+
+
+    // If credentials are unavailable, clear local session.
+    if (!accessToken || !refreshToken) {
+      this.clearSession();
+      void this.router.navigate(['/login']);
+      return;
+    }
+
+
+    this.http.post(
+      `${this.apiUrl}/auth/logout/`,
+      { refresh: refreshToken },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    ).pipe(
+      finalize(() => {
+        // Always clear local authentication data.
+        this.clearSession();
+        void this.router.navigate(['/login']);
+      })
+    ).subscribe({
+      next: () => {
+        console.log('Backend session revoked successfully.');
+      },
+      error: (error) => {
+        console.error('Backend logout failed:', error);
+      }
+    });
+  }
+
+
 }
