@@ -1,9 +1,12 @@
-
 <div class="ticket-details-page">
 
   <!-- TOP HEADER -->
   <div class="ticket-topbar">
-    <button type="button" class="back-link" (click)="goBack()">
+    <button
+      type="button"
+      class="back-link"
+      (click)="goBack()"
+    >
       <span class="back-arrow">←</span>
       <span>Back</span>
     </button>
@@ -13,8 +16,14 @@
     </div>
 
     <div class="top-status-area" *ngIf="ticket">
-      <span class="top-status-dot" [ngClass]="ticket.status"></span>
-      <span class="top-status-text">{{ formatStatus(ticket.status) }}</span>
+      <span
+        class="top-status-dot"
+        [ngClass]="ticket.status"
+      ></span>
+
+      <span class="top-status-text">
+        {{ formatStatus(ticket.status) }}
+      </span>
     </div>
   </div>
 
@@ -28,7 +37,10 @@
   </div>
 
   <!-- ERROR -->
-  <div *ngIf="!loading && errorMessage" class="error-card">
+  <div
+    *ngIf="!loading && errorMessage"
+    class="error-card"
+  >
     <div class="error-icon">!</div>
     <div>
       <strong>Unable to load ticket</strong>
@@ -37,13 +49,19 @@
   </div>
 
   <!-- SUCCESS -->
-  <div *ngIf="!loading && successMessage" class="success-message">
+  <div
+    *ngIf="!loading && successMessage"
+    class="success-message"
+  >
     <span>✓</span>
     {{ successMessage }}
   </div>
 
   <!-- MAIN CONTENT -->
-  <div *ngIf="!loading && ticket" class="ticket-layout">
+  <div
+    *ngIf="!loading && ticket"
+    class="ticket-layout"
+  >
 
     <!-- MAIN COLUMN -->
     <main class="ticket-main">
@@ -52,12 +70,32 @@
       <section class="ticket-card ticket-header-card">
         <div class="ticket-heading">
           <div class="ticket-heading-left">
-            <div class="ticket-reference">{{ ticket.ticket_id }}</div>
 
-            <h1>{{ ticket.ticket_name }}</h1>
+            <div class="ticket-reference">
+              {{ ticket.ticket_id }}
+            </div>
+
+            <h1 *ngIf="!isEditing">
+              {{ ticket.ticket_name }}
+            </h1>
+
+            <input
+              *ngIf="isEditing"
+              id="ticket-name"
+              type="text"
+              class="edit-input ticket-title-input"
+              [(ngModel)]="editTicketName"
+              maxlength="255"
+              placeholder="Enter ticket name"
+              aria-label="Ticket name"
+            />
 
             <div class="ticket-badges">
-              <span class="status-badge" [ngClass]="ticket.status">
+
+              <span
+                class="status-badge"
+                [ngClass]="ticket.status"
+              >
                 {{ formatStatus(ticket.status) }}
               </span>
 
@@ -68,9 +106,14 @@
                 {{ ticket.priority || 'No Priority' }}
               </span>
 
-              <span *ngIf="ticket.is_locked" class="lock-badge locked">
-                🔒 Locked
+              <!-- AUTOMATIC LOCK BADGE -->
+              <span
+                class="lock-badge"
+                [ngClass]="isTicketLocked ? 'locked' : 'unlocked'"
+              >
+                {{ isTicketLocked ? '🔒 Locked' : '🔓 Unlocked' }}
               </span>
+
             </div>
           </div>
 
@@ -88,18 +131,29 @@
         </div>
       </section>
 
-      <!-- EDIT PANEL -->
-      <section *ngIf="isEditing" class="ticket-card edit-panel">
+      <!-- ADMIN EDIT PANEL -->
+      <section
+        *ngIf="isEditing"
+        class="ticket-card edit-panel"
+      >
+
         <div class="section-title-row">
           <div>
             <h2>Edit Ticket</h2>
-            <p>Update the ticket status and priority.</p>
+            <p>
+              Update status, priority, assignee, team and category.
+              Lock state is automatic.
+            </p>
           </div>
         </div>
 
         <div class="edit-grid">
+
+          <!-- 1. STATUS -->
           <div class="edit-field">
-            <label for="ticket-status">Status</label>
+            <label for="ticket-status">
+              Status
+            </label>
 
             <select
               id="ticket-status"
@@ -109,15 +163,18 @@
             >
               <option
                 *ngFor="let status of statusOptions"
-                [ngValue]="status"
+                [value]="status"
               >
                 {{ formatStatus(status) }}
               </option>
             </select>
           </div>
 
+          <!-- 2. PRIORITY -->
           <div class="edit-field">
-            <label for="ticket-priority">Priority</label>
+            <label for="ticket-priority">
+              Priority
+            </label>
 
             <select
               id="ticket-priority"
@@ -127,15 +184,105 @@
             >
               <option
                 *ngFor="let priority of priorityOptions"
-                [ngValue]="priority"
+                [value]="priority"
               >
                 {{ priority }}
               </option>
             </select>
           </div>
+
+          <!-- 3. ASSIGNEE -->
+          <div class="edit-field">
+            <label for="assigned-user">
+              Assign to
+            </label>
+
+            <select
+              id="assigned-user"
+              class="edit-select"
+              [(ngModel)]="selectedAssigneeId"
+              [disabled]="saving"
+            >
+              <option [ngValue]="null">
+                Unassigned
+              </option>
+
+              <option
+                *ngFor="let user of users"
+                [ngValue]="user.id"
+              >
+                {{
+                  (user.first_name || user.last_name)
+                    ? ((user.first_name || '') + ' ' + (user.last_name || '')).trim()
+                    : user.username
+                }}
+              </option>
+            </select>
+
+            <small class="field-hint">
+              Only active Team Members in this organization are listed.
+            </small>
+          </div>
+
+          <!-- 4. TEAM -->
+          <div class="edit-field">
+            <label for="ticket-team">
+              Assign to team
+            </label>
+
+            <select
+              id="ticket-team"
+              class="edit-select"
+              [(ngModel)]="selectedTeamId"
+              [disabled]="saving || teamsLoading || !!teamsLoadError"
+            >
+              <option [ngValue]="null">
+                No team
+              </option>
+
+              <option
+                *ngFor="let team of teams"
+                [ngValue]="team.id"
+              >
+                {{ getTeamName(team) }}
+              </option>
+            </select>
+
+            <small
+              *ngIf="teamsLoading"
+              class="field-hint"
+            >
+              Loading teams...
+            </small>
+
+            <small
+              *ngIf="teamsLoadError"
+              class="field-error"
+            >
+              {{ teamsLoadError }}
+            </small>
+          </div>
+
+          <!-- 5. CATEGORY -->
+          <div class="edit-field">
+            <label for="ticket-category">
+              Category
+            </label>
+
+            <input
+              id="ticket-category"
+              type="text"
+              class="edit-input"
+              [(ngModel)]="editCategory"
+              placeholder="Enter category"
+              [disabled]="saving"
+            />
+          </div>
+
         </div>
 
         <div class="edit-actions">
+
           <button
             type="button"
             class="cancel-button"
@@ -148,16 +295,18 @@
           <button
             type="button"
             class="save-button"
-            [disabled]="saving"
+            [disabled]="saving || teamsLoading || !!teamsLoadError"
             (click)="saveChanges()"
           >
-            {{ saving ? 'Saving...' : 'Save Changes' }}
+            {{ saving ? 'Saving...' : 'Save All Changes' }}
           </button>
+
         </div>
       </section>
 
       <!-- DESCRIPTION -->
       <section class="ticket-card content-card">
+
         <div class="section-heading">
           <div class="section-icon">≡</div>
           <div>
@@ -166,13 +315,27 @@
           </div>
         </div>
 
-        <div class="description-content">
+        <textarea
+          *ngIf="isEditing"
+          class="edit-textarea description-editor"
+          [(ngModel)]="editDescription"
+          rows="5"
+          placeholder="Enter ticket description"
+          aria-label="Ticket description"
+        ></textarea>
+
+        <div
+          *ngIf="!isEditing"
+          class="description-content"
+        >
           {{ ticket.description || 'No description provided.' }}
         </div>
+
       </section>
 
       <!-- SUMMARY -->
       <section class="ticket-card content-card">
+
         <div class="section-heading">
           <div class="section-icon">▤</div>
           <div>
@@ -181,13 +344,27 @@
           </div>
         </div>
 
-        <div class="summary-content">
+        <textarea
+          *ngIf="isEditing"
+          class="edit-textarea"
+          [(ngModel)]="editSummary"
+          rows="4"
+          placeholder="Enter ticket summary"
+          aria-label="Ticket summary"
+        ></textarea>
+
+        <div
+          *ngIf="!isEditing"
+          class="summary-content"
+        >
           {{ ticket.summary || 'No summary available.' }}
         </div>
+
       </section>
 
       <!-- TAGS -->
       <section class="ticket-card content-card">
+
         <div class="section-heading">
           <div class="section-icon">#</div>
           <div>
@@ -196,19 +373,116 @@
           </div>
         </div>
 
-        <div *ngIf="ticket.tags?.length" class="tags-container">
-          <span *ngFor="let tag of ticket.tags" class="tag">
-            {{ tag }}
-          </span>
+        <div
+          *ngIf="isEditing"
+          class="tag-editor"
+        >
+
+          <div class="tag-add-row">
+
+            <select
+              class="edit-select"
+              [(ngModel)]="selectedTagToAdd"
+              [disabled]="tagSaving || tagsLoading || getUnassignedTags().length === 0"
+              aria-label="Select a tag to add"
+            >
+              <option value="">
+                Select a tag to add
+              </option>
+
+              <option
+                *ngFor="let tag of getUnassignedTags()"
+                [value]="getTagName(tag)"
+              >
+                {{ getTagName(tag) }}
+              </option>
+            </select>
+
+            <button
+              type="button"
+              class="secondary-action-button"
+              [disabled]="tagSaving || !selectedTagToAdd"
+              (click)="addSelectedTag()"
+            >
+              {{ tagSaving ? 'Saving...' : 'Add Tag' }}
+            </button>
+
+          </div>
+
+          <small
+            *ngIf="tagsLoading"
+            class="field-hint"
+          >
+            Loading available tags...
+          </small>
+
+          <small
+            *ngIf="tagsLoadError"
+            class="field-error"
+          >
+            {{ tagsLoadError }}
+          </small>
+
+          <small
+            *ngIf="!tagsLoading && !tagsLoadError && getUnassignedTags().length === 0"
+            class="field-hint"
+          >
+            All available tags are already assigned, or no tag definitions exist.
+          </small>
+
         </div>
 
-        <div *ngIf="!ticket.tags?.length" class="empty-value">
+        <div
+          *ngIf="ticket.tags?.length"
+          class="tags-container"
+        >
+
+          <span
+            *ngFor="let tag of ticket.tags"
+            class="tag-item"
+          >
+
+            <span class="tag">
+              {{ getTagName(tag) }}
+            </span>
+
+            <button
+              *ngIf="isEditing"
+              type="button"
+              class="remove-tag-button"
+              [disabled]="tagSaving"
+              [attr.aria-label]="'Remove tag ' + getTagName(tag)"
+              (click)="removeTicketTag(getTagName(tag))"
+              title="Remove tag"
+            >
+              ×
+            </button>
+
+          </span>
+
+        </div>
+
+        <div
+          *ngIf="!ticket.tags?.length"
+          class="empty-value"
+        >
           No tags assigned.
         </div>
-      </section>
 
+        <p
+          *ngIf="tagMessage"
+          class="inline-feedback"
+          [class.inline-feedback-error]="tagError"
+          role="status"
+        >
+          {{ tagMessage }}
+        </p>
+
+      </section>
+     
       <!-- ATTACHMENTS -->
       <section class="ticket-card content-card">
+
         <div class="section-heading">
           <div class="section-icon">📎</div>
           <div>
@@ -221,279 +495,134 @@
         </div>
 
         <div
+          *ngIf="isEditing"
+          class="attachment-editor"
+        >
+
+          <label
+            class="upload-label"
+            for="ticket-attachment-input"
+          >
+            Add files
+          </label>
+
+          <input
+            #attachmentInput
+            id="ticket-attachment-input"
+            type="file"
+            class="attachment-file-input"
+            multiple
+            (change)="onAttachmentSelection($event)"
+            [disabled]="attachmentsSaving"
+          />
+
+          <div
+            *ngIf="selectedAttachmentFiles.length"
+            class="selected-files"
+          >
+            <span
+              *ngFor="let file of selectedAttachmentFiles"
+              class="selected-file"
+            >
+              {{ file.name }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="secondary-action-button upload-button"
+            [disabled]="attachmentsSaving || selectedAttachmentFiles.length === 0"
+            (click)="uploadSelectedAttachments(attachmentInput)"
+          >
+            {{ attachmentsSaving ? 'Uploading...' : 'Upload Attachments' }}
+          </button>
+
+        </div>
+
+        <div
           *ngIf="ticket.attachments?.length"
           class="attachments-container"
         >
+
           <div
             *ngFor="let attachment of ticket.attachments"
             class="attachment"
           >
+
             <div class="attachment-icon">📄</div>
-            <div class="attachment-name">{{ attachment }}</div>
+
+            <div class="attachment-name">
+
+              <a
+                *ngIf="getAttachmentUrl(attachment) as attachmentUrl"
+                [href]="attachmentUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ getAttachmentName(attachment) }}
+              </a>
+
+              <span *ngIf="!getAttachmentUrl(attachment)">
+                {{ getAttachmentName(attachment) }}
+              </span>
+
+            </div>
+
+            <button
+              *ngIf="isEditing"
+              type="button"
+              class="remove-attachment-button"
+              [disabled]="attachmentsSaving"
+              (click)="deleteTicketAttachment(attachment)"
+            >
+              Delete
+            </button>
+
           </div>
+
         </div>
 
-        <div *ngIf="!ticket.attachments?.length" class="empty-value">
+        <div
+          *ngIf="!ticket.attachments?.length"
+          class="empty-value"
+        >
           No attachments available.
         </div>
-      </section>
-
-    </main>
-
-    <!-- SIDEBAR -->
-    <aside class="ticket-sidebar">
-
-      <!-- DETAILS -->
-      <section class="sidebar-card">
-        <div class="sidebar-title">Details</div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Requester</span>
-          <span class="sidebar-value">
-            {{ ticket.created_by || ticket.requester || '—' }}
-          </span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Assigned to</span>
-          <span class="sidebar-value">{{ getAssignedUserName() }}</span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Team</span>
-          <span class="sidebar-value">{{ ticket.team || '—' }}</span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Category</span>
-          <span class="sidebar-value">{{ ticket.category || '—' }}</span>
-        </div>
-
-        <!-- CURRENT PRIORITY -->
-        <div class="sidebar-row">
-          <span class="sidebar-label">Priority</span>
-          <span class="sidebar-value">
-            <span
-              class="small-priority"
-              [ngClass]="ticket.priority?.toLowerCase()"
-            >
-              {{ ticket.priority || '—' }}
-            </span>
-          </span>
-        </div>
-
-        <!-- ADMIN PRIORITY CONTROL -->
-        <div *ngIf="isAdmin" class="priority-update-form">
-          <label for="change-ticket-priority">Change priority</label>
-
-          <select
-            id="change-ticket-priority"
-            class="edit-select"
-            [(ngModel)]="priorityToSave"
-            [disabled]="prioritySaving || loading"
-          >
-            <option
-              *ngFor="let priority of priorityOptions"
-              [ngValue]="priority"
-            >
-              {{ priority }}
-            </option>
-          </select>
-
-          <button
-            type="button"
-            class="assign-button priority-save-button"
-            [disabled]="prioritySaving || loading || !priorityToSave"
-            (click)="changeTicketPriority()"
-          >
-            {{ prioritySaving ? 'Updating...' : 'Save Priority' }}
-          </button>
-
-          <p
-            *ngIf="priorityMessage"
-            class="priority-feedback"
-            [class.priority-error]="priorityError"
-            role="status"
-          >
-            {{ priorityMessage }}
-          </p>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Created</span>
-          <span class="sidebar-value">
-            {{ ticket.created_at ? (ticket.created_at | date:'medium') : '—' }}
-          </span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Updated</span>
-          <span class="sidebar-value">
-            {{ ticket.updated_at ? (ticket.updated_at | date:'medium') : '—' }}
-          </span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">SLA Due Date</span>
-          <span class="sidebar-value">
-            {{ ticket.sla_due_date ? (ticket.sla_due_date | date:'medium') : '—' }}
-          </span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Storage</span>
-          <span class="sidebar-value">{{ ticket.storage_type || '—' }}</span>
-        </div>
-
-        <div class="sidebar-row">
-          <span class="sidebar-label">Lock status</span>
-          <span class="sidebar-value">
-            <span
-              class="small-lock"
-              [ngClass]="ticket.is_locked ? 'locked' : 'unlocked'"
-            >
-              {{ ticket.is_locked ? 'Locked' : 'Unlocked' }}
-            </span>
-          </span>
-        </div>
-      </section>
-
-      <!-- ASSIGNMENT -->
-      <section class="sidebar-card assignment-card">
-        <div class="sidebar-title">Assignment</div>
-
-        <div class="current-assignment">
-          <div class="assignment-avatar">
-            {{ getAssignedUserName().charAt(0).toUpperCase() }}
-          </div>
-
-          <div>
-            <div class="assignment-name">{{ getAssignedUserName() }}</div>
-            <div class="assignment-team">
-              {{ ticket.team || 'No team assigned' }}
-            </div>
-          </div>
-        </div>
-
-        <div class="edit-field assignment-field">
-          <label for="assigned-user">Assign ticket to</label>
-
-          <select
-            id="assigned-user"
-            class="edit-select"
-            [(ngModel)]="selectedAssigneeId"
-            [disabled]="assigning || loading"
-          >
-            <option [ngValue]="null">Unassigned</option>
-
-            <option
-              *ngFor="let user of users"
-              [ngValue]="user.id"
-            >
-              {{
-                (user.first_name || user.last_name)
-                  ? ((user.first_name || '') + ' ' + (user.last_name || '')).trim()
-                  : user.username
-              }}
-            </option>
-          </select>
-        </div>
-
-        <button
-          type="button"
-          class="assign-button"
-          [disabled]="assigning || loading"
-          (click)="assignTicket()"
-        >
-          {{ assigning ? 'Saving...' : 'Save Assignment' }}
-        </button>
 
         <p
-          *ngIf="assignmentMessage"
+          *ngIf="attachmentMessage"
+          class="inline-feedback"
+          [class.inline-feedback-error]="attachmentError"
           role="status"
-          [class.assignment-error]="assignmentError"
         >
-          {{ assignmentMessage }}
+          {{ attachmentMessage }}
         </p>
 
-        <div *ngIf="!isTicketAssigned()" class="unassigned-message">
-          This ticket is currently unassigned.
-        </div>
       </section>
+ <!-- BOTTOM SAVE ACTIONS -->
+<div
+  *ngIf="isEditing"
+  class="ticket-footer-actions"
+>
+  <button
+    type="button"
+    class="cancel-button"
+    [disabled]="saving"
+    (click)="cancelEditing()"
+  >
+    Cancel
+  </button>
 
-      <!-- CURRENT STATUS -->
-      <section class="sidebar-card status-management-card">
-        <div class="sidebar-title">Current Status</div>
+  <button
+    type="button"
+    class="save-button"
+    [disabled]="saving || teamsLoading || !!teamsLoadError"
+    (click)="saveChanges()"
+  >
+    {{ saving ? 'Saving...' : 'Save All Changes' }}
+  </button>
+</div>
+    </main>
 
-        <div class="sidebar-status">
-          <span
-            class="large-status-dot"
-            [ngClass]="ticket.status"
-          ></span>
-
-          <div>
-            <strong>{{ formatStatus(ticket.status) }}</strong>
-            <span>Current ticket status</span>
-          </div>
-        </div>
-
-        <div class="status-update-form">
-          <label for="change-ticket-status">Change ticket status</label>
-
-          <select
-            id="change-ticket-status"
-            class="edit-select"
-            [(ngModel)]="statusToSave"
-            [disabled]="statusSaving || loading"
-          >
-            <option
-              *ngFor="let status of statusOptions"
-              [ngValue]="status"
-            >
-              {{ formatStatus(status) }}
-            </option>
-          </select>
-
-          <button
-            type="button"
-            class="assign-button status-save-button"
-            [disabled]="statusSaving || loading || !statusToSave"
-            (click)="changeTicketStatus()"
-          >
-            {{ statusSaving ? 'Updating...' : 'Save Status' }}
-          </button>
-
-          <p
-            *ngIf="statusMessage"
-            class="status-feedback"
-            [class.status-error]="statusError"
-            role="status"
-          >
-            {{ statusMessage }}
-          </p>
-        </div>
-      </section>
-
-      <!-- TICKET INFORMATION -->
-      <section class="sidebar-card">
-        <div class="sidebar-title">Ticket Information</div>
-
-        <div class="info-item">
-          <span>Ticket ID</span>
-          <strong>{{ ticket.ticket_id }}</strong>
-        </div>
-
-        <div class="info-item">
-          <span>Database ID</span>
-          <strong>{{ ticket.id || ticketId }}</strong>
-        </div>
-
-        <div class="info-item">
-          <span>Category</span>
-          <strong>{{ ticket.category || '—' }}</strong>
-        </div>
-      </section>
-
-    </aside>
   </div>
 </div>

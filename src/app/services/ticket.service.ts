@@ -64,6 +64,49 @@ export class TicketService {
 
 
   // ==============================
+  // TAGS: READ / ADD / REMOVE ON TICKET
+  // ==============================
+
+  getTags(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/tags/`
+    );
+  }
+
+  addTicketTags(ticketId: number, tagNames: string[]): Observable<any> {
+    return this.http.post(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/add_tags/`,
+      { tag_name: tagNames }
+    );
+  }
+
+  removeTicketTag(ticketId: number, tagName: string): Observable<any> {
+    return this.http.delete(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/remove_tags/${encodeURIComponent(tagName)}/`
+    );
+  }
+
+  // ==============================
+  // ATTACHMENTS: UPLOAD / DELETE
+  // ==============================
+
+  uploadTicketAttachments(ticketId: number, files: File[]): Observable<any> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('file', file, file.name));
+
+    return this.http.post(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/attachments/`,
+      formData
+    );
+  }
+
+  deleteTicketAttachment(ticketId: number, attachmentId: number): Observable<any> {
+    return this.http.delete(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/attachments/${attachmentId}/`
+    );
+  }
+
+  // ==============================
   // CREATE TEAM
   // ==============================
 

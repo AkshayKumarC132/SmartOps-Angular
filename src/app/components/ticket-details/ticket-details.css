@@ -1,4 +1,3 @@
-
 /* =========================================================
    PAGE
    ========================================================= */
@@ -103,7 +102,7 @@
 .ticket-layout {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -356,7 +355,7 @@
 
 .edit-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -389,10 +388,69 @@
   box-shadow: 0 0 0 3px rgba(32, 169, 158, 0.1);
 }
 
+
+/* Text inputs used by the Admin ticket editor. */
+.edit-input,
+.edit-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #101828;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.edit-input {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.edit-textarea {
+  min-height: 110px;
+  padding: 11px 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.edit-input:focus,
+.edit-textarea:focus {
+  border-color: #20a99e;
+  box-shadow: 0 0 0 3px rgba(32, 169, 158, 0.1);
+}
+
+.edit-input:disabled,
+.edit-textarea:disabled,
 .edit-select:disabled {
   background: #f9fafb;
   color: #98a2b3;
   cursor: not-allowed;
+}
+
+.ticket-title-input {
+  max-width: 680px;
+  margin-top: 2px;
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.field-hint {
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.description-editor {
+  min-height: 135px;
 }
 
 .edit-actions {
@@ -712,25 +770,13 @@
 
 .assign-button {
   width: 100%;
-  min-height: 38px;
-  padding: 0 12px;
+  height: 38px;
   border: none;
   border-radius: 6px;
   background: #20a99e;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.assign-button:hover:not(:disabled) {
-  background: #168f85;
-}
-
-.assign-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .unassigned-message {
@@ -937,7 +983,7 @@
 
 @media (max-width: 1050px) {
   .ticket-layout {
-    grid-template-columns: minmax(0, 1fr) 290px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
 
@@ -952,10 +998,8 @@
     grid-template-columns: 1fr;
   }
 
-  .ticket-sidebar {
-    display: grid;
+  .edit-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
   }
 }
 
@@ -983,10 +1027,6 @@
 
   .edit-grid {
     grid-template-columns: 1fr;
-  }
-
-  .ticket-sidebar {
-    display: flex;
   }
 
   .ticket-heading h1 {
@@ -1019,14 +1059,6 @@
     gap: 6px;
   }
 
-  .sidebar-row {
-    align-items: flex-start;
-  }
-
-  .sidebar-value {
-    max-width: 52%;
-  }
-
   .edit-actions {
     flex-direction: column-reverse;
   }
@@ -1037,10 +1069,7 @@
   }
 }
 
-/* =========================================================
-   CURRENT STATUS MANAGEMENT
-   ========================================================= */
-
+/* Current status management */
 .status-management-card {
   display: flex;
   flex-direction: column;
@@ -1090,49 +1119,210 @@
   color: #c62828;
 }
 
+
 /* =========================================================
-   ADMIN PRIORITY UPDATE
+   EDITABLE TAGS
    ========================================================= */
 
-.priority-update-form {
+.tag-editor,
+.attachment-editor {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 0 16px;
-  border-bottom: 1px solid #eaecf0;
+  gap: 10px;
+  margin: 2px 0 16px;
+  padding: 14px;
+  background: #f9fafb;
+  border: 1px solid #eaecf0;
+  border-radius: 7px;
 }
 
-.priority-update-form label {
+.tag-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.remove-tag-button {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fecdca;
+  border-radius: 50%;
+  background: #fff5f4;
+  color: #b42318;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.remove-tag-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondary-action-button,
+.remove-attachment-button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #20a99e;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #168f85;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.secondary-action-button:hover {
+  background: #effaf8;
+}
+
+.secondary-action-button:disabled,
+.remove-attachment-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.inline-feedback {
+  margin: 10px 0 0;
+  color: #067647;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.inline-feedback-error {
+  color: #b42318;
+}
+
+/* =========================================================
+   EDITABLE ATTACHMENTS
+   ========================================================= */
+
+.upload-label {
   color: #344054;
   font-size: 12px;
   font-weight: 600;
 }
 
-.priority-update-form .edit-select {
+.attachment-file-input {
   width: 100%;
-  min-height: 42px;
+  padding: 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
-.priority-save-button {
-  width: 100%;
-  min-height: 40px;
-  margin-top: 2px;
+.selected-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.priority-save-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.priority-feedback {
-  margin: 2px 0 0;
-  color: #067647;
-  font-size: 12px;
-  line-height: 1.5;
+.selected-file {
+  padding: 5px 8px;
+  border: 1px solid #d0d5dd;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #475467;
+  font-size: 11px;
   overflow-wrap: anywhere;
 }
 
-.priority-feedback.priority-error {
+.upload-button {
+  align-self: flex-start;
+}
+
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attachment-name {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.attachment-name a {
+  color: #176b9b;
+  text-decoration: none;
+}
+
+.attachment-name a:hover {
+  text-decoration: underline;
+}
+
+.remove-attachment-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-color: #fecdca;
   color: #b42318;
+}
+
+.remove-attachment-button:hover {
+  background: #fff5f4;
+}
+
+@media (max-width: 560px) {
+  .tag-add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tag-add-row .secondary-action-button {
+    width: 100%;
+  }
+
+  .attachment {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .remove-attachment-button {
+    margin-left: 42px;
+  }
+}
+.ticket-footer-actions {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 20px 24px;
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+@media (max-width: 500px) {
+  .ticket-footer-actions {
+    padding: 15px;
+  }
+
+  .ticket-footer-actions button {
+    flex: 1;
+  }
 }

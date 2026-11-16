@@ -1,13 +1,10 @@
-
 import {
   ChangeDetectorRef,
   Component,
   OnInit
 } from '@angular/core';
-
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import {
   ActivatedRoute,
   Router
@@ -15,26 +12,45 @@ import {
 
 import { TicketService } from '../../services/ticket.service';
 import { ApiErrorService } from '../../services/api-error.service';
-
 import {
   UserService,
   User
 } from '../../services/user.service';
-
-import { OrganizationContextService } from '../../services/organization-context.service';
-import { AuthService } from '../../services/auth.service';
+import {
+  OrganizationContextService
+} from '../../services/organization-context.service';
 
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './ticket-details.html',
   styleUrl: './ticket-details.css'
 })
 export class TicketDetails implements OnInit {
   ticket: any = null;
   ticketId: number | null = null;
+
   users: User[] = [];
+  teams: any[] = [];
+  teamsLoading = false;
+  teamsLoadError = '';
+
+  availableTags: any[] = [];
+  tagsLoading = false;
+  tagsLoadError = '';
+  selectedTagToAdd = '';
+  tagSaving = false;
+  tagMessage = '';
+  tagError = false;
+
+  selectedAttachmentFiles: File[] = [];
+  attachmentsSaving = false;
+  attachmentMessage = '';
+  attachmentError = false;
 
   loading = true;
   saving = false;
@@ -44,21 +60,17 @@ export class TicketDetails implements OnInit {
   isEditing = false;
   editStatus = '';
   editPriority = '';
+  editTicketName = '';
+  editDescription = '';
+  editSummary = '';
+  editCategory = '';
 
   selectedAssigneeId: number | null = null;
+  selectedTeamId: number | null = null;
+
   assigning = false;
   assignmentMessage = '';
   assignmentError = false;
-
-  statusToSave = '';
-  statusSaving = false;
-  statusMessage = '';
-  statusError = false;
-
-  priorityToSave = '';
-  prioritySaving = false;
-  priorityMessage = '';
-  priorityError = false;
 
   statusOptions: string[] = [
     'Open',
@@ -66,7 +78,8 @@ export class TicketDetails implements OnInit {
     'In_Progress',
     'Resolved',
     'Closed',
-    'ReOpened'
+    'ReOpened',
+    'Invalid'
   ];
 
   priorityOptions: string[] = [
@@ -83,12 +96,17 @@ export class TicketDetails implements OnInit {
     private apiErrorService: ApiErrorService,
     private userService: UserService,
     private organizationContext: OrganizationContextService,
-    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
+  // ============================================
+  // INITIALIZE
+  // ============================================
+
   ngOnInit(): void {
     this.loadUsers();
+    this.loadTeams();
+    this.loadTags();
 
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -100,7 +118,7 @@ export class TicketDetails implements OnInit {
 
     const parsedId = Number(id);
 
-    if (!Number.isInteger(parsedId) || parsedId <= 0) {
+    if (isNaN(parsedId) || parsedId <= 0) {
       this.loading = false;
       this.errorMessage = 'Invalid ticket ID.';
       return;
@@ -110,26 +128,10 @@ export class TicketDetails implements OnInit {
     this.loadTicket(parsedId);
   }
 
-  // Admin role check
-  get isAdmin(): boolean {
-    const user = this.authService.getUser();
+  // ============================================
+  // LOAD ASSIGNABLE TEAM MEMBERS
+  // ============================================
 
-    const role = String(
-      user?.Role ??
-      user?.role ??
-      user?.['user_role'] ??
-      ''
-    ).trim().toLowerCase();
-
-    return [
-      'admin',
-      'organization admin',
-      'organisation admin',
-      'superuser'
-    ].includes(role);
-  }
-
-  // Load active Team Members in the current organization.
   loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (response: any) => {
@@ -146,15 +148,22 @@ export class TicketDetails implements OnInit {
         }
 
         const activeUsers = userList.filter(
-          user => user.is_active !== false
+          (user: User) => user.is_active !== false
         );
 
         const organizationUsers =
           this.organizationContext.filterRecords(activeUsers);
 
         this.users = organizationUsers.filter(
-          user =>
-            String(user.role || '').trim().toLowerCase() === 'team member'
+          (user: User) =>
+            String(user.role || '')
+              .trim()
+              .toLowerCase() === 'team member'
+        );
+
+        console.log(
+          'Assignable Team Members:',
+          this.users
         );
 
         if (this.ticket) {
@@ -163,7 +172,8 @@ export class TicketDetails implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: error => {
+
+      error: (error: any) => {
         console.error('Failed to load users:', error);
         this.users = [];
         this.cdr.detectChanges();
@@ -171,19 +181,434 @@ export class TicketDetails implements OnInit {
     });
   }
 
+  // ============================================
+  // LOAD ORGANIZATION TEAMS
+  // ============================================
+
+  loadTeams(): void {
+    this.teamsLoading = true;
+    this.teamsLoadError = '';
+
+    this.ticketService.getTeams().subscribe({
+      next: (response: any) => {
+        let teamList: any[] = [];
+
+        if (Array.isArray(response)) {
+          teamList = response;
+        } else if (Array.isArray(response?.results)) {
+          teamList = response.results;
+        } else if (Array.isArray(response?.teams)) {
+          teamList = response.teams;
+        } else if (Array.isArray(response?.data)) {
+          teamList = response.data;
+        }
+
+        const activeTeams = teamList.filter(
+          team => team?.is_active !== false
+        );
+
+        this.teams =
+          this.organizationContext.filterRecords(activeTeams);
+
+        this.teamsLoading = false;
+
+        if (this.ticket) {
+          this.setCurrentTeam();
+        }
+
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Failed to load teams:', error);
+
+        this.teams = [];
+        this.teamsLoading = false;
+
+        this.teamsLoadError =
+          error?.status === 403
+            ? 'You do not have permission to view teams.'
+            : 'Unable to load teams. Please refresh and try again.';
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ============================================
+  // LOAD ORGANIZATION TAG DEFINITIONS
+  // ============================================
+
+  loadTags(): void {
+    this.tagsLoading = true;
+    this.tagsLoadError = '';
+
+    this.ticketService.getTags().subscribe({
+      next: (response: any) => {
+        if (Array.isArray(response)) {
+          this.availableTags = response;
+        } else if (Array.isArray(response?.results)) {
+          this.availableTags = response.results;
+        } else if (Array.isArray(response?.data)) {
+          this.availableTags = response.data;
+        } else {
+          this.availableTags = [];
+        }
+
+        this.tagsLoading = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Failed to load tag definitions:', error);
+
+        this.availableTags = [];
+        this.tagsLoading = false;
+
+        this.tagsLoadError = error?.status === 403
+          ? 'Only organization Admins can load tag definitions.'
+          : 'Unable to load available tags.';
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getTagName(tag: any): string {
+    if (typeof tag === 'string') {
+      return tag;
+    }
+
+    return String(tag?.tag_name || tag?.name || '');
+  }
+
+  isTagAssigned(tagName: string): boolean {
+    const currentTags = Array.isArray(this.ticket?.tags)
+      ? this.ticket.tags
+      : [];
+
+    return currentTags.some((tag: any) =>
+      this.getTagName(tag).trim().toLowerCase() ===
+      tagName.trim().toLowerCase()
+    );
+  }
+
+  getUnassignedTags(): any[] {
+    return this.availableTags.filter((tag: any) => {
+      const name = this.getTagName(tag);
+      return !!name && !this.isTagAssigned(name);
+    });
+  }
+
+  // ============================================
+  // ADD TAG
+  // ============================================
+
+  addSelectedTag(): void {
+    if (
+      !this.ticketId ||
+      !this.selectedTagToAdd ||
+      this.tagSaving
+    ) {
+      return;
+    }
+
+    if (this.isTagAssigned(this.selectedTagToAdd)) {
+      this.tagError = true;
+      this.tagMessage =
+        'This tag is already assigned to the ticket.';
+      return;
+    }
+
+    this.tagSaving = true;
+    this.tagError = false;
+    this.tagMessage = '';
+
+    this.ticketService.addTicketTags(
+      this.ticketId,
+      [this.selectedTagToAdd]
+    ).subscribe({
+      next: () => {
+        this.tagSaving = false;
+        this.selectedTagToAdd = '';
+        this.tagMessage = 'Tag added successfully.';
+
+        this.loadTicket(this.ticketId!);
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Failed to add ticket tag:', error);
+
+        this.tagSaving = false;
+        this.tagError = true;
+
+        this.tagMessage = this.readApiError(
+          error,
+          'Unable to add this tag.'
+        );
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ============================================
+  // REMOVE TAG
+  // ============================================
+
+  removeTicketTag(tagName: string): void {
+    if (
+      !this.ticketId ||
+      !tagName ||
+      this.tagSaving
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Remove the tag "${tagName}" from this ticket?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.tagSaving = true;
+    this.tagError = false;
+    this.tagMessage = '';
+
+    this.ticketService.removeTicketTag(
+      this.ticketId,
+      tagName
+    ).subscribe({
+      next: () => {
+        this.tagSaving = false;
+        this.tagMessage = 'Tag removed successfully.';
+
+        this.loadTicket(this.ticketId!);
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Failed to remove ticket tag:', error);
+
+        this.tagSaving = false;
+        this.tagError = true;
+
+        this.tagMessage = this.readApiError(
+          error,
+          'Unable to remove this tag.'
+        );
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ============================================
+  // ATTACHMENT UPLOAD / DELETE
+  // ============================================
+
+  onAttachmentSelection(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    this.selectedAttachmentFiles = input.files
+      ? Array.from(input.files)
+      : [];
+
+    this.attachmentMessage = '';
+    this.attachmentError = false;
+  }
+
+  uploadSelectedAttachments(input: HTMLInputElement): void {
+    if (
+      !this.ticketId ||
+      !this.selectedAttachmentFiles.length ||
+      this.attachmentsSaving
+    ) {
+      return;
+    }
+
+    this.attachmentsSaving = true;
+    this.attachmentError = false;
+    this.attachmentMessage = '';
+
+    this.ticketService.uploadTicketAttachments(
+      this.ticketId,
+      this.selectedAttachmentFiles
+    ).subscribe({
+      next: () => {
+        this.attachmentsSaving = false;
+        this.selectedAttachmentFiles = [];
+        input.value = '';
+
+        this.attachmentMessage =
+          'Attachment(s) uploaded successfully.';
+
+        this.loadTicket(this.ticketId!);
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Attachment upload failed:', error);
+
+        this.attachmentsSaving = false;
+        this.attachmentError = true;
+
+        this.attachmentMessage = this.readApiError(
+          error,
+          'Unable to upload attachment(s). Check file size and allowed file count.'
+        );
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  deleteTicketAttachment(attachment: any): void {
+    if (
+      !this.ticketId ||
+      !attachment?.id ||
+      this.attachmentsSaving
+    ) {
+      this.attachmentError = true;
+      this.attachmentMessage =
+        'The attachment ID is missing; it cannot be deleted.';
+      return;
+    }
+
+    const attachmentName = this.getAttachmentName(attachment);
+
+    const confirmed = window.confirm(
+      `Delete attachment "${attachmentName}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.attachmentsSaving = true;
+    this.attachmentError = false;
+    this.attachmentMessage = '';
+
+    this.ticketService.deleteTicketAttachment(
+      this.ticketId,
+      Number(attachment.id)
+    ).subscribe({
+      next: () => {
+        this.attachmentsSaving = false;
+
+        this.attachmentMessage =
+          'Attachment deleted successfully.';
+
+        this.ticket.attachments =
+          (this.ticket.attachments || []).filter(
+            (item: any) =>
+              Number(item.id) !== Number(attachment.id)
+          );
+
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Attachment deletion failed:', error);
+
+        this.attachmentsSaving = false;
+        this.attachmentError = true;
+
+        this.attachmentMessage = this.readApiError(
+          error,
+          'Unable to delete this attachment.'
+        );
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getAttachmentName(attachment: any): string {
+    if (typeof attachment === 'string') {
+      return attachment.split('/').pop() || attachment;
+    }
+
+    const originalName = attachment?.original_filename;
+
+    if (originalName) {
+      return originalName;
+    }
+
+    const file = attachment?.file;
+
+    if (typeof file === 'string') {
+      return file.split('/').pop() || file;
+    }
+
+    return 'Attachment';
+  }
+
+  getAttachmentUrl(attachment: any): string | null {
+    if (typeof attachment === 'string') {
+      return attachment.startsWith('http') ? attachment : null;
+    }
+
+    return typeof attachment?.file === 'string'
+      ? attachment.file
+      : null;
+  }
+
+  private readApiError(
+    error: any,
+    fallback: string
+  ): string {
+    const detail =
+      error?.error?.Error ||
+      error?.error?.error ||
+      error?.error?.detail;
+
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+
+    if (error?.error && typeof error.error === 'object') {
+      const firstValue = Object.values(error.error)[0];
+
+      if (Array.isArray(firstValue) && firstValue.length) {
+        return String(firstValue[0]);
+      }
+
+      if (typeof firstValue === 'string') {
+        return firstValue;
+      }
+    }
+
+    return fallback;
+  }
+
+  // ============================================
+  // GET CURRENT ASSIGNEE ID
+  // ============================================
+
   private getAssignedUserId(): number | null {
     const assigned =
       this.ticket?.assigned_to ??
       this.ticket?.assigned_to_id ??
       null;
 
-    if (assigned === null || assigned === undefined || assigned === '') {
+    if (
+      assigned === null ||
+      assigned === undefined ||
+      assigned === ''
+    ) {
       return null;
     }
 
     if (typeof assigned === 'object') {
       const id = assigned.id ?? assigned.pk;
-      return id !== null && id !== undefined ? Number(id) : null;
+
+      return id !== null && id !== undefined
+        ? Number(id)
+        : null;
     }
 
     if (
@@ -199,12 +624,146 @@ export class TicketDetails implements OnInit {
         user.email === assigned
     );
 
-    return matchingUser ? Number(matchingUser.id) : null;
+    return matchingUser
+      ? Number(matchingUser.id)
+      : null;
   }
 
   setCurrentAssignee(): void {
     this.selectedAssigneeId = this.getAssignedUserId();
   }
+
+  // ============================================
+  // RESOLVE CURRENT TEAM ID
+  // ============================================
+
+  private getCurrentTeamId(): number | null {
+    const currentTeam =
+      this.ticket?.team_id ??
+      this.ticket?.team ??
+      null;
+
+    if (
+      currentTeam === null ||
+      currentTeam === undefined ||
+      currentTeam === ''
+    ) {
+      return null;
+    }
+
+    if (typeof currentTeam === 'object') {
+      const id = currentTeam.id ?? currentTeam.pk;
+
+      return id !== null && id !== undefined
+        ? Number(id)
+        : null;
+    }
+
+    if (
+      typeof currentTeam === 'number' ||
+      /^\d+$/.test(String(currentTeam))
+    ) {
+      return Number(currentTeam);
+    }
+
+    const matchingTeam = this.teams.find(team =>
+      String(team.team_name || team.name || '')
+        .trim()
+        .toLowerCase() ===
+      String(currentTeam).trim().toLowerCase()
+    );
+
+    return matchingTeam?.id !== undefined
+      ? Number(matchingTeam.id)
+      : null;
+  }
+
+  setCurrentTeam(): void {
+    this.selectedTeamId = this.getCurrentTeamId();
+  }
+
+  getTeamName(team: any): string {
+    return team?.team_name || team?.name || 'Unnamed team';
+  }
+
+  // ============================================
+  // AUTOMATIC LOCK STATUS
+  // ============================================
+
+  get isTicketLocked(): boolean {
+    const assignedUser = this.isEditing
+      ? this.selectedAssigneeId
+      : (
+          this.ticket?.assigned_to ??
+          this.ticket?.assigned_to_id ??
+          null
+        );
+
+    const assignedTeam = this.isEditing
+      ? this.selectedTeamId
+      : (
+          this.ticket?.team_id ??
+          this.ticket?.team ??
+          null
+        );
+
+    return (
+      this.hasAssignmentValue(assignedUser) ||
+      this.hasAssignmentValue(assignedTeam)
+    );
+  }
+
+  private hasAssignmentValue(value: any): boolean {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return false;
+    }
+
+    if (typeof value === 'object') {
+      const identifier =
+        value.id ??
+        value.pk ??
+        value.team_id;
+
+      if (
+        identifier !== undefined &&
+        identifier !== null
+      ) {
+        return this.hasAssignmentValue(identifier);
+      }
+
+      const label =
+        value.username ??
+        value.email ??
+        value.team_name ??
+        value.name;
+
+      return this.hasAssignmentValue(label);
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+
+      return ![
+        '',
+        'none',
+        'null',
+        'unassigned',
+        'no team',
+        '—',
+        '-'
+      ].includes(normalized);
+    }
+
+    return Number(value) > 0;
+  }
+
+  // ============================================
+  // GET ASSIGNED USER NAME
+  // ============================================
 
   getAssignedUserName(): string {
     const assigned =
@@ -214,7 +773,11 @@ export class TicketDetails implements OnInit {
       this.ticket?.assigned_to_name ??
       null;
 
-    if (assigned === null || assigned === undefined || assigned === '') {
+    if (
+      assigned === null ||
+      assigned === undefined ||
+      assigned === ''
+    ) {
       return 'Unassigned';
     }
 
@@ -222,7 +785,10 @@ export class TicketDetails implements OnInit {
       const fullName = [
         assigned.first_name,
         assigned.last_name
-      ].filter(Boolean).join(' ').trim();
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
 
       return (
         fullName ||
@@ -253,7 +819,11 @@ export class TicketDetails implements OnInit {
   }
 
   private getUserNameById(id: any): string {
-    if (id === null || id === undefined || id === '') {
+    if (
+      id === null ||
+      id === undefined ||
+      id === ''
+    ) {
       return '';
     }
 
@@ -261,41 +831,54 @@ export class TicketDetails implements OnInit {
       item => Number(item.id) === Number(id)
     );
 
-    return user ? this.getUserDisplayName(user) : '';
+    return user
+      ? this.getUserDisplayName(user)
+      : '';
   }
 
   private getUserDisplayName(user: User): string {
     const fullName = [
       user.first_name,
       user.last_name
-    ].filter(Boolean).join(' ').trim();
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
 
-    return fullName || user.username || user.email || 'Unknown User';
+    return (
+      fullName ||
+      user.username ||
+      user.email ||
+      'Unknown User'
+    );
   }
 
   isTicketAssigned(): boolean {
     return this.getAssignedUserId() !== null;
   }
 
-  // Load ticket details.
+  // ============================================
+  // LOAD TICKET
+  // ============================================
+
   loadTicket(id: number): void {
     this.loading = true;
     this.errorMessage = '';
 
     this.ticketService.getTicket(id).subscribe({
       next: (response: any) => {
+        console.log('FULL TICKET RESPONSE:', response);
+
         this.ticket = response;
 
-        this.editStatus = this.ticket.status || '';
-        this.editPriority = this.ticket.priority || '';
-        this.statusToSave = this.ticket.status || '';
-        this.priorityToSave = this.ticket.priority || 'Low';
-
+        this.setEditValuesFromTicket();
         this.setCurrentAssignee();
+        this.setCurrentTeam();
 
         this.loading = false;
         this.cdr.detectChanges();
       },
+
       error: (error: any) => {
         console.error('TICKET DETAILS API ERROR:', error);
 
@@ -328,21 +911,31 @@ export class TicketDetails implements OnInit {
     });
   }
 
-  // Assign or reassign ticket.
+  // ============================================
+  // ASSIGN OR REASSIGN TICKET
+  // ============================================
+
   assignTicket(): void {
-    if (!this.ticket || this.ticketId === null || this.assigning) {
+    if (
+      !this.ticket ||
+      this.ticketId === null ||
+      this.assigning
+    ) {
       return;
     }
 
     if (this.selectedAssigneeId !== null) {
       const selectedUser = this.users.find(
-        user => Number(user.id) === Number(this.selectedAssigneeId)
+        user =>
+          Number(user.id) === Number(this.selectedAssigneeId)
       );
 
       if (
         !selectedUser ||
         selectedUser.is_active === false ||
-        String(selectedUser.role || '').trim().toLowerCase() !== 'team member'
+        String(selectedUser.role || '')
+          .trim()
+          .toLowerCase() !== 'team member'
       ) {
         this.assignmentError = true;
         this.assignmentMessage =
@@ -356,215 +949,94 @@ export class TicketDetails implements OnInit {
     this.assignmentError = false;
     this.errorMessage = '';
 
-    this.ticketService.updateTicket(this.ticketId, {
+    const payload = {
       assigned_to: this.selectedAssigneeId
-    }).subscribe({
-      next: () => {
-        this.assigning = false;
-        this.assignmentError = false;
+    };
 
-        this.assignmentMessage =
-          this.selectedAssigneeId === null
-            ? 'Ticket is now unassigned.'
-            : 'Ticket assignment updated successfully.';
+    console.log(
+      'Updating ticket assignment:',
+      this.ticketId,
+      payload
+    );
 
-        this.loadTicket(this.ticketId!);
-        this.cdr.detectChanges();
-      },
-      error: (error: any) => {
-        console.error('TICKET ASSIGNMENT ERROR:', error);
+    this.ticketService
+      .updateTicket(this.ticketId, payload)
+      .subscribe({
+        next: () => {
+          this.assigning = false;
+          this.assignmentError = false;
 
-        this.assigning = false;
-        this.assignmentError = true;
+          this.assignmentMessage =
+            this.selectedAssigneeId === null
+              ? 'Ticket is now unassigned.'
+              : 'Ticket assignment updated successfully.';
 
-        if (error.status === 400) {
-          this.assignmentMessage =
-            error?.error?.assigned_to?.[0] ||
-            error?.error?.detail ||
-            'Invalid assignee. Check the selected user and API field.';
-        } else if (error.status === 401) {
-          this.assignmentMessage =
-            'Your session has expired. Please log in again.';
-        } else if (error.status === 403) {
-          this.assignmentMessage =
-            'You do not have permission to assign this ticket.';
-        } else if (error.status === 404) {
-          this.assignmentMessage =
-            'Ticket or selected user was not found.';
-        } else {
-          this.assignmentMessage =
-            this.apiErrorService.getErrorMessage(error) ||
-            'Unable to update ticket assignment.';
+          this.loadTicket(this.ticketId!);
+          this.cdr.detectChanges();
+        },
+
+        error: (error: any) => {
+          console.error('TICKET ASSIGNMENT ERROR:', error);
+
+          this.assigning = false;
+          this.assignmentError = true;
+
+          if (error.status === 400) {
+            this.assignmentMessage =
+              error?.error?.assigned_to?.[0] ||
+              error?.error?.detail ||
+              'Invalid assignee. Check the selected user and API field.';
+          } else if (error.status === 401) {
+            this.assignmentMessage =
+              'Your session has expired. Please log in again.';
+          } else if (error.status === 403) {
+            this.assignmentMessage =
+              'You do not have permission to assign this ticket.';
+          } else if (error.status === 404) {
+            this.assignmentMessage =
+              'Ticket or selected user was not found.';
+          } else {
+            this.assignmentMessage =
+              this.apiErrorService.getErrorMessage(error) ||
+              'Unable to update ticket assignment.';
+          }
+
+          this.cdr.detectChanges();
         }
-
-        this.cdr.detectChanges();
-      }
-    });
+      });
   }
 
-  // Change ticket status.
-  changeTicketStatus(): void {
-    if (!this.ticket || this.ticketId === null || this.statusSaving) {
+  // ============================================
+  // COPY CURRENT VALUES INTO THE EDITOR
+  // ============================================
+
+  private setEditValuesFromTicket(): void {
+    if (!this.ticket) {
       return;
     }
 
-    if (!this.statusToSave) {
-      this.statusError = true;
-      this.statusMessage = 'Please select a status.';
-      return;
-    }
+    this.editTicketName = this.ticket.ticket_name || '';
+    this.editDescription = this.ticket.description || '';
+    this.editSummary = this.ticket.summary || '';
+    this.editCategory = this.ticket.category || '';
+    this.editStatus = this.ticket.status || '';
+    this.editPriority = this.ticket.priority || '';
 
-    if (this.statusToSave === this.ticket.status) {
-      this.statusError = false;
-      this.statusMessage = 'Ticket already has this status.';
-      return;
-    }
-
-    this.statusSaving = true;
-    this.statusMessage = '';
-    this.statusError = false;
-
-    this.ticketService.updateTicket(this.ticketId, {
-      status: this.statusToSave
-    }).subscribe({
-      next: (response: any) => {
-        this.statusSaving = false;
-        this.statusError = false;
-        this.statusMessage = 'Ticket status updated successfully.';
-
-        this.ticket = {
-          ...this.ticket,
-          ...(response && typeof response === 'object' ? response : {}),
-          status: response?.status || this.statusToSave
-        };
-
-        this.editStatus = this.ticket.status;
-        this.statusToSave = this.ticket.status;
-
-        this.cdr.detectChanges();
-        this.loadTicket(this.ticketId!);
-      },
-      error: (error: any) => {
-        console.error('TICKET STATUS UPDATE ERROR:', error);
-
-        this.statusSaving = false;
-        this.statusError = true;
-
-        if (error.status === 400) {
-          this.statusMessage =
-            error?.error?.status?.[0] ||
-            error?.error?.detail ||
-            'Invalid ticket status. Please select a supported status.';
-        } else if (error.status === 401) {
-          this.statusMessage =
-            'Authentication is required to change ticket status.';
-        } else if (error.status === 403) {
-          this.statusMessage =
-            'You do not have permission to change this ticket status.';
-        } else if (error.status === 404) {
-          this.statusMessage = 'Ticket was not found.';
-        } else if (error.status === 0) {
-          this.statusMessage = 'Unable to connect to the backend server.';
-        } else {
-          this.statusMessage = this.getSharedErrorMessage(
-            error,
-            `Unable to update ticket status. Server returned ${error?.status ?? 'an unknown error'}.`
-          );
-        }
-
-        this.cdr.detectChanges();
-      }
-    });
+    this.setCurrentAssignee();
+    this.setCurrentTeam();
   }
 
-  // Change priority from the Details panel (Admin only).
-  changeTicketPriority(): void {
-    if (
-      !this.isAdmin ||
-      !this.ticket ||
-      this.ticketId === null ||
-      this.prioritySaving
-    ) {
-      return;
-    }
-
-    if (!this.priorityToSave) {
-      this.priorityError = true;
-      this.priorityMessage = 'Please select a priority.';
-      return;
-    }
-
-    if (this.priorityToSave === this.ticket.priority) {
-      this.priorityError = false;
-      this.priorityMessage = 'Ticket already has this priority.';
-      return;
-    }
-
-    this.prioritySaving = true;
-    this.priorityMessage = '';
-    this.priorityError = false;
-
-    this.ticketService.updateTicket(this.ticketId, {
-      priority: this.priorityToSave
-    }).subscribe({
-      next: (response: any) => {
-        this.prioritySaving = false;
-        this.priorityError = false;
-
-        this.ticket = {
-          ...this.ticket,
-          ...(response && typeof response === 'object' ? response : {}),
-          priority: response?.priority || this.priorityToSave
-        };
-
-        this.editPriority = this.ticket.priority;
-        this.priorityToSave = this.ticket.priority;
-        this.priorityMessage = 'Ticket priority updated successfully.';
-
-        this.cdr.detectChanges();
-        this.loadTicket(this.ticketId!);
-      },
-      error: (error: any) => {
-        console.error('TICKET PRIORITY UPDATE ERROR:', error);
-
-        this.prioritySaving = false;
-        this.priorityError = true;
-
-        if (error.status === 400) {
-          this.priorityMessage =
-            error?.error?.priority?.[0] ||
-            error?.error?.detail ||
-            'Invalid priority. Please select a supported value.';
-        } else if (error.status === 401) {
-          this.priorityMessage =
-            'Authentication is required to change ticket priority.';
-        } else if (error.status === 403) {
-          this.priorityMessage =
-            'You do not have permission to change ticket priority.';
-        } else if (error.status === 404) {
-          this.priorityMessage = 'Ticket was not found.';
-        } else if (error.status === 0) {
-          this.priorityMessage =
-            'Unable to connect to the backend server.';
-        } else {
-          this.priorityMessage = this.getSharedErrorMessage(
-            error,
-            `Unable to update ticket priority. Server returned ${error?.status ?? 'an unknown error'}.`
-          );
-        }
-
-        this.cdr.detectChanges();
-      }
-    });
-  }
+  // ============================================
+  // START EDITING
+  // ============================================
 
   startEditing(): void {
     if (!this.ticket) {
       return;
     }
 
-    this.editStatus = this.ticket.status || '';
-    this.editPriority = this.ticket.priority || '';
+    this.setEditValuesFromTicket();
+
     this.errorMessage = '';
     this.successMessage = '';
     this.isEditing = true;
@@ -572,11 +1044,12 @@ export class TicketDetails implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // ============================================
+  // CANCEL EDITING
+  // ============================================
+
   cancelEditing(): void {
-    if (this.ticket) {
-      this.editStatus = this.ticket.status || '';
-      this.editPriority = this.ticket.priority || '';
-    }
+    this.setEditValuesFromTicket();
 
     this.isEditing = false;
     this.errorMessage = '';
@@ -585,30 +1058,98 @@ export class TicketDetails implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Existing Edit Ticket save operation.
+  // ============================================
+  // SAVE ALL ADMIN-EDITABLE TICKET FIELDS
+  // ============================================
+
   saveChanges(): void {
-    if (!this.ticket || this.ticketId === null || this.saving) {
+    if (
+      !this.ticket ||
+      this.ticketId === null ||
+      this.saving
+    ) {
       return;
     }
 
-    if (!this.editStatus) {
-      this.errorMessage = 'Please select a status.';
+    if (!this.editTicketName.trim()) {
+      this.errorMessage = 'Ticket name cannot be empty.';
       return;
     }
 
-    if (!this.editPriority) {
-      this.errorMessage = 'Please select a priority.';
+    if (!this.editStatus || !this.editPriority) {
+      this.errorMessage =
+        'Please select both status and priority.';
       return;
+    }
+
+    if (this.teamsLoadError) {
+      this.errorMessage = this.teamsLoadError;
+      return;
+    }
+
+    if (this.teamsLoading) {
+      this.errorMessage =
+        'Teams are still loading. Please try again.';
+      return;
+    }
+
+    if (this.selectedTeamId !== null) {
+      const selectedTeam = this.teams.find(
+        team => Number(team.id) === Number(this.selectedTeamId)
+      );
+
+      if (!selectedTeam) {
+        this.errorMessage =
+          'Select a team from your organization.';
+        return;
+      }
+    }
+
+    if (this.selectedAssigneeId !== null) {
+      const selectedUser = this.users.find(
+        user => Number(user.id) === Number(this.selectedAssigneeId)
+      );
+
+      if (
+        !selectedUser ||
+        selectedUser.is_active === false ||
+        String(selectedUser.role || '')
+          .trim()
+          .toLowerCase() !== 'team member'
+      ) {
+        this.errorMessage =
+          'Select an active Team Member from your organization.';
+        return;
+      }
     }
 
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.ticketService.updateTicket(this.ticketId, {
+    const updateData = {
+      ticket_name: this.editTicketName.trim(),
+      description: this.editDescription,
+      summary: this.editSummary,
+      category: this.editCategory.trim(),
       status: this.editStatus,
-      priority: this.editPriority
-    }).subscribe({
+      priority: this.editPriority,
+      assigned_to: this.selectedAssigneeId,
+      team: this.selectedTeamId
+    };
+
+    // is_locked is intentionally not sent.
+    // The existing backend derives it from assigned_to and team.
+
+    console.log(
+      'Updating ticket with Admin edit form:',
+      updateData
+    );
+
+    this.ticketService.updateTicket(
+      this.ticketId,
+      updateData
+    ).subscribe({
       next: () => {
         this.saving = false;
         this.isEditing = false;
@@ -617,14 +1158,17 @@ export class TicketDetails implements OnInit {
         this.loadTicket(this.ticketId!);
         this.cdr.detectChanges();
       },
+
       error: (error: any) => {
         console.error('TICKET UPDATE ERROR:', error);
 
         this.saving = false;
 
         if (error.status === 400) {
-          this.errorMessage =
-            'Invalid ticket data. Please check the selected values.';
+          this.errorMessage = this.getSharedErrorMessage(
+            error,
+            'Invalid ticket data. Check the selected status, priority, team and assignee.'
+          );
         } else if (error.status === 401) {
           this.errorMessage =
             'Authentication is required to update this ticket.';
@@ -632,11 +1176,14 @@ export class TicketDetails implements OnInit {
           this.errorMessage =
             'You do not have permission to update this ticket.';
         } else if (error.status === 404) {
-          this.errorMessage = 'Ticket was not found.';
+          this.errorMessage =
+            'Ticket or selected team/user was not found.';
         } else if (error.status === 500) {
-          this.errorMessage = 'Server error while updating ticket.';
+          this.errorMessage =
+            'Server error while updating ticket.';
         } else if (error.status === 0) {
-          this.errorMessage = 'Unable to connect to the backend server.';
+          this.errorMessage =
+            'Unable to connect to the backend server.';
         } else {
           this.errorMessage = this.getSharedErrorMessage(
             error,
@@ -649,20 +1196,38 @@ export class TicketDetails implements OnInit {
     });
   }
 
+  // ============================================
+  // SHARED API ERROR HANDLING
+  // ============================================
+
   private getSharedErrorMessage(
     error: any,
     fallback: string
   ): string {
-    const message = this.apiErrorService.getErrorMessage(error);
+    const message =
+      this.apiErrorService.getErrorMessage(error);
 
-    return message && message !== 'An unexpected error occurred.'
+    return message &&
+      message !== 'An unexpected error occurred.'
       ? message
       : fallback;
   }
 
+  // ============================================
+  // FORMAT STATUS
+  // ============================================
+
   formatStatus(status: string): string {
-    return status ? status.replace(/_/g, ' ') : '';
+    if (!status) {
+      return '';
+    }
+
+    return status.replace(/_/g, ' ');
   }
+
+  // ============================================
+  // BACK TO TICKETS
+  // ============================================
 
   goBack(): void {
     this.router.navigate(['/tickets']);
