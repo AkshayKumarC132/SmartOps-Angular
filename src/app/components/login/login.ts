@@ -107,6 +107,8 @@ export class Login {
             this.authService
               .confirmSession(
                 accessToken,
+                refreshToken,
+                user
 
               )
               .subscribe({

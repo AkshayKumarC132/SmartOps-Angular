@@ -57,20 +57,12 @@ export interface SmartOpsUser {
 
 
 export interface LoginResponse {
-
-
   Message?: string;
-
-
-  'Confirmation Token'?: string;
-
-
+  Access?: string;
+  Refresh?: string;
   'User Information'?: SmartOpsUser;
-
-
   [key: string]: unknown;
 }
-
 
 
 
@@ -240,113 +232,88 @@ export class AuthService {
   // ==========================================================
 
 
-  confirmSession(
-    confirmationToken: string
-  ): Observable<ConfirmSessionResponse> {
+ 
+confirmSession(
+  accessToken: string,
+  refreshToken: string,
+  userInformation: SmartOpsUser
+): Observable<ConfirmSessionResponse> {
 
-
-    return this.http.post<ConfirmSessionResponse>(
-      `${this.apiUrl}/auth/session/confirm/`,
-      {
-        confirmation_token: confirmationToken
+  return this.http.post<ConfirmSessionResponse>(
+    `${this.apiUrl}/auth/session/confirm/`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
       }
-    ).pipe(
+    }
+  ).pipe(
 
+    tap((response: ConfirmSessionResponse) => {
 
-      tap((response: ConfirmSessionResponse) => {
-
-
-        const accessToken = response?.Access;
-        const refreshToken = response?.Refresh;
-        const userInformation = response?.['User Information'];
-
-
-        // Validate confirmation response.
-        if (
-          typeof accessToken !== 'string' ||
-          !accessToken.trim() ||
-          typeof refreshToken !== 'string' ||
-          !refreshToken.trim() ||
-          !userInformation
-        ) {
-
-
-          throw new Error(
-            'Session confirmation response is incomplete.'
-          );
-
-
-        }
-
-
-        // Read the actual access-token expiration.
-        const expiresAt =
-          this.getJwtExpiration(accessToken);
-
-
-        if (
-          !expiresAt ||
-          expiresAt <= Date.now()
-        ) {
-
-
-          throw new Error(
-            'Session confirmation returned an invalid or expired access token.'
-          );
-
-
-        }
-
-
-        // Store JWT tokens only after backend confirmation.
-        localStorage.setItem(
-          'access_token',
-          accessToken
+      // Validate backend confirmation response.
+      if (
+        !response ||
+        typeof response.Message !== 'string'
+      ) {
+        throw new Error(
+          'Session confirmation failed or returned an invalid response.'
         );
+      }
 
+      // Validate access-token expiration.
+      const expiresAt =
+        this.getJwtExpiration(accessToken);
 
-        localStorage.setItem(
-          'refresh_token',
-          refreshToken
+      if (
+        !expiresAt ||
+        expiresAt <= Date.now()
+      ) {
+        throw new Error(
+          'Session confirmation returned an invalid or expired access token.'
         );
+      }
 
+      // Store tokens only after successful backend confirmation.
+      localStorage.setItem(
+        'access_token',
+        accessToken
+      );
 
-        // Store confirmed user information.
-        localStorage.setItem(
-          'user',
-          JSON.stringify(userInformation)
-        );
+      localStorage.setItem(
+        'refresh_token',
+        refreshToken
+      );
 
+      // Store confirmed user information.
+      localStorage.setItem(
+        'user',
+        JSON.stringify(userInformation)
+      );
 
-        // Store access-token expiry.
-        localStorage.setItem(
-          this.sessionExpiryKey,
-          String(expiresAt)
-        );
+      // Store access-token expiry.
+      localStorage.setItem(
+        this.sessionExpiryKey,
+        String(expiresAt)
+      );
 
+      // Start automatic logout timer.
+      this.scheduleSessionExpiry(expiresAt);
 
-        // Start automatic logout timer.
-        this.scheduleSessionExpiry(expiresAt);
+      console.log(
+        'Login session confirmed successfully.'
+      );
 
+      console.log(
+        'Session expires at:',
+        new Date(expiresAt).toLocaleString()
+      );
 
-        console.log(
-          'Login session confirmed successfully.'
-        );
+    })
 
+  );
+}
 
-        console.log(
-          'Session expires at:',
-          new Date(expiresAt).toLocaleString()
-        );
-
-
-      })
-
-
-    );
-
-
-  }
 
 
 
@@ -787,13 +754,36 @@ export class AuthService {
 
   }
 
+  // ==========================================================
+  // LOGOUT API
+  // ==========================================================
+
+  logoutApi(): Observable<any> {
+
+    const accessToken = this.getAccessToken();
+
+    const refreshToken =
+      localStorage.getItem('refresh_token');
+
+    return this.http.post(
+      `${this.apiUrl}/auth/logout/`,
+      { refresh: refreshToken },
+      {
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : {}
+      }
+    );
+
+  }
+
 
 
 
   // ==========================================================
   // LOGOUT
   // ==========================================================
-
+  
 
   logout(): void {
     console.log('Manual logout initiated.');

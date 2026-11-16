@@ -14,12 +14,11 @@ import {
   take
 } from 'rxjs';
 import Swal from 'sweetalert2';
-
 import {
   AIResult,
   AIResultService
 } from '../../services/ai-result.service';
-
+import { NavigationLockService } from '../../services/navigation-lock.service';
 interface StructuredAIResult {
   summary: string;
   suggested_tags: string[];
@@ -47,9 +46,10 @@ export class AiResults implements OnInit {
   successMessage = '';
 
   constructor(
-    private readonly aiResultService: AIResultService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+  private readonly aiResultService: AIResultService,
+  private readonly cdr: ChangeDetectorRef,
+  private readonly navigationLock: NavigationLockService
+) {}
 
   ngOnInit(): void {
     this.loadResults();
@@ -147,53 +147,71 @@ export class AiResults implements OnInit {
   // --------------------------------------------------
 
   loadConfidenceScores(): void {
-    const completedResults = this.results.filter(
-      item =>
-        this.normalizeStatus(item.processing_status) === 'COMPLETED'
-    );
 
-    completedResults.forEach(item => {
-      this.aiResultService.getConfidence(item.id)
-        .pipe(
-          take(1),
-          catchError(error => {
-            console.warn(
-              `[AI Results] Confidence unavailable for result ${item.id}:`,
-              error
-            );
+  const completedResults = this.results.filter(
+    item =>
+      this.normalizeStatus(item.processing_status) === 'COMPLETED'
+  );
 
-            // Confidence failure must not break the results page.
-            return of(null);
-          })
-        )
-        .subscribe(response => {
-          if (response === null) {
-            return;
-          }
+  if (completedResults.length === 0) {
+    return;
+  }
 
-          const scores = this.extractConfidenceScores(response);
+  // Lock navigation before starting calculations.
+  this.navigationLock.begin();
 
-          
-if (scores.length > 0) {
-  const average =
-    scores.reduce((sum, value) => sum + value, 0) /
-    scores.length;
+  let pendingRequests = completedResults.length;
 
-  this.confidenceByResult[item.id] =
-    Math.round(average * 100) / 100;
+  completedResults.forEach(item => {
 
+    this.aiResultService.getConfidence(item.id)
+      .pipe(
+        take(1),
+
+        catchError(error => {
+          console.warn(
+            `[AI Results] Confidence unavailable for result ${item.id}:`,
+            error
+          );
+          return of(null);
+        }),
+
+        finalize(() => {
+
+          pendingRequests--;
+
+          if (pendingRequests === 0) {
+            this.navigationLock.end();
 
             console.log(
-              `[AI Results] Confidence loaded for result ${item.id}:`,
-              this.confidenceByResult[item.id]
+              'All confidence calculations completed.'
             );
           }
 
           this.cdr.markForCheck();
-        });
-    });
-  }
+        })
+      )
+      .subscribe(response => {
 
+        if (response === null) {
+          return;
+        }
+
+        const scores = this.extractConfidenceScores(response);
+
+        if (scores.length > 0) {
+          const average =
+            scores.reduce((sum, value) => sum + value, 0)
+            / scores.length;
+
+          this.confidenceByResult[item.id] =
+            Math.round(average * 100) / 100;
+        }
+
+        this.cdr.markForCheck();
+      });
+  });
+}
   // --------------------------------------------------
   // Parse Confidence API Response
   // --------------------------------------------------

@@ -8,9 +8,9 @@ import { Teams } from './components/teams/teams';
 import { KnowledgeBase } from './components/knowledge-base/knowledge-base';
 import { KnowledgeBaseDetails } from './components/knowledge-base-details/knowledge-base-details';
 import { KnowledgeBaseEdit } from './components/knowledge-base-edit/knowledge-base-edit';
-
 import { authGuard } from './auth/auth.guard';
 import { roleGuard } from './auth/role.guard';
+import { navigationLockCanActivateChild } from './auth/navigation-lock.guard';
 
 export const routes: Routes = [
 
@@ -29,6 +29,7 @@ export const routes: Routes = [
     path: '',
     component: AdminLayout,
     canActivate: [authGuard, roleGuard],
+    canDeactivate: [navigationLockCanActivateChild],
     data: {
       roles: ['Admin']
     },

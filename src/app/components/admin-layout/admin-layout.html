@@ -34,6 +34,36 @@
         <div class="brand-subtitle">
           Admin Portal
         </div>
+        <!-- GLOBAL CONFIDENCE CALCULATION LOCK -->
+
+<div
+  class="navigation-lock-overlay"
+  *ngIf="navigationLocked"
+  role="alertdialog"
+  aria-modal="true"
+  aria-labelledby="navigation-lock-title">
+
+  <div class="navigation-lock-dialog">
+
+    <div class="navigation-lock-spinner"></div>
+
+    <h2 id="navigation-lock-title">
+      Confidence Score Calculation in Progress
+    </h2>
+
+    <p>
+      Please wait while SmartOps calculates confidence scores.
+      You cannot navigate to other pages during this process.
+    </p>
+
+    <span class="navigation-lock-note">
+      Navigation will be restored automatically
+      when all calculations finish.
+    </span>
+
+  </div>
+
+</div>
       </div>
 
     </div>
