@@ -53,8 +53,8 @@ export class NotificationService {
   private readonly readStorageKey =
     'smartops_read_notifications';
 
-  // Check only the Notifications API every 5 seconds.
-  private readonly pollingIntervalMs = 5000;
+  // Check only the Notifications API every 30 seconds.
+  private readonly pollingIntervalMs = 30000;
 
   // =========================================================
   // POLLING VARIABLES

@@ -721,68 +721,29 @@
   }
 }
 
+
 /* SweetAlert2 user information modal */
 
 .smartops-user-info-popup .user-info-modal {
+  width: 100%;
   text-align: left;
-}
-
-.smartops-user-info-popup .user-info-heading {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px;
-  margin-bottom: 18px;
-  border: 1px solid #e4efee;
-  border-radius: 10px;
-  background: #f7fbfb;
-}
-
-.smartops-user-info-popup .user-info-avatar {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #e1f5f2;
-  color: #208d87;
-  font-size: 19px;
-  font-weight: 700;
-}
-
-.smartops-user-info-popup .user-info-identity {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.smartops-user-info-popup .user-info-identity strong {
-  color: #172033;
-  font-size: 15px;
-}
-
-.smartops-user-info-popup .user-info-identity span {
-  color: #778293;
-  font-size: 12px;
+  padding: 5px 12px;
 }
 
 .smartops-user-info-popup .user-info-details {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .smartops-user-info-popup .user-info-row {
   display: grid;
-  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.2fr);
-  gap: 14px;
-  padding: 11px 4px;
-  border-bottom: 1px solid #edf0f3;
+  grid-template-columns: minmax(130px, 0.85fr) 15px minmax(0, 1.15fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px;
+  border-bottom: 1px solid #edf0f5;
   text-align: left;
-  overflow-wrap: anywhere;
 }
 
 .smartops-user-info-popup .user-info-row:last-child {
@@ -790,27 +751,62 @@
 }
 
 .smartops-user-info-popup .user-info-label {
-  color: #778293;
-  font-size: 12px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.smartops-user-info-popup .user-info-separator {
+  color: #98a2b3;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .smartops-user-info-popup .user-info-value {
   color: #253247;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 650;
   overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.smartops-user-info-popup .swal2-title {
+  color: #192641;
+  font-size: 23px;
+  font-weight: 750;
+  padding-top: 25px;
+}
+
+.smartops-user-info-popup .swal2-confirm {
+  min-width: 90px;
+  border-radius: 8px;
+  padding: 11px 22px;
+  font-weight: 650;
 }
 
 @media (max-width: 480px) {
   .smartops-user-info-popup .user-info-row {
-    grid-template-columns: 1fr;
-    gap: 4px;
+    grid-template-columns: minmax(95px, 0.8fr) 12px minmax(0, 1.2fr);
+    gap: 6px;
+    padding: 10px 3px;
+  }
+
+  .smartops-user-info-popup .user-info-label,
+  .smartops-user-info-popup .user-info-value {
+    font-size: 12px;
   }
 }
+
+
 
 /* Current device session styling */
 
 .settings-card .sessions-section {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 24px;
   border-top: 1px solid #edf0f3;
 }
@@ -823,10 +819,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 18px 20px;
-  margin-bottom: 16px;
+  margin: 0 0 16px;
   background: #f7fbfb;
   border: 1px solid #dce9e9;
   border-left: 4px solid #239f99;
@@ -839,6 +839,8 @@
   align-items: flex-start;
   gap: 6px;
   min-width: 0;
+  flex: 1 1 180px;
+  overflow-wrap: anywhere;
 }
 
 .settings-card .session-info strong {
@@ -851,6 +853,7 @@
   color: #667085;
   font-size: 12px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .settings-card .session-info small {
@@ -870,6 +873,8 @@
 
 .settings-card .session-logout-button {
   margin-top: 4px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 600px) {
@@ -880,5 +885,12 @@
   .settings-card .session-card {
     padding: 14px;
     gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .settings-card .session-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

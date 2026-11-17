@@ -749,11 +749,13 @@ export class Settings implements OnInit {
       });
     };
 
+    
     const rows = details
       .filter(([, value]) => value !== undefined)
       .map(([label, value]) => `
         <div class="user-info-row">
           <span class="user-info-label">${escapeHtml(label)}</span>
+          <span class="user-info-separator">:</span>
           <strong class="user-info-value">${escapeHtml(value)}</strong>
         </div>
       `)
@@ -763,25 +765,17 @@ export class Settings implements OnInit {
       title: 'User Information',
       html: `
         <div class="user-info-modal">
-          <div class="user-info-heading">
-            <div class="user-info-avatar">
-              ${escapeHtml(this.avatarLetter)}
-            </div>
-            <div class="user-info-identity">
-              <strong>${escapeHtml(this.displayName)}</strong>
-              <span>${escapeHtml(this.email)}</span>
-            </div>
-          </div>
           <div class="user-info-details">${rows}</div>
         </div>
       `,
       confirmButtonText: 'Close',
-      confirmButtonColor: '#239f99',
+      confirmButtonColor: '#6254e8',
       width: 620,
       customClass: {
         popup: 'smartops-user-info-popup'
       }
     });
+
   }
 
   selectSection(section: string): void {

@@ -263,23 +263,33 @@
             </small>
           </div>
 
-          <!-- 5. CATEGORY -->
-          <div class="edit-field">
-            <label for="ticket-category">
-              Category
-            </label>
+            <!-- 5. CATEGORY -->
+<div class="edit-field">
+  <label for="ticket-category">
+    Category
+  </label>
 
-            <input
-              id="ticket-category"
-              type="text"
-              class="edit-input"
-              [(ngModel)]="editCategory"
-              placeholder="Enter category"
-              [disabled]="saving"
-            />
+  <select
+    id="ticket-category"
+    class="edit-select"
+    [(ngModel)]="editCategory"
+    [disabled]="saving"
+  >
+    <option value="" disabled>
+      Select category
+    </option>
+
+    <option
+      *ngFor="let category of categoryOptions"
+      [value]="category"
+    >
+      {{ category }}
+    </option>
+  </select>
+</div>
           </div>
 
-        </div>
+
 
         <div class="edit-actions">
 
@@ -553,14 +563,14 @@
 
             <div class="attachment-name">
 
-              <a
-                *ngIf="getAttachmentUrl(attachment) as attachmentUrl"
-                [href]="attachmentUrl"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                *ngIf="getAttachmentUrl(attachment)"
+                type="button"
+                class="attachment-preview-link"
+                (click)="openAttachmentPreview(attachment)"
               >
                 {{ getAttachmentName(attachment) }}
-              </a>
+              </button>
 
               <span *ngIf="!getAttachmentUrl(attachment)">
                 {{ getAttachmentName(attachment) }}
@@ -580,6 +590,63 @@
 
           </div>
 
+        </div>
+
+        <!-- ATTACHMENT PREVIEW MODAL -->
+        <div
+          *ngIf="showAttachmentPreview"
+          class="attachment-preview-overlay"
+          (click)="closeAttachmentPreview()"
+        >
+          <div
+            class="attachment-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="'Preview ' + previewAttachmentName"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="attachment-preview-header">
+              <h3>{{ previewAttachmentName }}</h3>
+              <button
+                type="button"
+                class="preview-close-button"
+                aria-label="Close preview"
+                (click)="closeAttachmentPreview()"
+              >
+                ×
+              </button>
+            </div>
+
+            <div class="attachment-preview-body">
+              <img
+                *ngIf="previewAttachmentType === 'image'"
+                [src]="previewAttachmentUrl"
+                [alt]="previewAttachmentName"
+                class="attachment-preview-image"
+              />
+
+              <iframe
+                *ngIf="previewAttachmentType === 'pdf'"
+                [src]="previewAttachmentSafeUrl"
+                class="attachment-preview-pdf"
+                title="PDF attachment preview"
+              ></iframe>
+
+              <div
+                *ngIf="previewAttachmentType === 'other'"
+                class="attachment-preview-unsupported"
+              >
+                <p>Preview is not available for this file type.</p>
+                <a
+                  [href]="previewAttachmentUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open attachment
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div

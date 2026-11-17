@@ -26,9 +26,10 @@ export class Login {
   password = '';
   errorMessage = '';
   loading = false;
+  showPassword = false;
 
   private readonly invalidLoginMessage =
-    'Invalid username/password/role.';
+    'Invalid username or password. Please try again.';
 
   constructor(
     private readonly authService: AuthService,
@@ -40,17 +41,13 @@ export class Login {
     const error = this.route.snapshot.queryParamMap.get('error');
 
     if (error === 'not-admin') {
-      this.errorMessage = this.invalidLoginMessage;
-
+      this.errorMessage =
+        'You do not have permission to access the Admin Portal.';
     } else if (error === 'session-expired') {
       this.errorMessage =
         'Your session has expired. Please log in again.';
     }
   }
-
-  // ==========================================================
-  // LOGIN
-  // ==========================================================
 
   login(): void {
     if (this.loading) {
@@ -59,152 +56,230 @@ export class Login {
 
     this.errorMessage = '';
 
-    // Validate input fields.
-    if (!this.username.trim() || !this.password) {
-      this.errorMessage = this.invalidLoginMessage;
-      this.cdr.detectChanges();
+    if (!this.username.trim()) {
+      this.errorMessage = 'Please enter your username.';
+      return;
+    }
+
+    if (!this.password) {
+      this.errorMessage = 'Please enter your password.';
       return;
     }
 
     this.loading = true;
-    this.cdr.detectChanges();
 
-    // Step 1: Validate credentials with backend.
-    this.authService
-      .login(this.username.trim(), this.password)
-      .subscribe({
-        next: (loginResponse) => {
-          this.ngZone.run(() => {
+    this.authService.login(
+      this.username.trim(),
+      this.password
+    ).subscribe({
+      next: (loginResponse) => {
+        this.ngZone.run(() => {
+          const confirmationToken =
+            loginResponse?.['Confirmation Token'];
 
-            // Read access token, refresh token and user information.
-            const accessToken =
-              loginResponse?.['Access'];
+          const user =
+            loginResponse?.['User Information'];
 
-            const refreshToken =
-              loginResponse?.['Refresh'];
+          const role = user?.Role ?? user?.role;
 
-            const user =
-              loginResponse?.['User Information'];
+          // Validate the login response.
+          if (
+            typeof confirmationToken !== 'string' ||
+            !confirmationToken.trim() ||
+            !user ||
+            typeof role !== 'string'
+          ) {
+            this.finishFailedLogin(
+              'Login response is incomplete. Please try again.'
+            );
+            return;
+          }
 
-            const role =
-              user?.Role ?? user?.role;
+          // This is an Admin Portal.
+          if (role.trim().toLowerCase() !== 'admin') {
+            this.finishFailedLogin(
+              'You do not have permission to access the Admin Portal.'
+            );
+            return;
+          }
 
-            // Step 2: Validate frontend login requirements.
-            if (
-              typeof accessToken !== 'string' ||
-              !accessToken.trim() ||
-              typeof refreshToken !== 'string' ||
-              !refreshToken.trim() ||
-              !user ||
-              typeof role !== 'string' ||
-              role.trim().toLowerCase() !== 'admin'
-            ) {
-              this.finishFailedLogin();
-              return;
-            }
+          // Confirm the pending session with Django.
+          this.authService
+            .confirmSession(confirmationToken, user)
+            .subscribe({
+              next: () => {
+                this.ngZone.run(() => {
+                  this.loading = false;
+                  this.password = '';
 
-            // Step 3: Confirm the backend session.
-            this.authService
-              .confirmSession(
-                accessToken,
-                refreshToken,
-                user
+                  this.cdr.detectChanges();
 
-              )
-              .subscribe({
-
-                next: () => {
-
-                  this.ngZone.run(() => {
-
-                    this.loading = false;
-                    this.cdr.detectChanges();
-
-                    // Step 4: Navigate only after session confirmation.
-                    this.router.navigate(['/dashboard'])
-                      .then((navigated: boolean) => {
-
-                        this.ngZone.run(() => {
-
-                          if (!navigated) {
-                            this.errorMessage =
-                              'Unable to open the dashboard. Please try again.';
-                          }
-
-                          this.cdr.detectChanges();
-                        });
-
-                      })
-                      .catch((error: unknown) => {
-
-                        console.error(
-                          'Dashboard navigation error:',
-                          error
-                        );
-
-                        this.ngZone.run(() => {
-
+                  // Navigate only after session confirmation.
+                  this.router.navigate(['/dashboard'])
+                    .then((navigated: boolean) => {
+                      this.ngZone.run(() => {
+                        if (!navigated) {
                           this.errorMessage =
                             'Unable to open the dashboard. Please try again.';
+                        }
 
-                          this.cdr.detectChanges();
-                        });
-
+                        this.cdr.detectChanges();
                       });
+                    })
+                    .catch(() => {
+                      this.ngZone.run(() => {
+                        this.errorMessage =
+                          'Unable to open the dashboard. Please try again.';
 
-                  });
+                        this.cdr.detectChanges();
+                      });
+                    });
+                });
+              },
 
-                },
+              error: (error: unknown) => {
+                this.handleLoginError(error);
+              }
+            });
+        });
+      },
 
-                error: (error: unknown) => {
-
-                  console.error(
-                    'Session confirmation failed:',
-                    error
-                  );
-
-                  this.finishFailedLogin();
-                }
-
-              });
-
-          });
-
-        },
-
-        error: (error: unknown) => {
-          console.error(
-            'Login request failed:',
-            error
-          );
-
-          this.ngZone.run(() => {
-            this.loading = false;
-            this.password = '';
-            this.errorMessage = this.invalidLoginMessage;
-            this.cdr.detectChanges();
-          });
-
-        }
-
-      });
-
-  }
-
-  // ==========================================================
-  // HANDLE FAILED LOGIN
-  // ==========================================================
-
-  private finishFailedLogin(): void {
-    this.ngZone.run(() => {
-
-      // Clear any locally stored authentication information.
-      this.authService.clearSession();
-      this.password = '';
-      this.errorMessage = this.invalidLoginMessage;
-      this.loading = false;
-      this.cdr.detectChanges();
+      error: (error: unknown) => {
+        this.handleLoginError(error);
+      }
     });
   }
 
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  private handleLoginError(error: unknown): void {
+    this.ngZone.run(() => {
+      const err = error as {
+        status?: number;
+        error?: {
+          Code?: string;
+          code?: string;
+          Error?: string;
+          error?: string;
+          detail?: string;
+          message?: string;
+        };
+      };
+
+      const statusCode = err?.status;
+      const response = err?.error || {};
+
+      const errorCode = String(
+        response.Code || response.code || ''
+      ).toUpperCase();
+
+      const backendMessage = String(
+        response.Error ||
+        response.error ||
+        response.detail ||
+        response.message ||
+        ''
+      );
+
+      const messageToCheck =
+        `${errorCode} ${backendMessage}`.toLowerCase();
+
+      if (
+        errorCode === 'MAX_ACTIVE_SESSIONS' ||
+        messageToCheck.includes('maximum active session') ||
+        messageToCheck.includes('active sessions limit')
+      ) {
+        this.errorMessage =
+          'You have reached the maximum active session limit. Please log out from another device.';
+
+      } else if (
+        errorCode === 'LOGIN_ATTEMPTS_EXCEEDED' ||
+        messageToCheck.includes('maximum login attempts') ||
+        messageToCheck.includes('too many login attempts')
+      ) {
+        this.errorMessage =
+          'Maximum failed login attempts exceeded. Please try again later.';
+
+      } else if (
+        errorCode === 'ACCOUNT_INACTIVE' ||
+        messageToCheck.includes('account is inactive') ||
+        messageToCheck.includes('account disabled')
+      ) {
+        this.errorMessage =
+          'Your account is inactive. Please contact your administrator.';
+
+      } else if (
+        errorCode === 'ORGANIZATION_INACTIVE' ||
+        messageToCheck.includes('organization is inactive') ||
+        messageToCheck.includes('organization is deactivated')
+      ) {
+        this.errorMessage =
+          'Your organization is currently inactive. Please contact your administrator.';
+
+      } else if (
+        errorCode === 'ROLE_NOT_ALLOWED' ||
+        messageToCheck.includes('role not allowed') ||
+        messageToCheck.includes('permission denied')
+      ) {
+        this.errorMessage =
+          'You do not have permission to access this portal.';
+
+      } else if (errorCode === 'SESSION_EXPIRED') {
+        this.errorMessage =
+          'Your session has expired. Please log in again.';
+
+      } else if (statusCode === 0) {
+        this.errorMessage =
+          'Unable to connect to SmartOps server. Please check your connection.';
+
+      } else if (statusCode === 400) {
+        this.errorMessage =
+          'Invalid login request. Please check your username and password.';
+
+      } else if (statusCode === 401) {
+        this.errorMessage = this.invalidLoginMessage;
+
+      } else if (statusCode === 403) {
+        this.errorMessage =
+          'Access denied. You are not authorized to log in.';
+
+      } else if (statusCode === 404) {
+        this.errorMessage =
+          'Login service not found. Please contact support.';
+
+      } else if (statusCode === 429) {
+        this.errorMessage =
+          'Too many login requests. Please wait before trying again.';
+
+      } else if (
+        statusCode !== undefined &&
+        statusCode >= 500
+      ) {
+        this.errorMessage =
+          'SmartOps server error. Please try again later.';
+
+      } else {
+        this.errorMessage = this.invalidLoginMessage;
+      }
+
+      this.finishLoading();
+    });
+  }
+
+  private finishFailedLogin(
+    message: string = this.invalidLoginMessage
+  ): void {
+    this.authService.clearSession();
+
+    this.errorMessage = message;
+    this.finishLoading();
+  }
+
+  private finishLoading(): void {
+    this.password = '';
+    this.loading = false;
+    this.cdr.detectChanges();
+  }
 }

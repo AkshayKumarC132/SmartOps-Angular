@@ -105,6 +105,15 @@ export class TicketService {
       `${environment.apiUrl}/ticket_detail/${ticketId}/attachments/${attachmentId}/`
     );
   }
+  // ==============================
+// DOWNLOAD ATTACHMENT FOR PREVIEW
+// ==============================
+
+getAttachmentPreview(url: string): Observable<Blob> {
+  return this.http.get(url, {
+    responseType: 'blob'
+  });
+}
 
   // ==============================
   // CREATE TEAM

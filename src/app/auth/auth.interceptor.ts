@@ -1,12 +1,20 @@
 
 import { inject } from '@angular/core';
+
 import {
   HttpErrorResponse,
   HttpInterceptorFn
 } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
 
+import { Router } from '@angular/router';
+
+import {
+  catchError,
+  switchMap,
+  throwError
+} from 'rxjs';
+
+import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 
 // ============================================================
@@ -16,42 +24,44 @@ import { environment } from '../../environments/environment';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const router = inject(Router);
+  const authService = inject(AuthService);
 
-  // Normalize the configured API URL.
-  const apiBase = environment.apiUrl.replace(/\/+$/, '');
+  const apiBase =
+    environment.apiUrl.replace(/\/+$/, '');
 
-  // ==========================================================
-  // CHECK WHETHER REQUEST TARGETS OUR API
-  // ==========================================================
-
+  // Check whether request belongs to SmartOps API.
   const isApiRequest =
     req.url === apiBase ||
     req.url.startsWith(`${apiBase}/`) ||
     req.url.startsWith(`${apiBase}?`);
 
-  // ==========================================================
-  // IDENTIFY AUTHENTICATION ENDPOINTS
-  // ==========================================================
-
+  // Authentication endpoints.
   const isLoginRequest =
     /\/auth\/login\/?(?:\?.*)?$/.test(req.url);
 
-  // ==========================================================
-  // READ ACCESS TOKEN
-  // ==========================================================
+  const isConfirmRequest =
+    /\/auth\/session\/confirm\/?(?:\?.*)?$/.test(req.url);
 
-  const token = localStorage.getItem('access_token');
+  const isRefreshRequest =
+    /\/auth\/token\/refresh\/?(?:\?.*)?$/.test(req.url);
 
-  // ==========================================================
-  // ATTACH AUTHORIZATION HEADER
-  // ==========================================================
+  const isLogoutRequest =
+    /\/auth\/logout\/?(?:\?.*)?$/.test(req.url);
 
-  // Do not send credentials to external URLs or login requests.
-  // Preserve an existing Authorization header if one is supplied.
+  const isAuthRequest =
+    isLoginRequest ||
+    isConfirmRequest ||
+    isRefreshRequest;
+
+  // Read access token.
+  const token =
+    authService.getAccessToken();
+
+  // Attach token only to SmartOps API requests.
   const shouldAttachToken =
     !!token &&
     isApiRequest &&
-    !isLoginRequest &&
+    !isAuthRequest &&
     !req.headers.has('Authorization');
 
   const request = shouldAttachToken
@@ -62,49 +72,60 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       })
     : req;
 
-  // ==========================================================
-  // HANDLE HTTP ERRORS
-  // ==========================================================
-
   return next(request).pipe(
 
     catchError((error: unknown) => {
 
-      // ======================================================
-      // HANDLE EXPIRED OR INVALID AUTHENTICATION
-      // ======================================================
-
+      // Refresh only for protected API requests.
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
         isApiRequest &&
-        !isLoginRequest
+        !isAuthRequest &&
+        !isLogoutRequest
       ) {
 
-        // Clear session data to prevent stale user information.
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('session_expires_at');
+        return authService.refreshAccessToken().pipe(
 
-        // Avoid repeatedly navigating to the login page.
-        if (!router.url.startsWith('/login')) {
+          switchMap((newAccessToken) => {
 
-          void router.navigate(
-            ['/login'],
-            {
-              queryParams: {
-                error: 'session-expired'
+            // Retry original request using new access token.
+            const retryRequest = req.clone({
+              setHeaders: {
+                Authorization: `Bearer ${newAccessToken}`
               }
+            });
+
+            return next(retryRequest);
+
+          }),
+
+          catchError((refreshError: unknown) => {
+
+            // Refresh service handles session cleanup.
+            if (!router.url.startsWith('/login')) {
+              void router.navigate(
+                ['/login'],
+                {
+                  queryParams: {
+                    error: 'session-expired'
+                  }
+                }
+              );
             }
-          );
-        }
+
+            return throwError(() => refreshError);
+
+          })
+
+        );
+
       }
 
-      // Preserve the original error for existing subscribers.
       return throwError(() => error);
 
     })
 
   );
+
 };

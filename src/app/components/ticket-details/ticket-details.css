@@ -1326,3 +1326,106 @@
     flex: 1;
   }
 }
+/* Attachment preview link */
+.attachment-preview-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.attachment-preview-link:hover { color: #1d4ed8; }
+
+/* Attachment preview modal */
+.attachment-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.attachment-preview-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1000px, 92vw);
+  height: min(850px, 88vh);
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.attachment-preview-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.attachment-preview-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.preview-close-button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.preview-close-button:hover { color: #dc2626; }
+
+.attachment-preview-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 16px;
+  background: #f3f4f6;
+}
+
+.attachment-preview-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.attachment-preview-pdf {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.attachment-preview-unsupported {
+  color: #374151;
+  text-align: center;
+}
+
+.attachment-preview-unsupported a { color: #2563eb; }
+
+@media (max-width: 600px) {
+  .attachment-preview-overlay { padding: 10px; }
+  .attachment-preview-modal { width: 100%; height: 92vh; }
+}

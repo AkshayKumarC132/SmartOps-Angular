@@ -1,10 +1,12 @@
 import {
   ChangeDetectorRef,
   Component,
-  OnInit
+  OnInit,
+  OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   ActivatedRoute,
   Router
@@ -30,7 +32,7 @@ import {
   templateUrl: './ticket-details.html',
   styleUrl: './ticket-details.css'
 })
-export class TicketDetails implements OnInit {
+export class TicketDetails implements OnInit, OnDestroy {
   ticket: any = null;
   ticketId: number | null = null;
 
@@ -52,6 +54,13 @@ export class TicketDetails implements OnInit {
   attachmentMessage = '';
   attachmentError = false;
 
+  // Attachment preview state
+  previewAttachmentUrl = '';
+  previewAttachmentSafeUrl: SafeResourceUrl | null = null;
+  previewAttachmentName = '';
+  previewAttachmentType: 'image' | 'pdf' | 'other' = 'other';
+  showAttachmentPreview = false;
+
   loading = true;
   saving = false;
   errorMessage = '';
@@ -64,6 +73,13 @@ export class TicketDetails implements OnInit {
   editDescription = '';
   editSummary = '';
   editCategory = '';
+  categoryOptions: string[] = [
+    'Bug',
+    'Feature',
+    'Infrastructure',
+    'Documentation',
+    'Other'
+  ];
 
   selectedAssigneeId: number | null = null;
   selectedTeamId: number | null = null;
@@ -96,7 +112,8 @@ export class TicketDetails implements OnInit {
     private apiErrorService: ApiErrorService,
     private userService: UserService,
     private organizationContext: OrganizationContextService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {}
 
   // ============================================
@@ -555,6 +572,84 @@ export class TicketDetails implements OnInit {
     return typeof attachment?.file === 'string'
       ? attachment.file
       : null;
+  }
+
+  // ============================================
+  // ATTACHMENT PREVIEW (AUTHENTICATED DOWNLOAD)
+  // ============================================
+
+  openAttachmentPreview(attachment: any): void {
+    const url = this.getAttachmentUrl(attachment);
+
+    if (!url) {
+      return;
+    }
+
+    // Clear any previous preview URL before starting a new request.
+    this.releaseAttachmentPreviewUrl();
+
+    this.previewAttachmentName = this.getAttachmentName(attachment);
+    this.showAttachmentPreview = true;
+    this.previewAttachmentUrl = '';
+    this.previewAttachmentSafeUrl = null;
+
+    const extension = this.previewAttachmentName
+      .split('.')
+      .pop()
+      ?.toLowerCase();
+
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(extension || '')) {
+      this.previewAttachmentType = 'image';
+    } else if (extension === 'pdf') {
+      this.previewAttachmentType = 'pdf';
+    } else {
+      this.previewAttachmentType = 'other';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.ticketService.getAttachmentPreview(url).subscribe({
+      next: (blob: Blob) => {
+        this.previewAttachmentUrl = URL.createObjectURL(blob);
+
+        if (this.previewAttachmentType === 'pdf') {
+          this.previewAttachmentSafeUrl =
+            this.sanitizer.bypassSecurityTrustResourceUrl(
+              this.previewAttachmentUrl
+            );
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {
+        console.error('Attachment preview failed:', error);
+        this.closeAttachmentPreview();
+        this.errorMessage =
+          error?.status === 401 || error?.status === 403
+            ? 'You do not have permission to preview this attachment.'
+            : 'Unable to load attachment preview.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  closeAttachmentPreview(): void {
+    this.showAttachmentPreview = false;
+    this.releaseAttachmentPreviewUrl();
+    this.previewAttachmentName = '';
+    this.previewAttachmentSafeUrl = null;
+    this.previewAttachmentType = 'other';
+  }
+
+  private releaseAttachmentPreviewUrl(): void {
+    if (this.previewAttachmentUrl) {
+      URL.revokeObjectURL(this.previewAttachmentUrl);
+      this.previewAttachmentUrl = '';
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.releaseAttachmentPreviewUrl();
   }
 
   private readApiError(
