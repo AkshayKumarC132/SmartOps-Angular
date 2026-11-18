@@ -82,6 +82,13 @@ export class Settings implements OnInit {
 
   private currentUserId: number | null = null;
 
+  // Active login sessions
+  sessions: any[] = [];
+  sessionsLoading = false;
+  sessionsErrorMessage = '';
+  currentSessionId: number | null = null;
+  sessionSigningOutId: any = null;
+
   notificationPreferences: NotificationPreferences = {
     in_app: {
       ticket_assigned: true,
@@ -778,6 +785,135 @@ export class Settings implements OnInit {
 
   }
 
+  loadSessions(): void {
+    this.sessionsLoading = true;
+    this.sessionsErrorMessage = '';
+
+    this.http
+      .get<any>(`${environment.apiUrl}/auth/sessions/active/`)
+      .subscribe({
+        next: (response: any) => {
+          console.log('Active Sessions API Response:', response);
+
+          this.sessions = response?.Sessions || [];
+          this.currentSessionId =
+            response?.['Current Session Id'] ?? null;
+
+          this.sessionsLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Unable to load sessions:', error);
+          this.sessionsLoading = false;
+
+          if (error.status === 401) {
+            this.sessionsErrorMessage =
+              'Your session has expired. Please login again.';
+          } else if (error.status === 0) {
+            this.sessionsErrorMessage =
+              'Unable to connect to the backend server.';
+          } else {
+            this.sessionsErrorMessage =
+              error.error?.Message ||
+              error.error?.message ||
+              'Unable to load active sessions.';
+          }
+
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  isCurrentSession(sessionId: any): boolean {
+    return String(sessionId) === String(this.currentSessionId);
+  }
+
+  getSessionDeviceName(session: any): string {
+    const deviceName = String(session?.device_name || '').trim();
+
+    if (deviceName && deviceName.toLowerCase() !== 'other') {
+      return deviceName;
+    }
+
+    const browser = String(session?.browser || 'Unknown Browser').trim();
+    const operatingSystem = String(
+      session?.operating_system || 'Unknown OS'
+    ).trim();
+
+    return `${browser} on ${operatingSystem}`;
+  }
+
+  async signOutSession(session: any): Promise<void> {
+    if (!session?.id) {
+      return;
+    }
+
+    const isCurrent = this.isCurrentSession(session.id);
+
+    const result = await Swal.fire({
+      title: 'Sign out this session?',
+      text: isCurrent
+        ? 'You will be signed out of this device.'
+        : 'This device will no longer be able to access your SmartOps account.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sign Out',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d'
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    // The current device uses the existing logout API.
+    if (isCurrent) {
+      this.logout();
+      return;
+    }
+
+    this.sessionSigningOutId = session.id;
+
+    this.http
+      .post<any>(
+        `${environment.apiUrl}/auth/sessions/${session.id}/revoke/`,
+        {}
+      )
+      .subscribe({
+        next: async (response: any) => {
+          this.sessionSigningOutId = null;
+
+          await Swal.fire({
+            title: 'Signed Out',
+            text: response?.Message || 'The selected session has been signed out successfully.',
+            icon: 'success',
+            confirmButtonColor: '#239f99'
+          });
+
+          this.loadSessions();
+          this.cdr.detectChanges();
+        },
+        error: async (error: any) => {
+          console.error('Unable to revoke session:', error);
+          this.sessionSigningOutId = null;
+
+          await Swal.fire({
+            title: 'Unable to Sign Out',
+            text:
+              error.error?.Error ||
+              error.error?.Message ||
+              error.error?.message ||
+              'Unable to revoke the selected session.',
+            icon: 'error',
+            confirmButtonColor: '#239f99'
+          });
+
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
   selectSection(section: string): void {
     this.activeSection = section;
 
@@ -787,6 +923,10 @@ export class Settings implements OnInit {
     this.passwordErrorMessage = '';
     this.notificationSuccessMessage = '';
     this.notificationErrorMessage = '';
+
+    if (section === 'security') {
+      this.loadSessions();
+    }
   }
 
   saveProfile(): void {

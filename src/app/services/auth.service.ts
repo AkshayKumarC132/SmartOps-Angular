@@ -1190,89 +1190,48 @@ confirmSession(
   // ==========================================================
 
 
-  logoutApi(): Observable<any> {
+ logoutApi(): Observable<any> {
+  const accessToken = localStorage.getItem('access_token');
+  const refreshToken = localStorage.getItem('refresh_token');
 
+  console.log('Logout API URL:', `${this.apiUrl}/auth/logout/`);
+  console.log('Access token exists:', !!accessToken);
+  console.log('Refresh token exists:', !!refreshToken);
 
-    const accessToken = this.getAccessToken();
-
-
-    const refreshToken =
-      localStorage.getItem('refresh_token');
-
-
-    return this.http.post(
-      `${this.apiUrl}/auth/logout/`,
-      { refresh: refreshToken },
-      {
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : {}
-      }
-    );
-
-
-  }
-
-
-
-
-
-
-
-
+  return this.http.post(
+    `${this.apiUrl}/auth/logout/`,
+    {
+      refresh: refreshToken ?? ''
+    },
+    {
+      headers: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`
+          }
+        : {}
+    }
+  );
+}
   // ==========================================================
   // LOGOUT
   // ==========================================================
-  
-
-
   logout(): void {
-    console.log('Manual logout initiated.');
+  console.log('Logout button clicked');
 
+  this.logoutApi().subscribe({
+    next: (response) => {
+      console.log('Logout API response:', response);
 
-
-
-    const accessToken = this.getAccessToken();
-    const refreshToken = localStorage.getItem('refresh_token');
-
-
-
-
-    // If credentials are unavailable, clear local session.
-    if (!accessToken || !refreshToken) {
       this.clearSession();
-      void this.router.navigate(['/login']);
-      return;
+      this.router.navigateByUrl('/login', { replaceUrl: true });
+    },
+    error: (error) => {
+      console.error('Logout API error:', error);
+
+      // Always logout locally
+      this.clearSession();
+      this.router.navigateByUrl('/login', { replaceUrl: true });
     }
-
-
-
-
-    this.http.post(
-      `${this.apiUrl}/auth/logout/`,
-      { refresh: refreshToken },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    ).pipe(
-      finalize(() => {
-        // Always clear local authentication data.
-        this.clearSession();
-        void this.router.navigate(['/login']);
-      })
-    ).subscribe({
-      next: () => {
-        console.log('Backend session revoked successfully.');
-      },
-      error: (error) => {
-        console.error('Backend logout failed:', error);
-      }
-    });
-  }
-
-
-
-
+  });
+}
 }

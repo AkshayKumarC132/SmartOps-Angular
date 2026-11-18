@@ -894,3 +894,90 @@
     align-items: flex-start;
   }
 }
+/* Active Sessions */
+
+.sessions-loading {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #7a8494;
+  font-size: 12px;
+}
+
+.sessions-empty {
+  padding: 25px;
+  text-align: center;
+  color: #7a8494;
+  font-size: 12px;
+  border: 1px dashed #d8dee7;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.session-status {
+  white-space: nowrap;
+}
+
+.session-logout-button {
+  margin-top: 15px;
+}
+
+@media (max-width: 650px) {
+  .session-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .session-actions {
+    width: 100%;
+  }
+}
+
+/* Individual active-session sign-out controls */
+.session-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.settings-card .session-status.current {
+  background: #e7f7ef;
+  color: #218653;
+}
+
+.settings-card .session-status.active {
+  background: #e7f7ef;
+  color: #218653;
+}
+
+.settings-card .session-logout-button {
+  margin-top: 0;
+  min-width: 90px;
+  height: 34px;
+  padding: 0 14px;
+}
+
+.settings-card .session-logout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 650px) {
+  .settings-card .session-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

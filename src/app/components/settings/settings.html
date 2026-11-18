@@ -232,32 +232,68 @@
           </div>
         </div>
 
-        <!-- CURRENT DEVICE -->
+        <!-- ACTIVE SESSIONS -->
         <div class="sessions-section">
           <div class="section-title">
-            <h3>Sessions</h3>
-            <p>Manage your current device.</p>
+            <h3>Active Sessions</h3>
+            <p>Devices and browsers currently signed in to your account.</p>
           </div>
 
-          <div class="session-card">
-            <div class="session-info">
-              <strong>Current Device</strong>
-              <span>
-                {{ currentBrowser }} · {{ currentOperatingSystem }}
-              </span>
-              <small>Signed in on this browser</small>
+          <div class="sessions-loading" *ngIf="sessionsLoading">
+            <div class="spinner"></div>
+            <span>Loading active sessions...</span>
+          </div>
+
+          <div
+            class="error-message"
+            *ngIf="sessionsErrorMessage && !sessionsLoading"
+          >
+            {{ sessionsErrorMessage }}
+          </div>
+
+          <div *ngIf="!sessionsLoading && !sessionsErrorMessage">
+            <div class="session-card" *ngFor="let session of sessions">
+              <div class="session-info">
+                <strong>{{ getSessionDeviceName(session) }}</strong>
+                <span>
+                  {{ session.browser || 'Unknown Browser' }}
+                  ·
+                  {{ session.operating_system || 'Unknown OS' }}
+                </span>
+                <small>IP Address: {{ session.ip_address || 'Unknown' }}</small>
+                <small>Last Activity: {{ session.last_activity | date:'medium' }}</small>
+                <small>Signed in: {{ session.created_at | date:'medium' }}</small>
+              </div>
+
+              <div class="session-actions">
+                <span
+                  class="session-status current"
+                  *ngIf="isCurrentSession(session.id)"
+                >
+                  Current Session
+                </span>
+                <span
+                  class="session-status active"
+                  *ngIf="!isCurrentSession(session.id)"
+                >
+                  Active
+                </span>
+
+                <button
+                  type="button"
+                  class="danger-button session-logout-button"
+                  [disabled]="sessionSigningOutId === session.id"
+                  (click)="signOutSession(session)"
+                >
+                  {{ sessionSigningOutId === session.id ? 'Signing Out...' : 'Sign Out' }}
+                </button>
+              </div>
             </div>
 
-            <span class="session-status">Active now</span>
+            <div class="sessions-empty" *ngIf="sessions.length === 0">
+              <p>No active sessions found.</p>
+            </div>
           </div>
-
-          <button
-            type="button"
-            class="danger-button session-logout-button"
-            (click)="logout()"
-          >
-            Sign Out This Device
-          </button>
         </div>
       </div>
 

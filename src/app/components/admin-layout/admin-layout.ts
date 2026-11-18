@@ -175,36 +175,34 @@ export class AdminLayout implements OnInit, OnDestroy {
   // ==========================================================
 
   logout(): void {
+  console.log('Logout button clicked');
 
-    // Stop notification polling before logout.
-    this.notificationService.stopPolling();
+  // Stop notification polling immediately
+  this.notificationService.stopPolling();
 
-    this.authService.logoutApi().subscribe({
+  this.authService.logoutApi().subscribe({
+    next: (response) => {
+      console.log('Logout API successful:', response);
 
-      next: () => {
+      this.authService.clearSession();
 
-        this.router.navigateByUrl(
-          '/login',
-          { replaceUrl: true }
-        );
+      this.router.navigateByUrl('/login', {
+        replaceUrl: true
+      });
+    },
 
-      },
+    error: (error) => {
+      console.error('Logout API failed:', error);
 
-      error: (error: unknown) => {
+      // Always clear local session if API fails
+      this.authService.clearSession();
 
-        console.error('Logout API failed:', error);
+      this.router.navigateByUrl('/login', {
+        replaceUrl: true
+      });
+    }
+  });
 
-        // Clear local authentication even if backend logout fails.
-        this.authService.clearSession();
-
-        this.router.navigateByUrl(
-          '/login',
-          { replaceUrl: true }
-        );
-
-      }
-
-    });
 
   }
 
