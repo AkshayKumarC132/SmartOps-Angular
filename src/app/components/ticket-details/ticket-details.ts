@@ -21,7 +21,7 @@ import {
 import {
   OrganizationContextService
 } from '../../services/organization-context.service';
-
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
@@ -484,24 +484,32 @@ export class TicketDetails implements OnInit, OnDestroy {
   }
 
   deleteTicketAttachment(attachment: any): void {
-    if (
-      !this.ticketId ||
-      !attachment?.id ||
-      this.attachmentsSaving
-    ) {
-      this.attachmentError = true;
-      this.attachmentMessage =
-        'The attachment ID is missing; it cannot be deleted.';
-      return;
-    }
+  if (
+    !this.ticketId ||
+    !attachment?.id ||
+    this.attachmentsSaving
+  ) {
+    this.attachmentError = true;
+    this.attachmentMessage =
+      'The attachment ID is missing; it cannot be deleted.';
+    return;
+  }
 
-    const attachmentName = this.getAttachmentName(attachment);
+  const attachmentName = this.getAttachmentName(attachment);
 
-    const confirmed = window.confirm(
-      `Delete attachment "${attachmentName}"?`
-    );
+  Swal.fire({
+    title: 'Delete attachment?',
+    text: `Are you sure you want to delete "${attachmentName}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d',
+    reverseButtons: true
+  }).then((result) => {
 
-    if (!confirmed) {
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -510,7 +518,7 @@ export class TicketDetails implements OnInit, OnDestroy {
     this.attachmentMessage = '';
 
     this.ticketService.deleteTicketAttachment(
-      this.ticketId,
+      this.ticketId!,
       Number(attachment.id)
     ).subscribe({
       next: () => {
@@ -526,6 +534,14 @@ export class TicketDetails implements OnInit, OnDestroy {
           );
 
         this.cdr.detectChanges();
+
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'The attachment has been deleted successfully.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#14b8a6'
+        });
       },
 
       error: (error: any) => {
@@ -540,10 +556,18 @@ export class TicketDetails implements OnInit, OnDestroy {
         );
 
         this.cdr.detectChanges();
+
+        Swal.fire({
+          title: 'Delete failed',
+          text: this.attachmentMessage,
+          icon: 'error',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#dc3545'
+        });
       }
     });
-  }
-
+  });
+}
   getAttachmentName(attachment: any): string {
     if (typeof attachment === 'string') {
       return attachment.split('/').pop() || attachment;
@@ -565,14 +589,26 @@ export class TicketDetails implements OnInit, OnDestroy {
   }
 
   getAttachmentUrl(attachment: any): string | null {
-    if (typeof attachment === 'string') {
-      return attachment.startsWith('http') ? attachment : null;
-    }
+  let url: string | null = null;
 
-    return typeof attachment?.file === 'string'
-      ? attachment.file
-      : null;
+  if (typeof attachment === 'string') {
+    url = attachment;
+  } else if (typeof attachment?.file === 'string') {
+    url = attachment.file;
   }
+
+  if (!url) {
+    return null;
+  }
+
+  // Already an absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Relative media URL - point to Django backend
+  return `http://127.0.0.1:8000${url.startsWith('/') ? url : '/' + url}`;
+}
 
   // ============================================
   // ATTACHMENT PREVIEW (AUTHENTICATED DOWNLOAD)
