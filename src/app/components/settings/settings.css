@@ -981,3 +981,68 @@
     justify-content: space-between;
   }
 }
+/* Sign Out From All Devices */
+
+.sign-out-all-container {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #f2b8b8;
+  border-radius: 12px;
+  background: #fffafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.sign-out-all-info {
+  flex: 1;
+}
+
+.sign-out-all-info h4 {
+  margin: 0 0 8px;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sign-out-all-info p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sign-out-all-button {
+  flex-shrink: 0;
+  padding: 11px 18px;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-out-all-button:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.sign-out-all-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 650px) {
+  .sign-out-all-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sign-out-all-button {
+    width: 100%;
+  }
+}

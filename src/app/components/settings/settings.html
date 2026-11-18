@@ -293,9 +293,37 @@
             <div class="sessions-empty" *ngIf="sessions.length === 0">
               <p>No active sessions found.</p>
             </div>
+                        <div class="sessions-empty" *ngIf="sessions.length === 0">
+              <p>No active sessions found.</p>
+            </div>
+
+            <!-- SIGN OUT FROM ALL DEVICES -->
+            <div class="sign-out-all-container">
+              <div class="sign-out-all-info">
+                <h4>Sign Out From All Devices</h4>
+                <p>
+                  Sign out from every device, including your current session.
+                  You will need to log in again.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="sign-out-all-button"
+                [disabled]="sessionSigningOutId === 'all'"
+                (click)="signOutAllDevices()"
+              >
+                {{
+                  sessionSigningOutId === 'all'
+                    ? 'Signing Out...'
+                    : 'Sign Out From All Devices'
+                }}
+              </button>
+            </div>
+          </div>
           </div>
         </div>
-      </div>
+     
 
       <!-- NOTIFICATION PREFERENCES -->
       <div

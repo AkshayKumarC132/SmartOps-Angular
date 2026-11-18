@@ -913,7 +913,74 @@ export class Settings implements OnInit {
         }
       });
   }
+    async signOutAllDevices(): Promise<void> {
+    const result = await Swal.fire({
+      title: 'Sign Out From All Devices?',
+      text: 'This will sign you out from every device, including this one. You will need to log in again.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sign Out From All Devices',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d'
+    });
 
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.sessionSigningOutId = 'all';
+
+    this.http
+      .post<any>(
+        `${environment.apiUrl}/auth/sessions/revoke-all/`,
+        {}
+      )
+      .subscribe({
+        next: async (response: any) => {
+          this.sessionSigningOutId = null;
+
+          await Swal.fire({
+            title: 'All Devices Signed Out',
+            text:
+              response?.Message ||
+              'All active sessions have been revoked successfully.',
+            icon: 'success',
+            confirmButtonColor: '#239f99',
+            timer: 2000,
+            timerProgressBar: true
+          });
+
+          this.authService.clearSession();
+
+          this.router.navigateByUrl('/login', {
+            replaceUrl: true
+          });
+        },
+
+        error: async (error: any) => {
+          console.error(
+            'Unable to sign out all devices:',
+            error
+          );
+
+          this.sessionSigningOutId = null;
+
+          await Swal.fire({
+            title: 'Unable to Sign Out',
+            text:
+              error.error?.Error ||
+              error.error?.Message ||
+              error.error?.message ||
+              'Unable to sign out all devices. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#239f99'
+          });
+
+          this.cdr.detectChanges();
+        }
+      });
+  }
   selectSection(section: string): void {
     this.activeSection = section;
 
