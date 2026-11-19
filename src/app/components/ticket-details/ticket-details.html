@@ -564,7 +564,6 @@
             <div class="attachment-name">
 
               <button
-                *ngIf="getAttachmentUrl(attachment)"
                 type="button"
                 class="attachment-preview-link"
                 (click)="openAttachmentPreview(attachment)"
@@ -572,22 +571,60 @@
                 {{ getAttachmentName(attachment) }}
               </button>
 
-              <span *ngIf="!getAttachmentUrl(attachment)">
-                {{ getAttachmentName(attachment) }}
-              </span>
-
             </div>
-
+            <!-- Show delete action only while editing; otherwise show download. -->
             <button
               *ngIf="isEditing"
               type="button"
-              class="remove-attachment-button"
+              class="attachment-action-button attachment-delete-button"
+              title="Delete attachment"
+              [attr.aria-label]="'Delete ' + getAttachmentName(attachment)"
               [disabled]="attachmentsSaving"
               (click)="deleteTicketAttachment(attachment)"
             >
-              Delete
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4h8v2"></path>
+                <path d="m19 6-1 14H6L5 6"></path>
+                <path d="M10 11v5"></path>
+                <path d="M14 11v5"></path>
+              </svg>
             </button>
 
+            <button
+              *ngIf="!isEditing"
+              type="button"
+              class="attachment-action-button attachment-download-button"
+              title="Download attachment"
+              [attr.aria-label]="'Download ' + getAttachmentName(attachment)"
+              (click)="downloadAttachment(attachment)"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 3v12"></path>
+                <path d="m7 10 5 5 5-5"></path>
+                <path d="M5 19h14"></path>
+              </svg>
+            </button>
           </div>
 
         </div>
@@ -637,13 +674,13 @@
                 class="attachment-preview-unsupported"
               >
                 <p>Preview is not available for this file type.</p>
-                <a
-                  [href]="previewAttachmentUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  class="attachment-preview-link"
+                  (click)="openAttachmentInNewTab()"
                 >
                   Open attachment
-                </a>
+                </button>
               </div>
             </div>
           </div>

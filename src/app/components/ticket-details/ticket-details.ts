@@ -60,6 +60,7 @@ export class TicketDetails implements OnInit, OnDestroy {
   previewAttachmentName = '';
   previewAttachmentType: 'image' | 'pdf' | 'other' = 'other';
   showAttachmentPreview = false;
+  previewAttachment: any = null;
 
   loading = true;
   saving = false;
@@ -610,6 +611,16 @@ export class TicketDetails implements OnInit, OnDestroy {
   return `http://127.0.0.1:8000${url.startsWith('/') ? url : '/' + url}`;
 }
 
+  private showAttachmentUnavailablePopup(): void {
+    Swal.fire({
+      icon: 'warning',
+      title: 'File Not Available',
+      text: 'This attachment is no longer available on the server. It may have been deleted or moved.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#14b8a6'
+    });
+  }
+
   // ============================================
   // ATTACHMENT PREVIEW (AUTHENTICATED DOWNLOAD)
   // ============================================
@@ -618,12 +629,13 @@ export class TicketDetails implements OnInit, OnDestroy {
     const url = this.getAttachmentUrl(attachment);
 
     if (!url) {
+      this.showAttachmentUnavailablePopup();
       return;
     }
 
-    // Clear any previous preview URL before starting a new request.
     this.releaseAttachmentPreviewUrl();
 
+    this.previewAttachment = attachment;
     this.previewAttachmentName = this.getAttachmentName(attachment);
     this.showAttachmentPreview = true;
     this.previewAttachmentUrl = '';
@@ -634,7 +646,10 @@ export class TicketDetails implements OnInit, OnDestroy {
       .pop()
       ?.toLowerCase();
 
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(extension || '')) {
+    if (
+      ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
+        .includes(extension || '')
+    ) {
       this.previewAttachmentType = 'image';
     } else if (extension === 'pdf') {
       this.previewAttachmentType = 'pdf';
@@ -657,13 +672,132 @@ export class TicketDetails implements OnInit, OnDestroy {
 
         this.cdr.detectChanges();
       },
+
       error: (error: any) => {
         console.error('Attachment preview failed:', error);
+
         this.closeAttachmentPreview();
-        this.errorMessage =
-          error?.status === 401 || error?.status === 403
-            ? 'You do not have permission to preview this attachment.'
-            : 'Unable to load attachment preview.';
+
+        if (error?.status === 404 || error?.status === 410) {
+          this.showAttachmentUnavailablePopup();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Preview Failed',
+            text: error?.status === 401 || error?.status === 403
+              ? 'You do not have permission to preview this attachment.'
+              : 'Unable to load attachment preview. Please try again.',
+            confirmButtonText: 'OK'
+          });
+        }
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Download an attachment through the authenticated attachment API.
+  downloadAttachment(attachment: any): void {
+    const url = this.getAttachmentUrl(attachment);
+
+    if (!url) {
+      this.showAttachmentUnavailablePopup();
+      return;
+    }
+
+    this.attachmentMessage = '';
+    this.attachmentError = false;
+
+    this.ticketService.getAttachmentPreview(url).subscribe({
+      next: (blob: Blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        downloadLink.download = this.getAttachmentName(attachment);
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      },
+      error: (error: any) => {
+        console.error('Attachment download failed:', error);
+
+        if (error?.status === 404 || error?.status === 410) {
+          this.showAttachmentUnavailablePopup();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: error?.status === 401 || error?.status === 403
+              ? 'You do not have permission to download this attachment.'
+              : 'Unable to download attachment. Please try again.',
+            confirmButtonText: 'OK'
+          });
+        }
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Open non-previewable files through the authenticated attachment API.
+  openAttachmentInNewTab(): void {
+    const url = this.getAttachmentUrl(this.previewAttachment);
+
+    if (!url) {
+      this.showAttachmentUnavailablePopup();
+      return;
+    }
+
+    // Open synchronously from the click handler so the browser does not block it.
+    const newTab = window.open('', '_blank');
+
+    if (!newTab) {
+      this.attachmentError = true;
+      this.attachmentMessage =
+        'Please allow pop-ups to open this attachment.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    newTab.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Loading attachment</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 24px;">
+          Loading attachment...
+        </body>
+      </html>
+    `);
+
+    this.ticketService.getAttachmentPreview(url).subscribe({
+      next: (blob: Blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        newTab.location.href = objectUrl;
+
+        // Keep the object URL alive while the new tab loads the file.
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 120000);
+      },
+
+      error: (error: any) => {
+        console.error('Attachment opening failed:', error);
+        newTab.close();
+
+        if (error?.status === 404 || error?.status === 410) {
+          this.showAttachmentUnavailablePopup();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Unable to Open File',
+            text: error?.status === 401 || error?.status === 403
+              ? 'You do not have permission to access this attachment.'
+              : 'Unable to open attachment. Please try again.',
+            confirmButtonText: 'OK'
+          });
+        }
+
         this.cdr.detectChanges();
       }
     });
@@ -675,6 +809,7 @@ export class TicketDetails implements OnInit, OnDestroy {
     this.previewAttachmentName = '';
     this.previewAttachmentSafeUrl = null;
     this.previewAttachmentType = 'other';
+    this.previewAttachment = null;
   }
 
   private releaseAttachmentPreviewUrl(): void {

@@ -1429,3 +1429,54 @@
   .attachment-preview-overlay { padding: 10px; }
   .attachment-preview-modal { width: 100%; height: 92vh; }
 }
+
+/* Shared circular action button for attachment download/delete. */
+.attachment-action-button {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #d0d5dd;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease;
+}
+
+.attachment-download-button {
+  color: #344054;
+}
+
+.attachment-download-button:hover {
+  background: #f2f4f7;
+  border-color: #98a2b3;
+  color: #175cd3;
+}
+
+.attachment-delete-button {
+  color: #dc2626;
+}
+
+.attachment-delete-button:hover:not(:disabled) {
+  background: #fff1f0;
+  border-color: #fda29b;
+  color: #b42318;
+}
+
+.attachment-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.attachment-action-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+

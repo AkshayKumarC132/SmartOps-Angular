@@ -194,6 +194,7 @@
             <tr>
               <th>Created</th>
               <th>Channel</th>
+              <th>from Email</th>
               <th>Endpoint</th>
               <th>Event</th>
               <th>Status</th>
@@ -218,7 +219,9 @@
                 </span>
               </td>
 
-              <td>{{ getDeliveryTarget(row) }}</td>
+             <td>  {{ row.channel === 'EMAIL' ? (row.from_email || '-') : '-' }}</td>
+
+            <td>{{ getDeliveryTarget(row) }}</td>
 
               <td>{{ formatEvent(row.event_type) }}</td>
 
@@ -522,6 +525,7 @@
             <tr>
               <th>Created</th>
               <th>Channel</th>
+              <th>From Email</th>
               <th>Endpoint</th>
               <th>Event</th>
               <th>Status</th>
@@ -544,6 +548,7 @@
                   {{ row.channel }}
                 </span>
               </td>
+              <td> {{ row.channel === 'EMAIL' ? (row.from_email || '-') : '-' }} </td>
 
               <td>{{ getDeliveryTarget(row) }}</td>
 

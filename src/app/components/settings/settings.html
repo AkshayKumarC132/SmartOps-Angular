@@ -255,12 +255,6 @@
             <div class="session-card" *ngFor="let session of sessions">
               <div class="session-info">
                 <strong>{{ getSessionDeviceName(session) }}</strong>
-                <span>
-                  {{ session.browser || 'Unknown Browser' }}
-                  ·
-                  {{ session.operating_system || 'Unknown OS' }}
-                </span>
-                <small>IP Address: {{ session.ip_address || 'Unknown' }}</small>
                 <small>Last Activity: {{ session.last_activity | date:'medium' }}</small>
                 <small>Signed in: {{ session.created_at | date:'medium' }}</small>
               </div>

@@ -40,6 +40,7 @@ interface DeliveryRow {
   channel: DeliveryChannel;
   endpoint_name?: string;
   email?: string;
+  from_email?: string;
   event_type: string;
   status: string;
   attempt_count: number;
