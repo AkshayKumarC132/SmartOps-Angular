@@ -29,10 +29,10 @@ interface KBArticle {
   updated_at?: string;
   slug?: string;
   rendered_content?: string;
-  likes?: number;
-  dislikes?: number;
-  like_count?: number;
-  dislike_count?: number;
+
+  helpful_count?: number;
+  not_helpful_count?: number;
+  current_user_feedback?: 'like' | 'dislike' | null;
 }
 
 // =========================================================
@@ -60,6 +60,7 @@ export class KnowledgeBaseDetails implements OnInit {
   // FEEDBACK
   feedback: 'like' | 'dislike' | null = null;
   feedbackSubmitted = false;
+  feedbackSubmitting = false;
 
   // API
   private apiUrl = `${environment.apiUrl}/kb/articles/`;
@@ -97,7 +98,6 @@ export class KnowledgeBaseDetails implements OnInit {
   loadArticle(articleId: string): void {
     this.loading = true;
     this.errorMessage = '';
-    this.article = null;
 
     const url = `${this.apiUrl}${articleId}/`;
 
@@ -108,10 +108,19 @@ export class KnowledgeBaseDetails implements OnInit {
         console.log('Knowledge Base Article Response:', response);
 
         this.article = response;
+
+        // Restore feedback saved for the logged-in user.
+        this.feedback = response.current_user_feedback ?? null;
+
+        this.feedbackSubmitted =
+          response.current_user_feedback === 'like' ||
+          response.current_user_feedback === 'dislike';
+
         this.loading = false;
         this.errorMessage = '';
 
         console.log('Article loaded:', this.article);
+        console.log('Current user feedback:', this.feedback);
 
         this.cdr.detectChanges();
       },
@@ -204,14 +213,8 @@ export class KnowledgeBaseDetails implements OnInit {
 
   // =======================================================
   // UNPUBLISH ARTICLE
-  //
-  // Existing endpoint:
   // PATCH /kb/articles/{id}/
-  //
   // Payload: { status: 'draft' }
-  //
-  // IMPORTANT: Do not use the separate /unpublish/
-  // endpoint because that endpoint deletes the article.
   // =======================================================
 
   async unpublishArticle(): Promise<void> {
@@ -249,24 +252,15 @@ export class KnowledgeBaseDetails implements OnInit {
       status: 'draft'
     };
 
-    console.log(
-      'Unpublishing Knowledge Base Article:',
-      articleId
-    );
-
     console.log('Unpublish API URL:', url);
     console.log('Unpublish payload:', payload);
 
     this.http.patch<any>(url, payload).subscribe({
       next: (response) => {
-        console.log(
-          'Article unpublished successfully:',
-          response
-        );
+        console.log('Article unpublished successfully:', response);
 
         this.unpublishing = false;
 
-        // Preserve the article and update its status.
         if (this.article) {
           this.article = {
             ...this.article,
@@ -275,11 +269,6 @@ export class KnowledgeBaseDetails implements OnInit {
             published_at: null
           };
         }
-
-        console.log(
-          'Article status changed to Draft:',
-          this.article
-        );
 
         this.cdr.detectChanges();
 
@@ -294,22 +283,13 @@ export class KnowledgeBaseDetails implements OnInit {
 
       error: (error) => {
         console.error('Unpublish article error:', error);
-        console.error('Status:', error.status);
-        console.error('Error body:', error.error);
-        console.error('URL:', error.url);
 
         this.unpublishing = false;
 
-        let errorMessage =
+        const errorMessage =
+          error.error?.detail ||
+          error.error?.message ||
           'Unable to unpublish the article.';
-
-        if (error.error?.detail) {
-          errorMessage = error.error.detail;
-        } else if (error.error?.message) {
-          errorMessage = error.error.message;
-        } else if (typeof error.error === 'string') {
-          errorMessage = error.error;
-        }
 
         this.cdr.detectChanges();
 
@@ -326,10 +306,7 @@ export class KnowledgeBaseDetails implements OnInit {
 
   // =======================================================
   // PUBLISH ARTICLE
-  //
-  // Existing endpoint:
   // PATCH /kb/articles/{id}/
-  //
   // Payload: { status: 'published' }
   // =======================================================
 
@@ -368,24 +345,15 @@ export class KnowledgeBaseDetails implements OnInit {
       status: 'published'
     };
 
-    console.log(
-      'Publishing Knowledge Base Article:',
-      articleId
-    );
-
     console.log('Publish API URL:', url);
     console.log('Publish payload:', payload);
 
     this.http.patch<any>(url, payload).subscribe({
       next: (response) => {
-        console.log(
-          'Article published successfully:',
-          response
-        );
+        console.log('Article published successfully:', response);
 
         this.publishing = false;
 
-        // Preserve the existing response-merge behavior.
         if (this.article) {
           this.article = {
             ...this.article,
@@ -397,7 +365,6 @@ export class KnowledgeBaseDetails implements OnInit {
           };
         }
 
-        // Merge the complete backend response if provided.
         if (
           response &&
           typeof response === 'object' &&
@@ -410,18 +377,12 @@ export class KnowledgeBaseDetails implements OnInit {
           };
         }
 
-        // Ensure the UI displays Published.
         if (this.article) {
           this.article = {
             ...this.article,
             status: 'published'
           };
         }
-
-        console.log(
-          'Article is now Published:',
-          this.article
-        );
 
         this.cdr.detectChanges();
 
@@ -436,22 +397,13 @@ export class KnowledgeBaseDetails implements OnInit {
 
       error: (error) => {
         console.error('Publish article error:', error);
-        console.error('Status:', error.status);
-        console.error('Error body:', error.error);
-        console.error('URL:', error.url);
 
         this.publishing = false;
 
-        let errorMessage =
+        const errorMessage =
+          error.error?.detail ||
+          error.error?.message ||
           'Unable to publish the article.';
-
-        if (error.error?.detail) {
-          errorMessage = error.error.detail;
-        } else if (error.error?.message) {
-          errorMessage = error.error.message;
-        } else if (typeof error.error === 'string') {
-          errorMessage = error.error;
-        }
 
         this.cdr.detectChanges();
 
@@ -467,42 +419,84 @@ export class KnowledgeBaseDetails implements OnInit {
   }
 
   // =======================================================
-  // FEEDBACK
+  // ARTICLE FEEDBACK
+  // Uses existing ArticleFeedbackSerializer
+  // POST /kb/articles/{id}/feedback/
   // =======================================================
 
-  submitFeedback(
-    type: 'like' | 'dislike'
-  ): void {
-    if (!this.article || this.feedbackSubmitted) {
+  submitFeedback(type: 'like' | 'dislike'): void {
+
+    if (
+      !this.article ||
+      this.feedbackSubmitted ||
+      this.feedbackSubmitting
+    ) {
       return;
     }
 
-    this.feedback = type;
-    this.feedbackSubmitted = true;
+    const articleId = this.article.id;
+    const url = `${this.apiUrl}${articleId}/feedback/`;
 
-    // Existing feedback behavior is UI-only.
-    if (type === 'like') {
-      this.article = {
-        ...this.article,
-        like_count: this.getLikes(this.article) + 1
-      };
-    } else {
-      this.article = {
-        ...this.article,
-        dislike_count: this.getDislikes(this.article) + 1
-      };
-    }
+    const payload = {
+      is_helpful: type === 'like',
+      feedback_type: type === 'like'
+        ? 'helpful'
+        : 'incomplete',
+      remarks: ''
+    };
 
-    this.cdr.detectChanges();
+    this.feedbackSubmitting = true;
+
+    console.log('Submitting article feedback:', payload);
+    console.log('Feedback API URL:', url);
+
+    this.http.post<any>(url, payload).subscribe({
+
+      next: (response) => {
+        console.log('Feedback saved successfully:', response);
+
+        this.feedback = type;
+        this.feedbackSubmitted = true;
+        this.feedbackSubmitting = false;
+
+        this.cdr.detectChanges();
+
+        // Reload authoritative counts and saved user feedback.
+        this.loadArticle(String(articleId));
+      },
+
+      error: (error) => {
+        console.error('Feedback submission failed:', error);
+        console.error('Feedback API status:', error.status);
+        console.error('Feedback API response:', error.error);
+
+        this.feedbackSubmitting = false;
+
+        const message =
+          error.error?.detail ||
+          error.error?.message ||
+          error.error?.feedback_type?.[0] ||
+          error.error?.is_helpful?.[0] ||
+          'Unable to submit feedback. Please try again.';
+
+        this.cdr.detectChanges();
+
+        void Swal.fire({
+          title: 'Feedback Failed',
+          text: message,
+          icon: 'error',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#239f99'
+        });
+      }
+    });
   }
 
   // =======================================================
   // FORMAT STATUS
   // =======================================================
 
-  formatStatus(
-    status: string | undefined
-  ): string {
+  formatStatus(status: string | undefined): string {
     if (!status) {
       return '';
     }
@@ -516,9 +510,7 @@ export class KnowledgeBaseDetails implements OnInit {
   // FORMAT DATE
   // =======================================================
 
-  formatDate(
-    date: string | null | undefined
-  ): string {
+  formatDate(date: string | null | undefined): string {
     if (!date) {
       return '—';
     }
@@ -564,35 +556,19 @@ export class KnowledgeBaseDetails implements OnInit {
   }
 
   // =======================================================
-  // LIKES
+  // HELPFUL COUNT
   // =======================================================
 
   getLikes(article: KBArticle): number {
-    if (typeof article.likes === 'number') {
-      return article.likes;
-    }
-
-    if (typeof article.like_count === 'number') {
-      return article.like_count;
-    }
-
-    return 0;
+    return article.helpful_count ?? 0;
   }
 
   // =======================================================
-  // DISLIKES
+  // NOT HELPFUL COUNT
   // =======================================================
 
   getDislikes(article: KBArticle): number {
-    if (typeof article.dislikes === 'number') {
-      return article.dislikes;
-    }
-
-    if (typeof article.dislike_count === 'number') {
-      return article.dislike_count;
-    }
-
-    return 0;
+    return article.not_helpful_count ?? 0;
   }
 
   // =======================================================

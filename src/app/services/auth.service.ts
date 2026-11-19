@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, finalize, map, throwError } from 'rxjs';
+import { Observable, tap, finalize, map, throwError, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 
@@ -171,6 +171,12 @@ export class AuthService {
 
 
   private sessionTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Emits whenever the local authenticated session ends.
+  private readonly sessionEndedSubject = new Subject<void>();
+
+  readonly sessionEnded$ =
+    this.sessionEndedSubject.asObservable();
 
 
 
@@ -1146,41 +1152,16 @@ confirmSession(
 
   clearSession(): void {
 
-
-
-
     this.clearSessionTimer();
 
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem(this.sessionExpiryKey);
 
-
-
-    localStorage.removeItem(
-      'access_token'
-    );
-
-
-
-
-    localStorage.removeItem(
-      'refresh_token'
-    );
-
-
-
-
-    localStorage.removeItem(
-      'user'
-    );
-
-
-
-
-    localStorage.removeItem(
-      this.sessionExpiryKey
-    );
-
-
-
+    // Immediately notify all services that the session has ended.
+    // Notification polling and any pending notification requests stop here.
+    this.sessionEndedSubject.next();
 
   }
 
@@ -1190,48 +1171,48 @@ confirmSession(
   // ==========================================================
 
 
- logoutApi(): Observable<any> {
-  const accessToken = localStorage.getItem('access_token');
-  const refreshToken = localStorage.getItem('refresh_token');
+  logoutApi(): Observable<any> {
 
-  console.log('Logout API URL:', `${this.apiUrl}/auth/logout/`);
-  console.log('Access token exists:', !!accessToken);
-  console.log('Refresh token exists:', !!refreshToken);
+    // Capture credentials before invalidating the local session.
+    const accessToken = localStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token');
 
-  return this.http.post(
-    `${this.apiUrl}/auth/logout/`,
-    {
-      refresh: refreshToken ?? ''
-    },
-    {
-      headers: accessToken
-        ? {
-            Authorization: `Bearer ${accessToken}`
-          }
-        : {}
-    }
-  );
-}
+    // Stop all protected activity immediately. The interceptor explicitly
+    // permits the logout endpoint, so this request can still reach Django.
+    this.clearSession();
+
+    return this.http.post(
+      `${this.apiUrl}/auth/logout/`,
+      {
+        refresh: refreshToken ?? ''
+      },
+      {
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`
+            }
+          : {}
+      }
+    );
+  }
+
   // ==========================================================
   // LOGOUT
   // ==========================================================
+
   logout(): void {
-  console.log('Logout button clicked');
 
-  this.logoutApi().subscribe({
-    next: (response) => {
-      console.log('Logout API response:', response);
+    this.logoutApi().subscribe({
+      next: () => {
+        this.router.navigateByUrl('/login', { replaceUrl: true });
+      },
+      error: (error) => {
+        console.error('Logout API error:', error);
 
-      this.clearSession();
-      this.router.navigateByUrl('/login', { replaceUrl: true });
-    },
-    error: (error) => {
-      console.error('Logout API error:', error);
+        // Local logout has already happened; always leave the protected area.
+        this.router.navigateByUrl('/login', { replaceUrl: true });
+      }
+    });
 
-      // Always logout locally
-      this.clearSession();
-      this.router.navigateByUrl('/login', { replaceUrl: true });
-    }
-  });
-}
+  }
 }

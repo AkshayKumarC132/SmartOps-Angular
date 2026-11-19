@@ -86,7 +86,10 @@ export class AdminLayout implements OnInit, OnDestroy {
     // Start a single notification polling mechanism.
     // The service performs the initial request immediately,
     // followed by requests at the configured interval.
-    this.notificationService.startPolling();
+    // The service checks for a valid session before making any request.
+    if (this.authService.isLoggedIn()) {
+      this.notificationService.startPolling();
+    }
   }
 
   // ==========================================================

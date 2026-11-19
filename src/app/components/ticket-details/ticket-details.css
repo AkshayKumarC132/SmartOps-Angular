@@ -1429,9 +1429,8 @@
   .attachment-preview-overlay { padding: 10px; }
   .attachment-preview-modal { width: 100%; height: 92vh; }
 }
-
-/* Shared circular action button for attachment download/delete. */
-.attachment-action-button {
+/* Circular attachment download action */
+.attachment-download-button {
   flex: 0 0 36px;
   width: 36px;
   height: 36px;
@@ -1444,14 +1443,11 @@
   border: 1px solid #d0d5dd;
   border-radius: 50%;
   background: #ffffff;
+  color: #344054;
   cursor: pointer;
   transition: background-color 0.15s ease,
               border-color 0.15s ease,
               color 0.15s ease;
-}
-
-.attachment-download-button {
-  color: #344054;
 }
 
 .attachment-download-button:hover {
@@ -1460,23 +1456,235 @@
   color: #175cd3;
 }
 
+.attachment-download-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+@media (max-width: 500px) {
+  .attachment-download-button {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+}
+
+
+/* Expanded attachment preview and office-file rendering */
+.attachment-preview-modal {
+  width: min(1180px, 96vw);
+  height: min(920px, 94vh);
+}
+
+.attachment-preview-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.preview-download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  border: 1px solid #d0d5dd;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #344054;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.preview-download-button:hover {
+  border-color: #20a99e;
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+.preview-download-button svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #667085;
+}
+
+.preview-loading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.attachment-preview-document,
+.attachment-preview-spreadsheet {
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+.attachment-preview-document {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.attachment-preview-document img {
+  max-width: 100%;
+  height: auto;
+}
+
+.attachment-preview-spreadsheet {
+  padding: 16px;
+}
+
+.spreadsheet-sheet {
+  margin-bottom: 26px;
+}
+
+.spreadsheet-sheet h3 {
+  position: sticky;
+  top: -16px;
+  z-index: 1;
+  margin: -16px -16px 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e4e7ec;
+  background: #f9fafb;
+  color: #344054;
+  font-size: 14px;
+}
+
+.attachment-preview-spreadsheet table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.attachment-preview-spreadsheet td,
+.attachment-preview-spreadsheet th {
+  min-width: 80px;
+  padding: 8px 10px;
+  border: 1px solid #e4e7ec;
+  text-align: left;
+}
+
+.attachment-preview-spreadsheet tr:first-child td,
+.attachment-preview-spreadsheet tr:first-child th {
+  background: #f2f4f7;
+  font-weight: 700;
+}
+
+.attachment-preview-text {
+  align-self: stretch;
+  width: 100%;
+  margin: 0;
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font: 13px/1.6 Consolas, 'Courier New', monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+
 .attachment-delete-button {
-  color: #dc2626;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #fecdca;
+  border-radius: 50%;
+  background: #fff5f4;
+  color: #d92d20;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.attachment-delete-button:hover:not(:disabled) {
-  background: #fff1f0;
+.attachment-delete-button:hover {
+  background: #fee4e2;
   border-color: #fda29b;
-  color: #b42318;
 }
 
-.attachment-action-button:disabled {
-  opacity: 0.5;
+.attachment-delete-button:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
-.attachment-action-button:focus-visible {
+.attachment-delete-button:focus-visible,
+.preview-download-button:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
+@media (max-width: 600px) {
+  .attachment-preview-modal {
+    width: 100%;
+    height: 94vh;
+  }
+
+  .attachment-preview-document,
+  .attachment-preview-spreadsheet {
+    padding: 12px;
+  }
+
+  .attachment-preview-header {
+    padding: 12px;
+  }
+
+}
+
+
+/* Word DOCX page-by-page preview */
+.docx-preview-container {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 12px 28px;
+  background: #e5e7eb;
+  box-sizing: border-box;
+}
+
+.docx-preview-container .docx-wrapper {
+  background: #e5e7eb !important;
+  padding: 0 !important;
+}
+
+.docx-preview-container .docx {
+  margin: 0 auto 18px !important;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.16);
+}
+
+.docx-preview-container .docx section {
+  margin: 0 auto;
+}
+
+.attachment-preview-body:has(.docx-preview-container) {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}

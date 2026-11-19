@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -47,8 +48,18 @@ interface KBArticle {
   rendered_content?: string;
 
   /*
-   * Optional fields used by the
-   * Knowledge Base card footer.
+   * Feedback information returned
+   * by the Django backend.
+   */
+  helpful_count?: number;
+
+  not_helpful_count?: number;
+
+  current_user_feedback?: 'like' | 'dislike' | null;
+
+  /*
+   * Backward compatibility with
+   * older API response fields.
    */
   likes?: number;
 
@@ -116,8 +127,6 @@ export class KnowledgeBase implements OnInit {
   /*
    * These are kept so your existing
    * filtering logic is not broken.
-   * They are no longer displayed
-   * in the UI.
    */
   selectedCategory = 'All';
 
@@ -132,7 +141,7 @@ export class KnowledgeBase implements OnInit {
     private http: HttpClient,
 
     private cdr: ChangeDetectorRef,
-    
+
     private router: Router
   ) {}
 
@@ -158,16 +167,12 @@ export class KnowledgeBase implements OnInit {
 
     this.errorMessage = '';
 
-
-    const url =
-      `${environment.apiUrl}/kb/articles/`;
-
+    const url = this.apiUrl;
 
     console.log(
       'Knowledge Base API URL:',
       url
     );
-
 
     this.http.get<any>(url).subscribe({
 
@@ -182,7 +187,6 @@ export class KnowledgeBase implements OnInit {
           response
         );
 
-
         if (Array.isArray(response)) {
 
           this.articles = response;
@@ -194,8 +198,7 @@ export class KnowledgeBase implements OnInit {
           Array.isArray(response.results)
         ) {
 
-          this.articles =
-            response.results;
+          this.articles = response.results;
 
         }
 
@@ -205,8 +208,8 @@ export class KnowledgeBase implements OnInit {
 
           this.errorMessage =
             'Invalid Knowledge Base response.';
-        }
 
+        }
 
         this.loading = false;
 
@@ -226,27 +229,22 @@ export class KnowledgeBase implements OnInit {
           error
         );
 
-
         console.error(
           'Status:',
           error.status
         );
-
 
         console.error(
           'Error body:',
           error.error
         );
 
-
         console.error(
           'URL:',
           error.url
         );
 
-
         this.loading = false;
-
 
         if (error.status === 401) {
 
@@ -283,7 +281,6 @@ export class KnowledgeBase implements OnInit {
 
         }
 
-
         this.cdr.detectChanges();
 
       }
@@ -299,88 +296,68 @@ export class KnowledgeBase implements OnInit {
 
   get filteredArticles(): KBArticle[] {
 
-    let result =
-      [...this.articles];
+    let result = [...this.articles];
 
-
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
-
+    const search = this.searchText
+      .trim()
+      .toLowerCase();
 
     if (search) {
 
-      result =
-        result.filter(article => {
+      result = result.filter(article => {
 
-          const title =
-            article.title?.toLowerCase() || '';
+        const title =
+          article.title?.toLowerCase() || '';
 
+        const summary =
+          article.summary?.toLowerCase() || '';
 
-          const summary =
-            article.summary?.toLowerCase() || '';
+        const content =
+          article.content?.toLowerCase() || '';
 
+        const category =
+          article.category?.toLowerCase() || '';
 
-          const content =
-            article.content?.toLowerCase() || '';
+        const slug =
+          article.slug?.toLowerCase() || '';
 
+        return (
+          title.includes(search) ||
+          summary.includes(search) ||
+          content.includes(search) ||
+          category.includes(search) ||
+          slug.includes(search)
+        );
 
-          const category =
-            article.category?.toLowerCase() || '';
-
-
-          const slug =
-            article.slug?.toLowerCase() || '';
-
-
-          return (
-
-            title.includes(search) ||
-
-            summary.includes(search) ||
-
-            content.includes(search) ||
-
-            category.includes(search) ||
-
-            slug.includes(search)
-
-          );
-
-        });
+      });
 
     }
 
-
     /*
-     * These filters are retained for
-     * existing functionality.
+     * Preserve existing category filter.
      */
 
     if (this.selectedCategory !== 'All') {
 
-      result =
-        result.filter(
-          article =>
-            article.category ===
-            this.selectedCategory
-        );
+      result = result.filter(
+        article =>
+          article.category === this.selectedCategory
+      );
 
     }
 
+    /*
+     * Preserve existing status filter.
+     */
 
     if (this.selectedStatus !== 'All') {
 
-      result =
-        result.filter(
-          article =>
-            article.status ===
-            this.selectedStatus
-        );
+      result = result.filter(
+        article =>
+          article.status === this.selectedStatus
+      );
 
     }
-
 
     return result;
 
@@ -393,19 +370,17 @@ export class KnowledgeBase implements OnInit {
 
   get categories(): string[] {
 
-    const values =
-      this.articles
+    const values = this.articles
 
-        .map(
-          article =>
-            article.category
-        )
+      .map(
+        article =>
+          article.category
+      )
 
-        .filter(
-          category =>
-            !!category
-        );
-
+      .filter(
+        category =>
+          !!category
+      );
 
     return [
       ...new Set(values)
@@ -428,17 +403,13 @@ export class KnowledgeBase implements OnInit {
 
     }
 
-
     if (Array.isArray(article.tags)) {
 
       return article.tags;
 
     }
 
-
-    if (
-      typeof article.tags === 'string'
-    ) {
+    if (typeof article.tags === 'string') {
 
       return article.tags
 
@@ -455,7 +426,6 @@ export class KnowledgeBase implements OnInit {
         );
 
     }
-
 
     return [];
 
@@ -475,7 +445,6 @@ export class KnowledgeBase implements OnInit {
       return '';
 
     }
-
 
     return status
 
@@ -510,10 +479,7 @@ export class KnowledgeBase implements OnInit {
 
     }
 
-
-    const parsedDate =
-      new Date(date);
-
+    const parsedDate = new Date(date);
 
     if (
       isNaN(
@@ -525,14 +491,11 @@ export class KnowledgeBase implements OnInit {
 
     }
 
-
     return parsedDate.toLocaleDateString(
       'en-IN',
       {
         day: 'numeric',
-
         month: 'numeric',
-
         year: 'numeric'
       }
     );
@@ -541,32 +504,45 @@ export class KnowledgeBase implements OnInit {
 
 
   /* =========================
-     LIKES
+     LIKES / HELPFUL COUNT
      ========================= */
 
   getLikes(
     article: KBArticle
   ): number {
 
+    /*
+     * Primary source:
+     * Backend feedback aggregation.
+     */
+
     if (
-      typeof article.likes ===
-      'number'
+      typeof article.helpful_count === 'number'
+    ) {
+
+      return article.helpful_count;
+
+    }
+
+    /*
+     * Backward compatibility.
+     */
+
+    if (
+      typeof article.likes === 'number'
     ) {
 
       return article.likes;
 
     }
 
-
     if (
-      typeof article.like_count ===
-      'number'
+      typeof article.like_count === 'number'
     ) {
 
       return article.like_count;
 
     }
-
 
     return 0;
 
@@ -574,32 +550,45 @@ export class KnowledgeBase implements OnInit {
 
 
   /* =========================
-     DISLIKES
+     DISLIKES / NOT HELPFUL COUNT
      ========================= */
 
   getDislikes(
     article: KBArticle
   ): number {
 
+    /*
+     * Primary source:
+     * Backend feedback aggregation.
+     */
+
     if (
-      typeof article.dislikes ===
-      'number'
+      typeof article.not_helpful_count === 'number'
+    ) {
+
+      return article.not_helpful_count;
+
+    }
+
+    /*
+     * Backward compatibility.
+     */
+
+    if (
+      typeof article.dislikes === 'number'
     ) {
 
       return article.dislikes;
 
     }
 
-
     if (
-      typeof article.dislike_count ===
-      'number'
+      typeof article.dislike_count === 'number'
     ) {
 
       return article.dislike_count;
 
     }
-
 
     return 0;
 
@@ -614,9 +603,7 @@ export class KnowledgeBase implements OnInit {
     article: KBArticle
   ): string {
 
-    const author =
-      article.created_by;
-
+    const author = article.created_by;
 
     if (!author) {
 
@@ -624,34 +611,22 @@ export class KnowledgeBase implements OnInit {
 
     }
 
-
-    if (
-      typeof author === 'string'
-    ) {
+    if (typeof author === 'string') {
 
       return author;
 
     }
 
-
-    if (
-      typeof author === 'object'
-    ) {
+    if (typeof author === 'object') {
 
       return (
-
         author.username ||
-
         author.email ||
-
         author.name ||
-
         'admin'
-
       );
 
     }
-
 
     return 'admin';
 
@@ -677,15 +652,27 @@ export class KnowledgeBase implements OnInit {
      TRACK BY
      ========================= */
 
-trackByArticle(
-  index: number,
-  article: KBArticle
-): number {
-  return article.id;
-}
+  trackByArticle(
+    index: number,
+    article: KBArticle
+  ): number {
 
-openArticle(articleId: number): void {
-  this.router.navigate(['/knowledge-base', articleId]);
-}
+    return article.id;
+
+  }
+
+
+  /* =========================
+     OPEN ARTICLE
+     ========================= */
+
+  openArticle(articleId: number): void {
+
+    this.router.navigate([
+      '/knowledge-base',
+      articleId
+    ]);
+
+  }
 
 }

@@ -1,4 +1,3 @@
-
 import { inject } from '@angular/core';
 
 import {
@@ -26,16 +25,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
 
-  const apiBase =
-    environment.apiUrl.replace(/\/+$/, '');
+  const apiBase = environment.apiUrl.replace(/\/+$/, '');
 
-  // Check whether request belongs to SmartOps API.
+  // Requests outside the SmartOps API are not handled here.
   const isApiRequest =
     req.url === apiBase ||
     req.url.startsWith(`${apiBase}/`) ||
     req.url.startsWith(`${apiBase}?`);
 
-  // Authentication endpoints.
+  if (!isApiRequest) {
+    return next(req);
+  }
+
+  // These endpoints must remain reachable without an active access token.
   const isLoginRequest =
     /\/auth\/login\/?(?:\?.*)?$/.test(req.url);
 
@@ -48,48 +50,54 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const isLogoutRequest =
     /\/auth\/logout\/?(?:\?.*)?$/.test(req.url);
 
-  const isAuthRequest =
+  const isPublicAuthRequest =
     isLoginRequest ||
     isConfirmRequest ||
-    isRefreshRequest;
+    isRefreshRequest ||
+    isLogoutRequest;
 
-  // Read access token.
-  const token =
-    authService.getAccessToken();
+  if (isPublicAuthRequest) {
+    return next(req);
+  }
 
-  // Attach token only to SmartOps API requests.
-  const shouldAttachToken =
-    !!token &&
-    isApiRequest &&
-    !isAuthRequest &&
-    !req.headers.has('Authorization');
+  // Critical guard: do not forward protected API requests if the session
+  // has expired, has been cleared, or the access token is unavailable.
+  const token = authService.getAccessToken();
 
-  const request = shouldAttachToken
-    ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-    : req;
+  if (!token) {
+    console.warn(
+      '[SmartOps Auth] Protected request blocked; no active session:',
+      req.url
+    );
 
-  return next(request).pipe(
+    return throwError(() => new HttpErrorResponse({
+      status: 401,
+      statusText: 'Session expired or logged out',
+      url: req.url
+    }));
+  }
+
+  // Always use the current token, replacing any stale Authorization header.
+  const authenticatedRequest = req.clone({
+    setHeaders: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  return next(authenticatedRequest).pipe(
 
     catchError((error: unknown) => {
 
-      // Refresh only for protected API requests.
       if (
         error instanceof HttpErrorResponse &&
-        error.status === 401 &&
-        isApiRequest &&
-        !isAuthRequest &&
-        !isLogoutRequest
+        error.status === 401
       ) {
 
         return authService.refreshAccessToken().pipe(
 
           switchMap((newAccessToken) => {
 
-            // Retry original request using new access token.
+            // Retry once with the refreshed token.
             const retryRequest = req.clone({
               setHeaders: {
                 Authorization: `Bearer ${newAccessToken}`
@@ -97,16 +105,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             });
 
             return next(retryRequest);
-
           }),
 
           catchError((refreshError: unknown) => {
 
-            // Refresh service handles session cleanup.
+            // Refresh failed: clear session, stop polling and redirect.
+            authService.clearSession();
+
             if (!router.url.startsWith('/login')) {
               void router.navigate(
                 ['/login'],
                 {
+                  replaceUrl: true,
                   queryParams: {
                     error: 'session-expired'
                   }
@@ -115,17 +125,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }
 
             return throwError(() => refreshError);
-
           })
-
         );
-
       }
 
       return throwError(() => error);
-
     })
-
   );
 
 };

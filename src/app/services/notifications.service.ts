@@ -1,6 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 import {
   BehaviorSubject,
@@ -11,7 +12,8 @@ import {
   timer,
   catchError,
   of,
-  finalize
+  finalize,
+  takeUntil
 } from 'rxjs';
 
 import Swal from 'sweetalert2';
@@ -62,6 +64,11 @@ export class NotificationService {
 
   private pollingSubscription?: Subscription;
 
+  // Tracks the active polling HTTP request so logout can cancel it.
+  private pollingRequestSubscription?: Subscription;
+
+  private readonly sessionEndedSubscription: Subscription;
+
   private pollingStarted = false;
 
   private initialFetchCompleted = false;
@@ -94,14 +101,28 @@ export class NotificationService {
     this.newNotificationSubject.asObservable();
 
   constructor(
-    private http: HttpClient
-  ) {}
+    private http: HttpClient,
+    private authService: AuthService
+  ) {
+
+    // Stop polling and cancel pending work whenever the session ends.
+    this.sessionEndedSubscription = this.authService.sessionEnded$.subscribe(() => {
+      this.stopPolling();
+    });
+
+  }
 
   // =========================================================
   // START GLOBAL NOTIFICATION POLLING
   // =========================================================
 
   startPolling(): void {
+
+    // Never start background requests without a valid authenticated session.
+    if (!this.authService.getAccessToken()) {
+      this.stopPolling();
+      return;
+    }
 
     if (this.pollingStarted) {
       console.log(
@@ -133,9 +154,13 @@ export class NotificationService {
   stopPolling(): void {
 
     this.pollingSubscription?.unsubscribe();
-
     this.pollingSubscription = undefined;
 
+    // Cancel an in-flight notification HTTP request as well.
+    this.pollingRequestSubscription?.unsubscribe();
+    this.pollingRequestSubscription = undefined;
+
+    this.pollingRequestInProgress = false;
     this.pollingStarted = false;
 
     console.log(
@@ -149,11 +174,18 @@ export class NotificationService {
 
   getNotifications(): Observable<NotificationItem[]> {
 
+    if (!this.authService.getAccessToken()) {
+      return of(this.notificationsSubject.value);
+    }
+
     console.log(
       '[SmartOps Notifications] Fetching notifications.'
     );
 
     return this.http.get<any>(this.apiUrl).pipe(
+
+      // Abort this request immediately when logout/session expiry occurs.
+      takeUntil(this.authService.sessionEnded$),
 
       map((response: any) => {
 
@@ -223,6 +255,11 @@ export class NotificationService {
     showNewNotifications: boolean
   ): void {
 
+    if (!this.authService.getAccessToken()) {
+      this.stopPolling();
+      return;
+    }
+
     if (this.pollingRequestInProgress) {
       return;
     }
@@ -233,7 +270,10 @@ export class NotificationService {
       '[SmartOps Notifications] Checking Notifications API.'
     );
 
-    this.http.get<any>(this.apiUrl).pipe(
+    this.pollingRequestSubscription = this.http.get<any>(this.apiUrl).pipe(
+
+      // Cancel the HTTP request if the session ends while it is in flight.
+      takeUntil(this.authService.sessionEnded$),
 
       map((response: any) =>
         this.normalizeNotifications(response)
@@ -252,9 +292,15 @@ export class NotificationService {
       finalize(() => {
 
         this.pollingRequestInProgress = false;
+        this.pollingRequestSubscription = undefined;
       })
 
     ).subscribe(notifications => {
+
+      if (!this.authService.getAccessToken()) {
+        this.stopPolling();
+        return;
+      }
 
       if (notifications === null) {
         return;
@@ -833,6 +879,10 @@ export class NotificationService {
 
   markAsRead(id: number): void {
 
+    if (!this.authService.getAccessToken()) {
+      return;
+    }
+
     const readIds = this.getReadIds();
 
     if (!readIds.includes(id)) {
@@ -859,6 +909,8 @@ export class NotificationService {
     this.http.post(
       `${this.apiUrl}${id}/read/`,
       {}
+    ).pipe(
+      takeUntil(this.authService.sessionEnded$)
     ).subscribe({
 
       next: () => {
@@ -887,6 +939,10 @@ export class NotificationService {
     notifications: NotificationItem[]
   ): void {
 
+    if (!this.authService.getAccessToken()) {
+      return;
+    }
+
     const readIds = this.getReadIds();
 
     for (const notification of notifications) {
@@ -913,6 +969,8 @@ export class NotificationService {
     this.http.post(
       `${this.apiUrl}mark-all-read/`,
       {}
+    ).pipe(
+      takeUntil(this.authService.sessionEnded$)
     ).subscribe({
 
       next: () => {
@@ -961,6 +1019,11 @@ export class NotificationService {
   // =========================================================
 
   refreshUnreadCount(): void {
+
+    if (!this.authService.getAccessToken()) {
+      this.stopPolling();
+      return;
+    }
 
     this.fetchNotifications(false);
   }

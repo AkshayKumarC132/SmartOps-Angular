@@ -1,6 +1,8 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
+  ViewChild,
   OnInit,
   OnDestroy
 } from '@angular/core';
@@ -22,6 +24,8 @@ import {
   OrganizationContextService
 } from '../../services/organization-context.service';
 import Swal from 'sweetalert2';
+import { renderAsync as renderDocxAsync } from 'docx-preview';
+import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
@@ -58,7 +62,12 @@ export class TicketDetails implements OnInit, OnDestroy {
   previewAttachmentUrl = '';
   previewAttachmentSafeUrl: SafeResourceUrl | null = null;
   previewAttachmentName = '';
-  previewAttachmentType: 'image' | 'pdf' | 'other' = 'other';
+  previewAttachmentType: 'image' | 'pdf' | 'docx' | 'spreadsheet' | 'text' | 'other' = 'other';
+  previewAttachmentHtml = '';
+  @ViewChild('docxPreviewContainer') docxPreviewContainer?: ElementRef<HTMLDivElement>;
+  previewAttachmentText = '';
+  previewAttachmentLoading = false;
+  previewAttachmentError = '';
   showAttachmentPreview = false;
   previewAttachment: any = null;
 
@@ -611,6 +620,10 @@ export class TicketDetails implements OnInit, OnDestroy {
   return `http://127.0.0.1:8000${url.startsWith('/') ? url : '/' + url}`;
 }
 
+  // ============================================
+  // ATTACHMENT PREVIEW (AUTHENTICATED)
+  // ============================================
+
   private showAttachmentUnavailablePopup(): void {
     Swal.fire({
       icon: 'warning',
@@ -621,9 +634,9 @@ export class TicketDetails implements OnInit, OnDestroy {
     });
   }
 
-  // ============================================
-  // ATTACHMENT PREVIEW (AUTHENTICATED DOWNLOAD)
-  // ============================================
+  private isMissingAttachmentError(error: any): boolean {
+    return error?.status === 404 || error?.status === 410;
+  }
 
   openAttachmentPreview(attachment: any): void {
     const url = this.getAttachmentUrl(attachment);
@@ -640,45 +653,102 @@ export class TicketDetails implements OnInit, OnDestroy {
     this.showAttachmentPreview = true;
     this.previewAttachmentUrl = '';
     this.previewAttachmentSafeUrl = null;
+    this.previewAttachmentHtml = '';
+    this.previewAttachmentText = '';
+    if (this.docxPreviewContainer?.nativeElement) {
+      this.docxPreviewContainer.nativeElement.innerHTML = '';
+    }
+    this.previewAttachmentError = '';
+    this.previewAttachmentLoading = true;
+    this.previewAttachmentType = 'other';
+    this.cdr.detectChanges();
 
     const extension = this.previewAttachmentName
       .split('.')
       .pop()
-      ?.toLowerCase();
-
-    if (
-      ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
-        .includes(extension || '')
-    ) {
-      this.previewAttachmentType = 'image';
-    } else if (extension === 'pdf') {
-      this.previewAttachmentType = 'pdf';
-    } else {
-      this.previewAttachmentType = 'other';
-      this.cdr.detectChanges();
-      return;
-    }
+      ?.toLowerCase() || '';
 
     this.ticketService.getAttachmentPreview(url).subscribe({
-      next: (blob: Blob) => {
-        this.previewAttachmentUrl = URL.createObjectURL(blob);
+      next: async (blob: Blob) => {
+        try {
+          if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(extension)) {
+            this.previewAttachmentType = 'image';
+            this.previewAttachmentUrl = URL.createObjectURL(blob);
+          } else if (extension === 'pdf') {
+            this.previewAttachmentType = 'pdf';
+            this.previewAttachmentUrl = URL.createObjectURL(blob);
+            this.previewAttachmentSafeUrl =
+              this.sanitizer.bypassSecurityTrustResourceUrl(
+                this.previewAttachmentUrl
+              );
+          } else if (extension === 'docx') {
+            // docx-preview renders Word layout as separate page elements.
+            this.previewAttachmentType = 'docx';
+            this.cdr.detectChanges();
+            await new Promise<void>(resolve => setTimeout(resolve, 0));
 
-        if (this.previewAttachmentType === 'pdf') {
-          this.previewAttachmentSafeUrl =
-            this.sanitizer.bypassSecurityTrustResourceUrl(
-              this.previewAttachmentUrl
+            const container = this.docxPreviewContainer?.nativeElement;
+            if (!container) {
+              throw new Error('DOCX preview container is unavailable.');
+            }
+
+            container.innerHTML = '';
+            await renderDocxAsync(blob, container, undefined, {
+              className: 'docx-preview',
+              inWrapper: true,
+              ignoreWidth: false,
+              ignoreHeight: false,
+              ignoreFonts: false,
+              breakPages: true,
+              ignoreLastRenderedPageBreak: false,
+              renderHeaders: true,
+              renderFooters: true,
+              renderFootnotes: true,
+              renderEndnotes: true
+            });
+          } else if (['xls', 'xlsx', 'csv'].includes(extension)) {
+            const workbook = XLSX.read(
+              new Uint8Array(await blob.arrayBuffer()),
+              { type: 'array' }
             );
+
+            this.previewAttachmentType = 'spreadsheet';
+            this.previewAttachmentHtml = workbook.SheetNames.map((sheetName) => {
+              const sheet = workbook.Sheets[sheetName];
+              return `
+                <section class="spreadsheet-sheet">
+                  <h3>${this.escapePreviewHtml(sheetName)}</h3>
+                  ${XLSX.utils.sheet_to_html(sheet)}
+                </section>
+              `;
+            }).join('');
+          } else if (['txt', 'log', 'md', 'json', 'xml', 'html', 'yaml', 'yml'].includes(extension)) {
+            this.previewAttachmentType = 'text';
+            this.previewAttachmentText = await blob.text();
+          } else if (extension === 'doc') {
+            this.previewAttachmentType = 'other';
+            this.previewAttachmentError =
+              'Legacy .doc files cannot be reliably paginated in the browser. Convert this file to .docx or PDF to preview it page by page. You can still download it.';
+          } else {
+            this.previewAttachmentType = 'other';
+            this.previewAttachmentError =
+              'Preview is not supported for this file type. You can still download the attachment.';
+          }
+        } catch (error) {
+          console.error('Attachment rendering failed:', error);
+          this.previewAttachmentType = 'other';
+          this.previewAttachmentError =
+            'This file could not be rendered in the preview. You can still download it.';
+        } finally {
+          this.previewAttachmentLoading = false;
+          this.cdr.detectChanges();
         }
-
-        this.cdr.detectChanges();
       },
-
       error: (error: any) => {
         console.error('Attachment preview failed:', error);
-
         this.closeAttachmentPreview();
 
-        if (error?.status === 404 || error?.status === 410) {
+        if (this.isMissingAttachmentError(error)) {
           this.showAttachmentUnavailablePopup();
         } else {
           Swal.fire({
@@ -693,6 +763,19 @@ export class TicketDetails implements OnInit, OnDestroy {
 
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  private escapePreviewHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (character) => {
+      const entities: { [key: string]: string } = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return entities[character];
     });
   }
 
@@ -724,7 +807,7 @@ export class TicketDetails implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error('Attachment download failed:', error);
 
-        if (error?.status === 404 || error?.status === 410) {
+        if (this.isMissingAttachmentError(error)) {
           this.showAttachmentUnavailablePopup();
         } else {
           Swal.fire({
@@ -742,73 +825,19 @@ export class TicketDetails implements OnInit, OnDestroy {
     });
   }
 
-  // Open non-previewable files through the authenticated attachment API.
-  openAttachmentInNewTab(): void {
-    const url = this.getAttachmentUrl(this.previewAttachment);
-
-    if (!url) {
-      this.showAttachmentUnavailablePopup();
-      return;
-    }
-
-    // Open synchronously from the click handler so the browser does not block it.
-    const newTab = window.open('', '_blank');
-
-    if (!newTab) {
-      this.attachmentError = true;
-      this.attachmentMessage =
-        'Please allow pop-ups to open this attachment.';
-      this.cdr.detectChanges();
-      return;
-    }
-
-    newTab.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head><title>Loading attachment</title></head>
-        <body style="font-family: Arial, sans-serif; padding: 24px;">
-          Loading attachment...
-        </body>
-      </html>
-    `);
-
-    this.ticketService.getAttachmentPreview(url).subscribe({
-      next: (blob: Blob) => {
-        const objectUrl = URL.createObjectURL(blob);
-        newTab.location.href = objectUrl;
-
-        // Keep the object URL alive while the new tab loads the file.
-        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 120000);
-      },
-
-      error: (error: any) => {
-        console.error('Attachment opening failed:', error);
-        newTab.close();
-
-        if (error?.status === 404 || error?.status === 410) {
-          this.showAttachmentUnavailablePopup();
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Unable to Open File',
-            text: error?.status === 401 || error?.status === 403
-              ? 'You do not have permission to access this attachment.'
-              : 'Unable to open attachment. Please try again.',
-            confirmButtonText: 'OK'
-          });
-        }
-
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
   closeAttachmentPreview(): void {
     this.showAttachmentPreview = false;
     this.releaseAttachmentPreviewUrl();
     this.previewAttachmentName = '';
     this.previewAttachmentSafeUrl = null;
     this.previewAttachmentType = 'other';
+    this.previewAttachmentHtml = '';
+    this.previewAttachmentText = '';
+    if (this.docxPreviewContainer?.nativeElement) {
+      this.docxPreviewContainer.nativeElement.innerHTML = '';
+    }
+    this.previewAttachmentLoading = false;
+    this.previewAttachmentError = '';
     this.previewAttachment = null;
   }
 

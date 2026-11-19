@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
 import {
   catchError,
   finalize,
+  forkJoin,
   of,
   take
 } from 'rxjs';
@@ -42,6 +43,7 @@ export class AiResults implements OnInit {
   confidenceByResult: Record<number, number | null> = {};
 
   loading = false;
+  calculatingConfidence = false;
   errorMessage = '';
   successMessage = '';
 
@@ -67,7 +69,6 @@ export class AiResults implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.confidenceByResult = {};
 
     this.cdr.markForCheck();
 
@@ -98,9 +99,6 @@ export class AiResults implements OnInit {
             results: this.results,
             completedResults: this.completedResults
           });
-
-          // Load confidence scores after retrieving AI results.
-          this.loadConfidenceScores();
 
           this.cdr.markForCheck();
         },
@@ -143,75 +141,143 @@ export class AiResults implements OnInit {
   }
 
   // --------------------------------------------------
-  // Load Confidence Scores from Django API
+  // Calculate Confidence Scores (manual action only)
   // --------------------------------------------------
 
-  loadConfidenceScores(): void {
+  async calculateConfidenceScores(): Promise<void> {
+    if (this.loading || this.calculatingConfidence) {
+      return;
+    }
 
-  const completedResults = this.results.filter(
-    item =>
-      this.normalizeStatus(item.processing_status) === 'COMPLETED'
-  );
+    const completedResults = this.results.filter(
+      item => this.normalizeStatus(item.processing_status) === 'COMPLETED'
+    );
 
-  if (completedResults.length === 0) {
-    return;
-  }
+    if (completedResults.length === 0) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'No Completed Results',
+        text: 'There are no completed AI results available for confidence calculation.',
+        confirmButtonColor: '#6557e8'
+      });
+      return;
+    }
 
-  // Lock navigation before starting calculations.
-  this.navigationLock.begin();
+    // Step 1: Ask for confirmation before making any confidence API calls.
+    const confirmation = await Swal.fire({
+      icon: 'question',
+      title: 'Calculate Confidence Scores?',
+      text: `Do you want to calculate confidence scores for ${completedResults.length} completed AI results?`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Calculate',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#6557e8',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true
+    });
 
-  let pendingRequests = completedResults.length;
+    if (!confirmation.isConfirmed) {
+      return;
+    }
 
-  completedResults.forEach(item => {
+    this.calculatingConfidence = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.cdr.markForCheck();
 
-    this.aiResultService.getConfidence(item.id)
-      .pipe(
+    // Step 2: Activate the existing application-wide navigation lock/waiting popup.
+    this.navigationLock.begin();
+
+    const requests = completedResults.map(item =>
+      this.aiResultService.getConfidence(item.id).pipe(
         take(1),
-
         catchError(error => {
           console.warn(
-            `[AI Results] Confidence unavailable for result ${item.id}:`,
+            `[AI Results] Confidence calculation failed for result ${item.id}:`,
             error
           );
           return of(null);
-        }),
-
-        finalize(() => {
-
-          pendingRequests--;
-
-          if (pendingRequests === 0) {
-            this.navigationLock.end();
-
-            console.log(
-              'All confidence calculations completed.'
-            );
-          }
-
-          this.cdr.markForCheck();
         })
       )
-      .subscribe(response => {
+    );
 
-        if (response === null) {
-          return;
-        }
+    // Each request is allowed to finish; one failed result does not stop the others.
+    forkJoin(requests).pipe(take(1)).subscribe({
+      next: async responses => {
+        let successfulCount = 0;
+        let failedCount = 0;
 
-        const scores = this.extractConfidenceScores(response);
+        responses.forEach((response, index) => {
+          const item = completedResults[index];
 
-        if (scores.length > 0) {
+          if (response === null) {
+            failedCount++;
+            return;
+          }
+
+          const scores = this.extractConfidenceScores(response);
+
+          if (scores.length === 0) {
+            failedCount++;
+            return;
+          }
+
           const average =
-            scores.reduce((sum, value) => sum + value, 0)
-            / scores.length;
+            scores.reduce((sum, value) => sum + value, 0) / scores.length;
 
           this.confidenceByResult[item.id] =
             Math.round(average * 100) / 100;
-        }
+
+          successfulCount++;
+        });
 
         this.cdr.markForCheck();
-      });
-  });
-}
+
+        // Step 3: Close the waiting popup/lock before showing the final popup.
+        // The SweetAlert success/warning modal prevents page interaction until OK.
+        this.navigationLock.end();
+
+        try {
+          await Swal.fire({
+            icon: failedCount === 0 ? 'success' : 'warning',
+            title: failedCount === 0
+              ? 'Confidence Calculation Completed!'
+              : 'Calculation Partially Completed',
+            text: failedCount === 0
+              ? `Confidence scores successfully calculated for ${successfulCount} AI results.`
+              : `Successfully calculated ${successfulCount} of ${completedResults.length} results. ${failedCount} results could not be calculated.`,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#6557e8',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+          });
+        } finally {
+          // Step 4: Re-enable the Calculate button only after the final popup is dismissed.
+          this.calculatingConfidence = false;
+          this.cdr.markForCheck();
+        }
+      },
+      error: async error => {
+        console.error('[AI Results] Confidence calculation error:', error);
+        this.navigationLock.end();
+
+        try {
+          await Swal.fire({
+            icon: 'error',
+            title: 'Calculation Failed',
+            text: 'Unable to complete confidence score calculation.',
+            confirmButtonColor: '#6557e8',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+          });
+        } finally {
+          this.calculatingConfidence = false;
+          this.cdr.markForCheck();
+        }
+      }
+    });
+  }
+
   // --------------------------------------------------
   // Parse Confidence API Response
   // --------------------------------------------------
@@ -350,14 +416,6 @@ get averageConfidence(): number | null {
   return Math.round(average * 100) / 100;
 }
 
-
-  get resultTypes(): string[] {
-    return Array.from(
-      new Set(
-        this.results.map(item => this.getResultType(item))
-      )
-    );
-  }
 
   get completionRate(): number | null {
     if (this.totalResults === 0) {

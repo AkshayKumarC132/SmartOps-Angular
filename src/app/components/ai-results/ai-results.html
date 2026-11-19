@@ -9,13 +9,23 @@
       </p>
     </div>
 
-    <button
-      type="button"
-      class="refresh-button"
-      [disabled]="loading"
-      (click)="loadResults()">
-      {{ loading ? 'Loading...' : '↻ Refresh' }}
-    </button>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="confidence-button"
+        [disabled]="loading || calculatingConfidence"
+        (click)="calculateConfidenceScores()">
+        {{ calculatingConfidence ? 'Calculating...' : 'Calculate Confidence Score' }}
+      </button>
+
+      <button
+        type="button"
+        class="refresh-button"
+        [disabled]="loading || calculatingConfidence"
+        (click)="loadResults()">
+        {{ loading ? 'Loading...' : '↻ Refresh' }}
+      </button>
+    </div>
   </header>
 
   <div
@@ -82,20 +92,6 @@
       </small>
     </article>
 
-    <article class="summary-card result-types-card">
-      <span class="summary-label">Result Types</span>
-
-      <div class="type-list" *ngIf="resultTypes.length > 0">
-        <span *ngFor="let type of resultTypes">
-          {{ type }}
-        </span>
-      </div>
-
-      <small *ngIf="resultTypes.length === 0">
-        No result type metadata
-      </small>
-    </article>
-
   </section>
 
   <!-- Initial loading -->
@@ -138,12 +134,6 @@
           <span class="ai-icon" aria-hidden="true">✥</span>
 
           <div class="result-title">
-            <span
-              class="type-badge"
-              [ngClass]="getStatusClass(getResultType(item))">
-              {{ getResultType(item) }}
-            </span>
-
             <span class="for-label">for</span>
 
             <a
@@ -178,9 +168,12 @@
 
       <div class="result-body">
 
-        <p class="result-content">
-          {{ getResultSummary(item) }}
-        </p>
+        <section class="ai-summary-section">
+          <span class="detail-label ai-summary-heading">AI Summary</span>
+          <p class="result-content">
+            {{ getResultSummary(item) }}
+          </p>
+        </section>
 
         <section
           class="result-details"
