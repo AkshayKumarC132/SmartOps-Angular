@@ -33,8 +33,14 @@ export const routes: Routes = [
     data: {
       roles: ['Admin']
     },
-
     children: [
+
+      {
+        path: 'request-organization',
+        loadComponent: () =>
+          import('./components/request-organization/request-organization')
+            .then(m => m.RequestOrganization)
+      },
 
       {
         path: 'dashboard',

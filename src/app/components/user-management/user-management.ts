@@ -409,71 +409,115 @@ export class UserManagement implements OnInit {
         : null
     };
   }
+// =====================================================
+// ADMIN PORTAL USER FILTERING - ORGANIZATION ISOLATION
+// =====================================================
 
-  // =====================================================
-  // ADMIN PORTAL USER FILTERING
-  // =====================================================
+private getCurrentOrganizationId(): string | null {
+  const currentUser = this.getLoggedInUser();
 
-  private filterUsersForAdminPortal(
-    users: User[]
-  ): User[] {
-    const organizationFilteredUsers =
-      this.organizationContextService.filterRecords(
-        users as unknown as (User & Record<string, unknown>)[]
-      );
-
-    const currentAdmin = this.getCurrentAdminIdentity();
-
-    const nonAdminUsers = organizationFilteredUsers.filter(
-      user =>
-        String(user.role || '').trim().toLowerCase() !== 'admin'
-    );
-
-    const adminUsers = organizationFilteredUsers.filter(
-      user =>
-        String(user.role || '').trim().toLowerCase() === 'admin'
-    );
-
-    const matchingAdmin = adminUsers.find(user => {
-      const rawUser = user as User & Record<string, unknown>;
-
-      const userIdValue =
-        rawUser.id ??
-        rawUser['ID'] ??
-        rawUser['Id'] ??
-        rawUser['user_id'] ??
-        rawUser['userId'] ??
-        rawUser['User Id'];
-
-      const userId =
-        userIdValue !== null && userIdValue !== undefined
-          ? String(userIdValue).trim()
-          : null;
-
-      const username = String(
-        rawUser.username ?? rawUser['Username'] ?? ''
-      ).trim().toLowerCase();
-
-      const email = String(
-        rawUser.email ?? rawUser['Email'] ?? ''
-      ).trim().toLowerCase();
-
-      return (
-        (!!currentAdmin.id &&
-          !!userId &&
-          currentAdmin.id === userId) ||
-        (!!currentAdmin.username &&
-          currentAdmin.username === username) ||
-        (!!currentAdmin.email &&
-          currentAdmin.email === email)
-      );
-    });
-
-    // Never substitute a hardcoded administrator.
-    return matchingAdmin
-      ? [matchingAdmin, ...nonAdminUsers]
-      : nonAdminUsers;
+  if (!currentUser) {
+    return null;
   }
+
+  const organizationValue =
+  currentUser.organization_id ??
+  currentUser.organizationId ??
+  currentUser.tenant_id ??
+  currentUser.tenantId ??
+  currentUser['Organization Id'] ??
+  currentUser['Organization'] ??
+  currentUser.organization ??
+  currentUser.tenant;
+
+let organizationId: any = organizationValue;
+
+if (
+  organizationValue &&
+  typeof organizationValue === 'object'
+) {
+  organizationId =
+    organizationValue.id ??
+    organizationValue.ID ??
+    organizationValue.pk ??
+    organizationValue.organization_id ??
+    organizationValue.organizationId ??
+    organizationValue['Organization Id'];
+}
+
+  if (
+    organizationId === null ||
+    organizationId === undefined ||
+    String(organizationId).trim() === ''
+  ) {
+    return null;
+  }
+
+  return String(organizationId).trim();
+}
+
+private getUserOrganizationId(user: User): string | null {
+  const rawUser = user as User & Record<string, any>;
+
+  const organizationValue =
+  rawUser.organization_id ??
+  rawUser.organizationId ??
+  rawUser.tenant_id ??
+  rawUser.tenantId ??
+  rawUser['Organization Id'] ??
+  rawUser['Organization'] ??
+  rawUser.organization ??
+  rawUser['tenant'];
+
+let organizationId: any = organizationValue;
+
+if (
+  organizationValue &&
+  typeof organizationValue === 'object'
+) {
+  organizationId =
+    organizationValue.id ??
+    organizationValue.ID ??
+    organizationValue.pk ??
+    organizationValue.organization_id ??
+    organizationValue.organizationId ??
+    organizationValue['Organization Id'];
+}
+
+  if (
+    organizationId === null ||
+    organizationId === undefined ||
+    String(organizationId).trim() === ''
+  ) {
+    return null;
+  }
+
+  return String(organizationId).trim();
+}
+
+private filterUsersForAdminPortal(
+  users: User[]
+): User[] {
+  const currentOrganizationId =
+    this.getCurrentOrganizationId();
+
+  if (!currentOrganizationId) {
+    console.warn(
+      'Unable to identify current organization. User list hidden.'
+    );
+
+    this.errorMessage =
+      'Unable to identify your organization. Please log in again.';
+
+    return [];
+  }
+
+  // Keep only users belonging to the logged-in Admin's organization.
+  // Include all roles, including other Admin accounts.
+  return users.filter(user =>
+    this.getUserOrganizationId(user) === currentOrganizationId
+  );
+}
 
   // =====================================================
   // LOAD USERS
@@ -484,10 +528,10 @@ export class UserManagement implements OnInit {
     this.errorMessage = '';
 
     this.userService.getUsers().subscribe({
-      next: response => {
+      next: (response: User[] | any) => {
         const allUsers: User[] = Array.isArray(response)
           ? response
-          : [];
+          : (response?.results ?? response?.users ?? response?.data ?? []);
 
         // Keep active and inactive accounts visible in User Management.
         this.users = this.filterUsersForAdminPortal(allUsers);
