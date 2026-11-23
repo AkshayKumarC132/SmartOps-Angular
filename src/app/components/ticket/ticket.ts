@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectorRef,
   Component,
@@ -7,6 +8,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import Swal from 'sweetalert2';
 
 import { TicketService } from '../../services/ticket.service';
 import { ApiErrorService } from '../../services/api-error.service';
@@ -34,6 +37,9 @@ export class Tickets implements OnInit {
   searchText = '';
   selectedStatus = 'All';
   selectedPriority = 'All';
+
+  // Prevent multiple simultaneous ticket deletions.
+  deletingTicketId: number | null = null;
 
   constructor(
     private ticketService: TicketService,
@@ -186,6 +192,7 @@ export class Tickets implements OnInit {
     const slaTicket = ticket as Ticket & {
       sla_resolution_due_date?: string | null;
     };
+
     const dueDate = slaTicket?.sla_resolution_due_date;
 
     if (
@@ -389,5 +396,75 @@ export class Tickets implements OnInit {
       '/ticket',
       id
     ]);
+  }
+
+  // ============================================
+  // DELETE TICKET
+  // ============================================
+
+  deleteTicket(ticket: Ticket): void {
+
+    if (this.deletingTicketId !== null) {
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Delete Ticket?',
+      text: `Are you sure you want to delete ${ticket.ticket_id}? This action cannot be undone.`,
+      showCancelButton: true,
+      confirmButtonText: 'Delete Ticket',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: true
+    }).then((result) => {
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      this.deletingTicketId = ticket.id;
+      this.cdr.detectChanges();
+
+      this.ticketService.deleteTicket(ticket.id).subscribe({
+
+        next: () => {
+
+          // Remove deleted ticket from the existing list.
+          this.tickets = this.tickets.filter(
+            item => item.id !== ticket.id
+          );
+
+          this.deletingTicketId = null;
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Ticket Deleted',
+            text: `${ticket.ticket_id} has been deleted successfully.`,
+            timer: 1800,
+            showConfirmButton: false
+          });
+        },
+
+        error: (error: any) => {
+
+          console.error(
+            'Ticket deletion failed:',
+            error
+          );
+
+          this.deletingTicketId = null;
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: this.apiErrorService.getErrorMessage(error)
+          });
+        }
+      });
+    });
   }
 }

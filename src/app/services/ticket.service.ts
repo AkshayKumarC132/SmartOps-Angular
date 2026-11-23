@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +25,6 @@ export class TicketService {
     );
   }
 
-
   // ==============================
   // GET SINGLE TICKET
   // ==============================
@@ -34,7 +34,6 @@ export class TicketService {
       `${environment.apiUrl}/ticket_detail/${ticketId}/`
     );
   }
-
 
   // ==============================
   // UPDATE TICKET
@@ -51,6 +50,15 @@ export class TicketService {
     );
   }
 
+  // ==============================
+  // DELETE TICKET
+  // ==============================
+
+  deleteTicket(ticketId: number): Observable<any> {
+    return this.http.delete(
+      `${environment.apiUrl}/ticket_detail/${ticketId}/`
+    );
+  }
 
   // ==============================
   // GET TEAMS
@@ -62,7 +70,6 @@ export class TicketService {
     );
   }
 
-
   // ==============================
   // TAGS: READ / ADD / REMOVE ON TICKET
   // ==============================
@@ -73,14 +80,20 @@ export class TicketService {
     );
   }
 
-  addTicketTags(ticketId: number, tagNames: string[]): Observable<any> {
+  addTicketTags(
+    ticketId: number,
+    tagNames: string[]
+  ): Observable<any> {
     return this.http.post(
       `${environment.apiUrl}/ticket_detail/${ticketId}/add_tags/`,
       { tag_name: tagNames }
     );
   }
 
-  removeTicketTag(ticketId: number, tagName: string): Observable<any> {
+  removeTicketTag(
+    ticketId: number,
+    tagName: string
+  ): Observable<any> {
     return this.http.delete(
       `${environment.apiUrl}/ticket_detail/${ticketId}/remove_tags/${encodeURIComponent(tagName)}/`
     );
@@ -90,9 +103,16 @@ export class TicketService {
   // ATTACHMENTS: UPLOAD / DELETE
   // ==============================
 
-  uploadTicketAttachments(ticketId: number, files: File[]): Observable<any> {
+  uploadTicketAttachments(
+    ticketId: number,
+    files: File[]
+  ): Observable<any> {
+
     const formData = new FormData();
-    files.forEach(file => formData.append('file', file, file.name));
+
+    files.forEach(
+      file => formData.append('file', file, file.name)
+    );
 
     return this.http.post(
       `${environment.apiUrl}/ticket_detail/${ticketId}/attachments/`,
@@ -100,20 +120,25 @@ export class TicketService {
     );
   }
 
-  deleteTicketAttachment(ticketId: number, attachmentId: number): Observable<any> {
+  deleteTicketAttachment(
+    ticketId: number,
+    attachmentId: number
+  ): Observable<any> {
     return this.http.delete(
       `${environment.apiUrl}/ticket_detail/${ticketId}/attachments/${attachmentId}/`
     );
   }
-// ==============================
-// DOWNLOAD ATTACHMENT FOR PREVIEW
-// ==============================
 
-getAttachmentPreview(url: string): Observable<Blob> {
-  return this.http.get(url, {
-    responseType: 'blob'
-  });
-}
+  // ==============================
+  // DOWNLOAD ATTACHMENT FOR PREVIEW
+  // ==============================
+
+  getAttachmentPreview(url: string): Observable<Blob> {
+    return this.http.get(url, {
+      responseType: 'blob'
+    });
+  }
+
   // ==============================
   // CREATE TEAM
   // ==============================
@@ -124,7 +149,6 @@ getAttachmentPreview(url: string): Observable<Blob> {
       data
     );
   }
-
 
   // ==============================
   // UPDATE TEAM
@@ -140,7 +164,10 @@ getAttachmentPreview(url: string): Observable<Blob> {
       data
     );
   }
+
+  // ==============================
   // DELETE TEAM
+  // ==============================
 
   deleteTeam(id: number): Observable<any> {
     return this.http.delete(
@@ -161,7 +188,6 @@ getAttachmentPreview(url: string): Observable<Blob> {
       data
     );
   }
-
 
   // ==============================
   // AUDIT LOG / TICKET ACTIVITY

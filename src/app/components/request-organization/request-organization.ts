@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 import { OrganizationContextService } from '../../services/organization-context.service';
+import { OrganizationRequestService } from '../../services/organization-request.service';
+import { ApiErrorService } from '../../services/api-error.service';
 
 @Component({
   selector: 'app-request-organization',
@@ -27,7 +29,9 @@ export class RequestOrganization implements OnInit {
 
   constructor(
     private readonly router: Router,
-    private readonly organizationContext: OrganizationContextService
+    private readonly organizationContext: OrganizationContextService,
+    private readonly organizationRequestService: OrganizationRequestService,
+    private readonly apiErrorService: ApiErrorService
   ) {}
 
   // =========================================================
@@ -47,7 +51,8 @@ export class RequestOrganization implements OnInit {
     const organizationId =
       this.organizationContext.getCurrentOrganizationId();
 
-    // Admin has no organization.
+    // If the Admin has no organization,
+    // allow the request form to be displayed.
     if (organizationId === null) {
       return;
     }
@@ -117,9 +122,16 @@ export class RequestOrganization implements OnInit {
 
   submitRequest(): void {
 
+    const trimmedOrganizationName =
+      this.organizationName.trim();
+
+    const trimmedReason =
+      this.reason.trim();
+
+    // Validate fields.
     if (
-      !this.organizationName.trim() ||
-      !this.reason.trim()
+      !trimmedOrganizationName ||
+      !trimmedReason
     ) {
 
       Swal.fire({
@@ -140,22 +152,64 @@ export class RequestOrganization implements OnInit {
 
     this.submitting = true;
 
-    // Frontend mock submission.
-    // Backend integration will be added later.
+    // ============================================
+    // SEND REQUEST TO DJANGO BACKEND
+    // ============================================
 
-    setTimeout(() => {
+    this.organizationRequestService
+      .submitRequest({
+        organization_name: trimmedOrganizationName,
+        explanation: trimmedReason
+      })
+      .subscribe({
 
-      this.submitting = false;
-      this.submitted = true;
+        // ============================================
+        // SUCCESS
+        // ============================================
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Request Submitted',
-        text: 'Your organization request has been submitted successfully. It is awaiting Super Admin approval.',
-        confirmButtonText: 'OK'
+        next: (response: any) => {
+
+          console.log(
+            'Organization request response:',
+            response
+          );
+
+          this.submitting = false;
+          this.submitted = true;
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Request Submitted',
+            text:
+              response?.message ||
+              'Your organization request has been submitted successfully. It is awaiting Super Admin approval.',
+            confirmButtonText: 'OK'
+          });
+        },
+
+        // ============================================
+        // ERROR
+        // ============================================
+
+        error: (error: any) => {
+
+          console.error(
+            'Organization request submission failed:',
+            error
+          );
+
+          this.submitting = false;
+
+          const errorMessage =
+            this.apiErrorService.getErrorMessage(error);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Request Failed',
+            text: errorMessage
+          });
+        }
       });
-
-    }, 800);
   }
 
   // =========================================================

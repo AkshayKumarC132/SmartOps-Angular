@@ -1,3 +1,4 @@
+
 .tickets-page {
   min-height: calc(100vh - 56px);
   padding: 28px 25px 40px;
@@ -155,7 +156,7 @@
 
 table {
   width: 100%;
-  min-width: 1255px;
+  min-width: 1325px;
   table-layout: fixed;
   border-collapse: collapse;
 }
@@ -202,12 +203,15 @@ td:nth-child(8) {
   width: 220px;
 }
 
+/* WIDEN ACTION COLUMN */
+
 th:nth-child(9),
 td:nth-child(9) {
-  width: 100px;
+  width: 170px;
 }
 
 /* Allow the long SLA heading to wrap. */
+
 th:nth-child(8) {
   white-space: normal;
   line-height: 1.4;
@@ -429,6 +433,7 @@ tbody tr.clickable-ticket-row:focus-visible {
   color: #344054;
   font-size: 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .view-button:hover {
@@ -437,6 +442,59 @@ tbody tr.clickable-ticket-row:focus-visible {
 }
 
 .view-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ACTION COLUMN - KEEP BUTTONS BESIDE EACH OTHER */
+
+td:nth-child(9) {
+  white-space: nowrap;
+}
+
+td:nth-child(9) .view-button,
+td:nth-child(9) .delete-button {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 5px 0 0;
+}
+
+/* DELETE BUTTON */
+
+.delete-button {
+  height: 31px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-button svg {
   width: 14px;
   height: 14px;
   fill: none;
