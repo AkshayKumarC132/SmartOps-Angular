@@ -26,6 +26,7 @@ import {
 import Swal from 'sweetalert2';
 import { renderAsync as renderDocxAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
+import { parseMsDoc, renderMsDoc } from '@file-viewer/doc';
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
@@ -62,7 +63,7 @@ export class TicketDetails implements OnInit, OnDestroy {
   previewAttachmentUrl = '';
   previewAttachmentSafeUrl: SafeResourceUrl | null = null;
   previewAttachmentName = '';
-  previewAttachmentType: 'image' | 'pdf' | 'docx' | 'spreadsheet' | 'text' | 'other' = 'other';
+  previewAttachmentType: 'image' | 'pdf' | 'docx' | 'doc' | 'spreadsheet' | 'text' | 'other' = 'other';
   previewAttachmentHtml = '';
   @ViewChild('docxPreviewContainer') docxPreviewContainer?: ElementRef<HTMLDivElement>;
   previewAttachmentText = '';
@@ -655,9 +656,11 @@ export class TicketDetails implements OnInit, OnDestroy {
     this.previewAttachmentSafeUrl = null;
     this.previewAttachmentHtml = '';
     this.previewAttachmentText = '';
+
     if (this.docxPreviewContainer?.nativeElement) {
       this.docxPreviewContainer.nativeElement.innerHTML = '';
     }
+
     this.previewAttachmentError = '';
     this.previewAttachmentLoading = true;
     this.previewAttachmentType = 'other';
@@ -674,6 +677,7 @@ export class TicketDetails implements OnInit, OnDestroy {
           if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(extension)) {
             this.previewAttachmentType = 'image';
             this.previewAttachmentUrl = URL.createObjectURL(blob);
+
           } else if (extension === 'pdf') {
             this.previewAttachmentType = 'pdf';
             this.previewAttachmentUrl = URL.createObjectURL(blob);
@@ -681,18 +685,21 @@ export class TicketDetails implements OnInit, OnDestroy {
               this.sanitizer.bypassSecurityTrustResourceUrl(
                 this.previewAttachmentUrl
               );
+
           } else if (extension === 'docx') {
-            // docx-preview renders Word layout as separate page elements.
             this.previewAttachmentType = 'docx';
             this.cdr.detectChanges();
-            await new Promise<void>(resolve => setTimeout(resolve, 0));
+
+            await new Promise<void>(resolve => setTimeout(resolve, 50));
 
             const container = this.docxPreviewContainer?.nativeElement;
+
             if (!container) {
               throw new Error('DOCX preview container is unavailable.');
             }
 
             container.innerHTML = '';
+
             await renderDocxAsync(blob, container, undefined, {
               className: 'docx-preview',
               inWrapper: true,
@@ -706,6 +713,7 @@ export class TicketDetails implements OnInit, OnDestroy {
               renderFootnotes: true,
               renderEndnotes: true
             });
+
           } else if (['xls', 'xlsx', 'csv'].includes(extension)) {
             const workbook = XLSX.read(
               new Uint8Array(await blob.arrayBuffer()),
@@ -713,37 +721,67 @@ export class TicketDetails implements OnInit, OnDestroy {
             );
 
             this.previewAttachmentType = 'spreadsheet';
-            this.previewAttachmentHtml = workbook.SheetNames.map((sheetName) => {
-              const sheet = workbook.Sheets[sheetName];
-              return `
-                <section class="spreadsheet-sheet">
-                  <h3>${this.escapePreviewHtml(sheetName)}</h3>
-                  ${XLSX.utils.sheet_to_html(sheet)}
-                </section>
-              `;
-            }).join('');
-          } else if (['txt', 'log', 'md', 'json', 'xml', 'html', 'yaml', 'yml'].includes(extension)) {
+
+            this.previewAttachmentHtml = workbook.SheetNames.map(
+              (sheetName) => {
+                const sheet = workbook.Sheets[sheetName];
+
+                return `
+                  <section class="spreadsheet-sheet">
+                    <h3>${this.escapePreviewHtml(sheetName)}</h3>
+                    ${XLSX.utils.sheet_to_html(sheet)}
+                  </section>
+                `;
+              }
+            ).join('');
+
+          } else if (
+            ['txt', 'log', 'md', 'json', 'xml', 'html', 'yaml', 'yml'].includes(extension)
+          ) {
             this.previewAttachmentType = 'text';
             this.previewAttachmentText = await blob.text();
+
           } else if (extension === 'doc') {
-            this.previewAttachmentType = 'other';
-            this.previewAttachmentError =
-              'Legacy .doc files cannot be reliably paginated in the browser. Convert this file to .docx or PDF to preview it page by page. You can still download it.';
+            // Render legacy binary Word files entirely in the browser.
+            this.previewAttachmentType = 'doc';
+            this.cdr.detectChanges();
+            await new Promise<void>(resolve => setTimeout(resolve, 50));
+
+            const container = this.docxPreviewContainer?.nativeElement;
+            if (!container) {
+              throw new Error('Word document preview container is unavailable.');
+            }
+
+            container.innerHTML = '';
+            const arrayBuffer = await blob.arrayBuffer();
+            const parsedDocument = parseMsDoc(arrayBuffer);
+            const renderedDocument = renderMsDoc(parsedDocument);
+
+            // The renderer blocks external resources by default. Keep output within this preview container.
+            container.innerHTML = `
+              <style>${renderedDocument.css}</style>
+              <div class="msdoc-root">${renderedDocument.html}</div>
+            `;
+
           } else {
             this.previewAttachmentType = 'other';
             this.previewAttachmentError =
               'Preview is not supported for this file type. You can still download the attachment.';
           }
+
         } catch (error) {
           console.error('Attachment rendering failed:', error);
+
           this.previewAttachmentType = 'other';
           this.previewAttachmentError =
-            'This file could not be rendered in the preview. You can still download it.';
+            'This file could not be rendered in the preview. You can still download the attachment.';
+
         } finally {
           this.previewAttachmentLoading = false;
           this.cdr.detectChanges();
         }
       },
+
       error: (error: any) => {
         console.error('Attachment preview failed:', error);
         this.closeAttachmentPreview();

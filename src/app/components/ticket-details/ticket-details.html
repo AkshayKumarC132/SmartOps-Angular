@@ -712,11 +712,12 @@
               ></iframe>
 
               <div
-              #docxPreviewContainer
-              class="docx-preview-container"
-              [hidden]="previewAttachmentType !== 'docx'"
-              aria-label="Word document page preview" ></div>
-
+  #docxPreviewContainer
+  class="docx-preview-container"
+  [class.preview-visible]="(previewAttachmentType === 'docx' || previewAttachmentType === 'doc') && !previewAttachmentLoading"
+  [class.preview-hidden]="(previewAttachmentType !== 'docx' && previewAttachmentType !== 'doc') || previewAttachmentLoading"
+  aria-label="Word document preview"
+></div>
               <div
                 *ngIf="!previewAttachmentLoading && previewAttachmentType === 'spreadsheet'"
                 class="attachment-preview-spreadsheet"
