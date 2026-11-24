@@ -909,7 +909,19 @@
         <pre>{{ selectedDelivery.subject || '-' }}</pre>
 
         <h3>Email Message</h3>
-        <pre>{{ selectedDelivery.message || '-' }}</pre>
+
+        <div class="email-preview-container" *ngIf="selectedDelivery.message; else noEmailMessage">
+          <iframe
+            class="email-preview-frame"
+            [srcdoc]="selectedDelivery.message"
+            sandbox=""
+            title="Rendered email preview">
+          </iframe>
+        </div>
+
+        <ng-template #noEmailMessage>
+          <div class="email-preview-empty">No email message available.</div>
+        </ng-template>
       </div>
 
 
