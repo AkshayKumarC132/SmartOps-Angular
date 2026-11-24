@@ -4,7 +4,8 @@ import {
   ElementRef,
   ViewChild,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -862,7 +863,13 @@ export class TicketDetails implements OnInit, OnDestroy {
       }
     });
   }
-
+  @HostListener('document:keydown.escape', ['$event'])
+onEscapeKey(event: Event): void {
+  if (this.showAttachmentPreview) {
+    event.preventDefault();
+    this.closeAttachmentPreview();
+  }
+}
   closeAttachmentPreview(): void {
     this.showAttachmentPreview = false;
     this.releaseAttachmentPreviewUrl();
