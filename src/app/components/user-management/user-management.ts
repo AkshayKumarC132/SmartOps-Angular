@@ -82,6 +82,7 @@ export class UserManagement implements OnInit {
 
     return (
       normalizedRole === 'admin' ||
+      normalizedRole === 'additional admin' ||
       normalizedRole === 'team member' ||
       normalizedRole === 'teammate'
     );
@@ -556,7 +557,7 @@ private filterUsersForAdminPortal(
             'Authentication failed. Please login again.';
         } else if (error?.status === 403) {
           this.errorMessage =
-            'Only Admin users can view User Management.';
+            'Only organization administrators can view User Management.';
         } else {
           this.errorMessage =
             this.apiErrorService.getErrorMessage(error);
@@ -680,6 +681,7 @@ closeUserDetailsModal(): void {
   getRoleClass(role: string): string {
     switch (role?.toLowerCase()) {
       case 'admin':
+      case 'additional admin':
         return 'role-admin';
 
       case 'team member':
@@ -783,8 +785,21 @@ closeUserDetailsModal(): void {
     }
 
     const role = this.userForm.role;
-    if (role !== 'Requester' && role !== 'Team Member') {
+
+    const allowedRoles: RegistrationRole[] = [
+      'Requester',
+      'Team Member',
+      'Additional Admin'
+    ];
+
+    if (!allowedRoles.includes(role as RegistrationRole)) {
       this.errorMessage = 'Invalid user role.';
+      return;
+    }
+
+    const organizationId = this.getCurrentOrganizationId();
+    if (!organizationId || !Number.isInteger(Number(organizationId))) {
+      this.errorMessage = 'Unable to identify your organization. Please log in again.';
       return;
     }
 
@@ -795,13 +810,15 @@ closeUserDetailsModal(): void {
       role: RegistrationRole;
       first_name?: string;
       last_name?: string;
+      organization_id: number;
     } = {
       username: this.userForm.username.trim(),
       email: this.userForm.email.trim(),
       password: this.userForm.password,
-      role,
+      role: role as RegistrationRole,
       first_name: this.userForm.first_name.trim(),
-      last_name: this.userForm.last_name.trim()
+      last_name: this.userForm.last_name.trim(),
+      organization_id: Number(organizationId)
     };
 
     Swal.fire({

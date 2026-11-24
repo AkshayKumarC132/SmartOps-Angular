@@ -333,6 +333,7 @@
         >
           <option value="Requester">Requester</option>
           <option value="Team Member">Team Member</option>
+          <option value="Additional Admin">Additional Admin</option>
         </select>
       </div>
 
@@ -491,6 +492,7 @@
         >
           <option value="Requester">Requester</option>
           <option value="Team Member">Team Member</option>
+          <option value="Additional Admin">Additional Admin</option>
 
           <!-- Admin option is shown for an Admin account. -->
           <option
@@ -530,7 +532,7 @@
             {{
               canUseAI(userForm.role)
                 ? 'AI access is enabled for this role.'
-                : 'AI access is available only for Admin and Team Member.'
+                : 'AI access is available only for Admin, Additional Admin and Team Member.'
             }}
           </span>
         </div>

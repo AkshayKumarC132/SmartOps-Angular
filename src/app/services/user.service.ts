@@ -58,7 +58,10 @@ export interface User {
 // REGISTRATION ROLE
 // ============================================================
 
-export type RegistrationRole = 'Requester' | 'Team Member';
+export type RegistrationRole =
+  | 'Requester'
+  | 'Team Member'
+  | 'Additional Admin';
 
 // ============================================================
 // USER SERVICE
@@ -124,6 +127,7 @@ export class UserService {
     role: RegistrationRole;
     first_name?: string;
     last_name?: string;
+    organization_id: number;
   }): Observable<any> {
 
     const payload = {
@@ -132,7 +136,8 @@ export class UserService {
       password: data.password,
       role: data.role,
       first_name: data.first_name?.trim() || '',
-      last_name: data.last_name?.trim() || ''
+      last_name: data.last_name?.trim() || '',
+      organization_id: data.organization_id
     };
 
     return this.http.post<any>(
