@@ -112,6 +112,13 @@ export class AIResultService {
   );
 }
 
+  submitFeedback(id: number, isHelpful: boolean): Observable<unknown> {
+    return this.http.post<unknown>(
+      `${this.baseUrl}${id}/feedback/`,
+      { is_helpful: isHelpful }
+    );
+  }
+
   retestResult(id: number): Observable<unknown> {
     return this.http.post<unknown>(
       `${this.baseUrl}${id}/retest/`,

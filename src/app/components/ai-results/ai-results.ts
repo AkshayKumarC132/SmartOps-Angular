@@ -47,6 +47,10 @@ export class AiResults implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  feedbackSubmitting: Record<number, boolean> = {};
+  feedbackSubmitted: Record<number, boolean> = {};
+  feedbackChoice: Record<number, boolean> = {};
+
   constructor(
   private readonly aiResultService: AIResultService,
   private readonly cdr: ChangeDetectorRef,
@@ -718,6 +722,67 @@ get averageConfidence(): number | null {
     return item.id;
   }
 
+
+  // --------------------------------------------------
+  // AI Result Feedback
+  // --------------------------------------------------
+
+  submitFeedback(item: AIResult, isHelpful: boolean): void {
+    if (this.feedbackSubmitting[item.id] || this.feedbackSubmitted[item.id]) {
+      return;
+    }
+
+    if (this.normalizeStatus(item.processing_status) !== 'COMPLETED') {
+      void Swal.fire({
+        icon: 'info',
+        title: 'Feedback unavailable',
+        text: 'Feedback can only be submitted for completed AI results.',
+        confirmButtonColor: '#6557e8'
+      });
+      return;
+    }
+
+    this.feedbackSubmitting[item.id] = true;
+    this.cdr.markForCheck();
+
+    this.aiResultService.submitFeedback(item.id, isHelpful).pipe(
+      take(1),
+      finalize(() => {
+        this.feedbackSubmitting[item.id] = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.feedbackSubmitted[item.id] = true;
+        this.feedbackChoice[item.id] = isHelpful;
+        this.cdr.markForCheck();
+        void Swal.fire({
+          icon: 'success',
+          title: 'Feedback submitted',
+          text: 'Thank you for helping us improve AI results!',
+          confirmButtonColor: '#6557e8'
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        const message = error.error?.Error || error.error?.detail || error.error?.message ||
+          (error.status === 409 ? 'Feedback has already been submitted for this AI result.' :
+          error.status === 403 ? 'You do not have permission to submit feedback for this result.' :
+          error.status === 400 ? 'Feedback can only be submitted for completed AI results.' :
+          'Unable to submit feedback. Please try again.');
+        if (error.status === 409) {
+          this.feedbackSubmitted[item.id] = true;
+        }
+        this.cdr.markForCheck();
+        void Swal.fire({
+          icon: error.status === 403 ? 'warning' : 'error',
+          title: error.status === 409 ? 'Feedback already submitted' : 'Feedback submission failed',
+          text: message,
+          confirmButtonColor: '#6557e8'
+        });
+      }
+    });
+  }
+
   // --------------------------------------------------
   // Request AI Retest
   // --------------------------------------------------
@@ -798,7 +863,7 @@ get averageConfidence(): number | null {
   // Private Helpers
   // --------------------------------------------------
 
-  private normalizeStatus(
+  normalizeStatus(
     status: string | null | undefined
   ): string {
     return (status || '')

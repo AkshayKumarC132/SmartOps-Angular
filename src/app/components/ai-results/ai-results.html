@@ -219,6 +219,37 @@
 
       </div>
 
+
+      <!-- AI feedback -->
+      <section class="ai-feedback" *ngIf="normalizeStatus(item.processing_status) === 'COMPLETED'">
+        <div class="feedback-content" *ngIf="!feedbackSubmitted[item.id]">
+          <div class="feedback-heading">
+            <span class="feedback-title">AI Feedback</span>
+            <span class="feedback-question">Was this AI result helpful?</span>
+          </div>
+          <div class="feedback-actions">
+            <button type="button" class="feedback-button helpful"
+              [disabled]="feedbackSubmitting[item.id]"
+              (click)="submitFeedback(item, true)">
+              <span aria-hidden="true">👍</span> Helpful
+            </button>
+            <button type="button" class="feedback-button not-helpful"
+              [disabled]="feedbackSubmitting[item.id]"
+              (click)="submitFeedback(item, false)">
+              <span aria-hidden="true">👎</span> Not Helpful
+            </button>
+          </div>
+          <span class="feedback-loading" *ngIf="feedbackSubmitting[item.id]">Submitting feedback...</span>
+        </div>
+        <div class="feedback-thanks" *ngIf="feedbackSubmitted[item.id]">
+          <span class="feedback-thanks-icon">✓</span>
+          <span>Thank you! Your feedback has been submitted.</span>
+          <span class="feedback-recorded-choice" *ngIf="feedbackChoice[item.id] !== undefined">
+            {{ feedbackChoice[item.id] ? 'Helpful' : 'Not Helpful' }}
+          </span>
+        </div>
+      </section>
+
       <footer class="result-footer">
 
         <div class="result-statuses">
