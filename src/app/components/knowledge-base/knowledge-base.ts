@@ -1,14 +1,7 @@
-
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit
-} from '@angular/core';
-
+import {ChangeDetectorRef,Component,OnInit} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
 
@@ -169,10 +162,6 @@ export class KnowledgeBase implements OnInit {
 
     const url = this.apiUrl;
 
-    console.log(
-      'Knowledge Base API URL:',
-      url
-    );
 
     this.http.get<any>(url).subscribe({
 
@@ -182,10 +171,6 @@ export class KnowledgeBase implements OnInit {
 
       next: (response) => {
 
-        console.log(
-          'Knowledge Base API Response:',
-          response
-        );
 
         if (Array.isArray(response)) {
 
@@ -674,5 +659,4 @@ export class KnowledgeBase implements OnInit {
     ]);
 
   }
-
 }

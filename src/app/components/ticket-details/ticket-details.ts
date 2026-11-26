@@ -25,9 +25,6 @@ import {
   OrganizationContextService
 } from '../../services/organization-context.service';
 import Swal from 'sweetalert2';
-import { renderAsync as renderDocxAsync } from 'docx-preview';
-import * as XLSX from 'xlsx';
-import { parseMsDoc, renderMsDoc } from '@file-viewer/doc';
 @Component({
   selector: 'app-ticket-details',
   standalone: true,
@@ -701,6 +698,8 @@ export class TicketDetails implements OnInit, OnDestroy {
 
             container.innerHTML = '';
 
+            const { renderAsync: renderDocxAsync } = await import('docx-preview');
+
             await renderDocxAsync(blob, container, undefined, {
               className: 'docx-preview',
               inWrapper: true,
@@ -716,6 +715,8 @@ export class TicketDetails implements OnInit, OnDestroy {
             });
 
           } else if (['xls', 'xlsx', 'csv'].includes(extension)) {
+            const XLSX = await import('xlsx');
+
             const workbook = XLSX.read(
               new Uint8Array(await blob.arrayBuffer()),
               { type: 'array' }
@@ -755,6 +756,8 @@ export class TicketDetails implements OnInit, OnDestroy {
 
             container.innerHTML = '';
             const arrayBuffer = await blob.arrayBuffer();
+            const { parseMsDoc, renderMsDoc } = await import('@file-viewer/doc');
+
             const parsedDocument = parseMsDoc(arrayBuffer);
             const renderedDocument = renderMsDoc(parsedDocument);
 

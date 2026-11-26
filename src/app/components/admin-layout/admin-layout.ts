@@ -178,14 +178,12 @@ export class AdminLayout implements OnInit, OnDestroy {
   // ==========================================================
 
   logout(): void {
-  console.log('Logout button clicked');
 
   // Stop notification polling immediately
   this.notificationService.stopPolling();
 
   this.authService.logoutApi().subscribe({
     next: (response) => {
-      console.log('Logout API successful:', response);
 
       this.authService.clearSession();
 

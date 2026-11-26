@@ -106,7 +106,6 @@ export class Dashboard implements OnInit, OnDestroy {
         return;
       }
 
-      console.log('[Dashboard] Automatic metrics refresh started.');
 
       this.loadDashboardData();
     });

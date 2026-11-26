@@ -67,7 +67,6 @@ export class AuditLog implements OnInit {
     this.errorMessage = '';
 
     const startedAt = performance.now();
-    console.info('[Audit Log] Request started');
 
     this.http.get<AuditActivity[]>(
       `${environment.apiUrl}/tickets-activity/`
@@ -81,9 +80,6 @@ export class AuditLog implements OnInit {
         this.refreshing = false;
 
         const duration = Math.round(performance.now() - startedAt);
-        console.info(
-          `[Audit Log] Loaded ${this.activities.length} records in ${duration} ms`
-        );
 
         this.cdr.detectChanges();
       },

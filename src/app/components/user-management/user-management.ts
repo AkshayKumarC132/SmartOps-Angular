@@ -67,6 +67,23 @@ export class UserManagement implements OnInit {
     private router: Router
   ) {}
 
+  // Reusable toast notifications for User Management actions.
+  private showActionToast(message: string, icon: 'success' | 'error' | 'warning' | 'info' = 'success'): void {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon,
+      title: message,
+      showConfirmButton: false,
+      timer: 3200,
+      timerProgressBar: true,
+      didOpen: toast => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loadUsers();
   }
@@ -89,7 +106,10 @@ export class UserManagement implements OnInit {
   }
 
   private normalizeAIAccess(user: User): User {
-    user.is_ai_enabled = this.canUseAI(user.role);
+    // Respect the saved setting; use role-based default only if API omits it.
+    if (user.is_ai_enabled === undefined || user.is_ai_enabled === null) {
+      user.is_ai_enabled = this.canUseAI(user.role);
+    }
     return user;
   }
 
@@ -845,13 +865,7 @@ closeUserDetailsModal(): void {
           this.loadUsers();
           this.cdr.detectChanges();
 
-          Swal.fire({
-            title: 'User Created!',
-            text: `${payload.username} has been created successfully.`,
-            icon: 'success',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d9488'
-          });
+          this.showActionToast(`User ${payload.username} created successfully.`);
         },
         error: error => {
           console.error('User creation error:', error);
@@ -859,13 +873,7 @@ closeUserDetailsModal(): void {
           this.handleError(error, 'Unable to create user.');
           this.cdr.detectChanges();
 
-          Swal.fire({
-            title: 'Creation Failed',
-            text: this.errorMessage || 'Unable to create user.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
-          });
+          this.showActionToast(this.errorMessage || 'Unable to create user.', 'error');
         }
       });
     });
@@ -887,7 +895,7 @@ closeUserDetailsModal(): void {
       last_name: user.last_name || '',
       password: '',
       role,
-      is_ai_enabled: this.canUseAI(role),
+      is_ai_enabled: user.is_ai_enabled ?? this.canUseAI(role),
       is_active: user.is_active ?? true
     };
 
@@ -897,9 +905,10 @@ closeUserDetailsModal(): void {
   }
 
   onRoleChange(): void {
-    this.userForm.is_ai_enabled = this.canUseAI(
-      this.userForm.role
-    );
+    // Only disable AI for roles that are not eligible; retain user choice otherwise.
+    if (!this.canUseAI(this.userForm.role)) {
+      this.userForm.is_ai_enabled = false;
+    }
   }
 
   closeEditModal(): void {
@@ -934,11 +943,9 @@ closeUserDetailsModal(): void {
       return;
     }
 
-    const aiEnabled = this.canUseAI(
-      this.userForm.role
-    );
-
-    this.userForm.is_ai_enabled = aiEnabled;
+    const aiEnabled = this.canUseAI(this.userForm.role)
+      ? this.userForm.is_ai_enabled
+      : false;
 
     const payload: any = {
       email: this.userForm.email.trim(),
@@ -975,6 +982,7 @@ closeUserDetailsModal(): void {
         this.showEditModal = false;
         this.editingUser = null;
         this.successMessage = 'User updated successfully.';
+        this.showActionToast('User updated successfully.');
 
         this.loadUsers();
         this.cdr.detectChanges();
@@ -1033,12 +1041,7 @@ closeUserDetailsModal(): void {
             : 'User deactivated successfully.';
           this.cdr.detectChanges();
 
-          Swal.fire({
-            title: activate ? 'User Activated' : 'User Deactivated',
-            text: `${this.getUserName(user)} has been ${activate ? 'activated' : 'deactivated'}.`,
-            icon: 'success',
-            confirmButtonColor: '#0d9488'
-          });
+          this.showActionToast(activate ? 'User activated successfully.' : 'User deactivated successfully.');
         },
         error: error => {
           this.saving = false;
@@ -1048,12 +1051,7 @@ closeUserDetailsModal(): void {
           );
           this.cdr.detectChanges();
 
-          Swal.fire({
-            title: 'Action Failed',
-            text: this.errorMessage || 'Unable to update user status.',
-            icon: 'error',
-            confirmButtonColor: '#dc2626'
-          });
+          this.showActionToast(this.errorMessage || 'Unable to update user status.', 'error');
         }
       });
     });
@@ -1110,13 +1108,7 @@ closeUserDetailsModal(): void {
           this.successMessage = 'User permanently deleted.';
           this.cdr.detectChanges();
 
-          Swal.fire({
-            title: 'User Deleted',
-            text: `${this.getUserName(user)} was permanently deleted.`,
-            icon: 'success',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d9488'
-          });
+          this.showActionToast('User permanently deleted successfully.');
         },
         error: error => {
           console.error('Permanent deletion failed:', error);
@@ -1124,17 +1116,7 @@ closeUserDetailsModal(): void {
           this.handleError(error, 'Unable to permanently delete user.');
           this.cdr.detectChanges();
 
-          Swal.fire({
-            icon: 'error',
-            title: 'Deletion Failed',
-            text: error.error?.message || error.error?.detail || 'Unable to delete user.',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
-          }).then((result) => {
-            if (result.isConfirmed) {
-              this.router.navigateByUrl('/user-management');
-            }
-          });
+          this.showActionToast(error.error?.message || error.error?.detail || 'Unable to delete user.', 'error');
         }
       });
 
@@ -1187,11 +1169,13 @@ closeUserDetailsModal(): void {
         this.errorMessage = defaultMessage;
       }
 
+      this.showActionToast(this.errorMessage || defaultMessage, 'error');
       return;
     }
 
     this.errorMessage =
       this.apiErrorService.getErrorMessage(error) ||
       defaultMessage;
+    this.showActionToast(this.errorMessage, 'error');
   }
 }

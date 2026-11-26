@@ -142,9 +142,9 @@
             <td>
               <span
                 class="ai-badge"
-                [class.ai-enabled]="canUseAI(user.role)"
+                [class.ai-enabled]="user.is_ai_enabled"
               >
-                {{ canUseAI(user.role) ? 'Enabled' : 'Disabled' }}
+                {{ user.is_ai_enabled ? 'Enabled' : 'Disabled' }}
               </span>
             </td>
 
@@ -503,7 +503,7 @@
           </option>
         </select>
 
-        <small>AI access is automatically determined by role.</small>
+        <small>Eligible users can have AI enabled or disabled individually.</small>
       </div>
 
       <!-- NEW PASSWORD -->
@@ -531,8 +531,10 @@
           <span>
             {{
               canUseAI(userForm.role)
-                ? 'AI access is enabled for this role.'
-                : 'AI access is available only for Admin, Additional Admin and Team Member.'
+                ? (userForm.is_ai_enabled
+                    ? 'AI access is enabled for this user.'
+                    : 'AI access is disabled for this user.')
+                : 'AI access is unavailable for this role.'
             }}
           </span>
         </div>
